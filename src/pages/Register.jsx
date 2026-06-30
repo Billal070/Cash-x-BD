@@ -1,26 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext.jsx'; // useAuth ইম্পোর্ট
 import { toast } from 'react-hot-toast';
 import { ArrowLeft, User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react';
 
 export default function Register() {
+  const { user, loading } = useAuth(); // অথেনটিকেশন স্টেট নেওয়া হলো
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [regLoading, setRegLoading] = useState(false);
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const referralCode = searchParams.get('ref'); // ইউআরএল থেকে রেফার কোড নিয়ে আসা
+  const referralCode = searchParams.get('ref');
+
+  // যদি ইউজার আগে থেকেই লগইন থাকে, তবে সরাসরি ড্যাশবোর্ডে পাঠিয়ে দেবে
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
 
   const handleRegister = async (e) => {
     e.preventDefault();
     
-    // সাধারণ ভ্যালিডেশন
     if (!email || !phone || !username || !password || !confirmPassword) {
       return toast.error('Please fill all the fields');
     }
@@ -31,15 +39,13 @@ export default function Register() {
       return toast.error('Password must be at least 6 characters long');
     }
 
-    setLoading(true);
+    setRegLoading(true);
 
     try {
-      // সুপাবেসে সাইন-আপ প্রসেস শুরু
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
         options: {
-          // সুপাবেস মেটাডাটার ভেতরে আমরা রেফার কোড ও ফোন নম্বর সেভ করব
           data: {
             referred_by: referralCode || null,
             phone: phone.trim(),
@@ -52,15 +58,23 @@ export default function Register() {
 
       if (data.user) {
         toast.success('Registration successful!');
-        // অ্যাকাউন্ট তৈরি শেষে ইউজারকে ড্যাশবোর্ডে পাঠানো হবে
         navigate('/dashboard');
       }
     } catch (error) {
       toast.error(error.message || 'Registration failed. Try again.');
     } finally {
-      setLoading(false);
+      setRegLoading(false);
     }
   };
+
+  // ডাটা লোড হওয়ার সময় একটি সিম্পল ব্ল্যাঙ্ক স্ক্রিন দেখাবে
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -98,7 +112,7 @@ export default function Register() {
                   required
                   placeholder="enter_username"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value.replace(/\s+/g, ''))} // কোনো স্পেস বা খালি জায়গা রাখা যাবে না
+                  onChange={(e) => setUsername(e.target.value.replace(/\s+/g, ''))}
                   className="pl-10 w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
                 />
               </div>
@@ -130,7 +144,7 @@ export default function Register() {
                   required
                   placeholder="01XXXXXXXXX"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))} // শুধু নম্বর ইনপুট করা যাবে
+                  onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
                   className="pl-10 w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
                 />
               </div>
@@ -178,10 +192,10 @@ export default function Register() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={regLoading}
               className="w-full py-3 px-4 bg-primary text-background font-bold rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {loading ? 'Creating Account...' : 'Register'}
+              {regLoading ? 'Creating Account...' : 'Register'}
             </button>
           </form>
 
