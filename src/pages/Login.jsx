@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext.jsx'; // useAuth ইম্পোর্ট
+import { useAuth } from '../context/AuthContext.jsx';
+import { CONFIG } from '../config'; // সেন্ট্রাল কনফিগারেশন ইম্পোর্ট করা হলো
 import { toast } from 'react-hot-toast';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
-  const { user, loading } = useAuth(); // অথেনটিকেশন স্টেট নেওয়া হলো
+  const { user, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -14,7 +15,6 @@ export default function Login() {
   
   const navigate = useNavigate();
 
-  // যদি ইউজার আগে থেকেই লগইন থাকে, তবে সরাসরি ড্যাশবোর্ডে পাঠিয়ে দেবে
   useEffect(() => {
     if (user && !loading) {
       navigate('/dashboard');
@@ -49,7 +49,6 @@ export default function Login() {
     }
   };
 
-  // ডাটা লোড হওয়ার সময় একটি সিম্পল ব্ল্যাঙ্ক স্ক্রিন দেখাবে
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -67,11 +66,17 @@ export default function Login() {
         </Link>
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="text-center text-4xl font-extrabold text-primary flex justify-center items-center gap-1 mb-2">
-          🟢 Cash <span className="text-accent">x</span> BD
-        </h2>
-        <h3 className="text-center text-2xl font-bold tracking-tight text-textLight">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <div className="mb-4 inline-block">
+          {CONFIG.logoUrl ? (
+            <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-14 w-auto object-contain mx-auto" />
+          ) : (
+            <h2 className="text-4xl font-extrabold text-primary">
+              🟢 {CONFIG.siteName}
+            </h2>
+          )}
+        </div>
+        <h3 className="text-2xl font-bold tracking-tight text-textLight">
           Sign in to your account
         </h3>
       </div>
