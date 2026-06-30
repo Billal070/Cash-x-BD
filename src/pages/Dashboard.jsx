@@ -127,7 +127,7 @@ export default function Dashboard() {
           userId: user.id,
           email: user.email,
           username: profile?.username || 'user',
-          amount: CONFIG.activationFee, // কনফিগারেশন থেকে ১৫০৳ নেওয়া হলো
+          amount: CONFIG.activationFee, 
           redirectUrl: window.location.origin + '/dashboard'
         })
       });
@@ -145,7 +145,7 @@ export default function Dashboard() {
     }
   };
 
-  // ৬. জিনী পে পেমেন্ট ভেরিফাই করার ফাংশন
+  // 6. জিনী পে পেমেন্ট ভেরিফাই করার ফাংশন
   const verifyUserPayment = async (invoiceId) => {
     setVerifyingPayment(true);
     const toastId = toast.loading(`Verifying your ${CONFIG.activationFee}৳ payment...`);
@@ -171,7 +171,7 @@ export default function Dashboard() {
     }
   };
 
-  // ৭. বিজ্ঞাপন দেখা শুরু করার ফাংশন
+  // ७. বিজ্ঞাপন দেখা শুরু করার ফাংশন
   const startWatchingAd = () => {
     if (profile.ads_watched_today >= 15) {
       return toast.error('You have reached the daily limit of 15 Ads!');
@@ -202,7 +202,7 @@ export default function Dashboard() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          balance: profile.balance + CONFIG.perAdReward, // ৫৳ রিওয়ার্ড যোগ করা হলো
+          balance: profile.balance + CONFIG.perAdReward, 
           ads_watched_today: adsCount + 1,
           last_ad_watched_at: new Date().toISOString(),
           last_ad_date: todayStr
@@ -326,7 +326,7 @@ export default function Dashboard() {
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
 
           {CONFIG.logoUrl ? (
-            <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-10 w-auto mx-auto mb-4 object-contain" />
+            <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-16 w-auto mx-auto mb-4 object-contain" />
           ) : (
             <span className="text-4xl font-extrabold text-primary mb-2 block">Cash <span className="text-accent">x</span> BD</span>
           )}
@@ -384,7 +384,7 @@ export default function Dashboard() {
         </button>
 
         {CONFIG.logoUrl ? (
-          <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-8 w-auto absolute left-1/2 -translate-x-1/2 object-contain" />
+          <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-12 w-auto absolute left-1/2 -translate-x-1/2 object-contain" />
         ) : (
           <span className="text-xl font-black text-primary absolute left-1/2 -translate-x-1/2 pointer-events-none select-none">
             🟢 Cash <span className="text-accent">x</span> BD
@@ -405,7 +405,7 @@ export default function Dashboard() {
         <div>
           <div className="flex items-center justify-between mb-8">
             {CONFIG.logoUrl ? (
-              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-8 w-auto object-contain" />
+              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-12 w-auto object-contain" />
             ) : (
               <span className="text-xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
             )}
@@ -458,7 +458,7 @@ export default function Dashboard() {
         <div>
           <div className="mb-10 text-left">
             {CONFIG.logoUrl ? (
-              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-10 w-auto mb-2 object-contain" />
+              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-16 w-auto mb-2 object-contain" />
             ) : (
               <span className="text-2xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
             )}
