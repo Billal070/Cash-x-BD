@@ -1,6 +1,6 @@
 export const CONFIG = {
   siteName: "Cash x BD",
-  logoUrl: "https://i.postimg.cc/vZj3whQL/earnova.jpg", // উদাহরণ: "https://i.postimg.cc/xxxxxx/logo.png"
+  logoUrl: "https://i.postimg.cc/9fg4ngVv/earnova-png.png", // উদাহরণ: "https://i.postimg.cc/xxxxxx/logo.png"
   telegramLink: "https://t.me/your_channel_username", // আপনার টেলিগ্রাম গ্রুপ বা চ্যানেলের লিংক
   adsterraLink: "https://www.example.com", // আপনার অ্যাডস্টেরা ডিরেক্ট লিংক (আপাতত উদাহরণ দেওয়া)
   
