@@ -7,7 +7,8 @@ import { CONFIG } from '../config';
 import { 
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
-  Menu, X, User, Phone, Mail, Award, ArrowUpRight // নতুন আইকনসমূহ ইম্পোর্ট করা হলো
+  Menu, X, User, Phone, Mail, Award, ArrowUpRight,
+  HelpCircle, Send, MessageSquare // নতুন সাপোর্ট আইকনসমূহ
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -22,6 +23,9 @@ export default function Dashboard() {
 
   // মোবাইল মেনু কন্ট্রোল করার স্টেট
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // লাইভ সেটিংস ডাটাবেজ থেকে লোড করার স্টেট
+  const [dbSettings, setDbSettings] = useState(null);
 
   // ট্যাব পরিবর্তন হলে তা ব্রাউজার মেমোরিতে সেভ করে রাখা
   useEffect(() => {
@@ -48,6 +52,27 @@ export default function Dashboard() {
   const [editUsername, setEditUsername] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [updatingProfile, setUpdatingProfile] = useState(false);
+
+  // লাইভ সুপাবেস সেটিংস টেবিল থেকে ডাটা লোড করা
+  useEffect(() => {
+    fetchLiveSettings();
+  }, []);
+
+  const fetchLiveSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('id', 'config')
+        .single();
+      if (error) throw error;
+      if (data) {
+        setDbSettings(data);
+      }
+    } catch (err) {
+      console.error('Database settings failed to load, using config.js backup:', err.message);
+    }
+  };
 
   // যদি লগইন না থাকে, তবে লগইন পেজে রিডাইরেক্ট করবে
   useEffect(() => {
@@ -135,7 +160,7 @@ export default function Dashboard() {
           userId: user.id,
           email: user.email,
           username: profile?.username || 'user',
-          amount: CONFIG.activationFee, 
+          amount: activeActivationFee, 
           redirectUrl: window.location.origin + '/dashboard'
         })
       });
@@ -156,7 +181,7 @@ export default function Dashboard() {
   // ৬. জিনী পে পেমেন্ট ভেরিফাই করার ফাংশন
   const verifyUserPayment = async (invoiceId) => {
     setVerifyingPayment(true);
-    const toastId = toast.loading(`Verifying your ${CONFIG.activationFee}৳ payment...`);
+    const toastId = toast.loading(`Verifying your ${activeActivationFee}৳ payment...`);
     try {
       const response = await fetch('/api/verify-payment', {
         method: 'POST',
@@ -188,17 +213,17 @@ export default function Dashboard() {
       return toast.error(`Please wait ${cooldown} seconds before watching next ad!`);
     }
 
-    // কনফিগারেশন ফাইল থেকে আপনার Adsterra Direct Link ওপেন হবে
-    window.open(CONFIG.adsterraLink, '_blank'); 
+    // কনফিগারেশন বা লাইভ ডাটাবেজ থেকে আপনার Adsterra Direct Link ওপেন হবে
+    window.open(activeAdsterraLink, '_blank'); 
 
     setIsWatching(true);
     setAdTimer(15); 
     toast.success('Ad loaded! Please do not close this dashboard tab.');
   };
 
-  // ৮. বিজ্ঞপ্তির রিওয়ার্ড (৫৳) যোগ করার ফাংশন
+  // ৮. বিজ্ঞপ্তির রিওয়ার্ড যোগ করার ফাংশন
   const claimAdReward = async () => {
-    const toastId = toast.loading(`Adding ${CONFIG.perAdReward}৳ reward to your balance...`);
+    const toastId = toast.loading(`Adding ${activePerAdReward}৳ reward to your balance...`);
     try {
       const todayStr = new Date().toISOString().split('T')[0];
       
@@ -210,7 +235,7 @@ export default function Dashboard() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          balance: profile.balance + CONFIG.perAdReward, 
+          balance: profile.balance + activePerAdReward, 
           ads_watched_today: adsCount + 1,
           last_ad_watched_at: new Date().toISOString(),
           last_ad_date: todayStr
@@ -219,7 +244,7 @@ export default function Dashboard() {
 
       if (error) throw error;
 
-      toast.success(`Successfully earned ${CONFIG.perAdReward}৳! 🎉`, { id: toastId });
+      toast.success(`Successfully earned ${activePerAdReward}৳! 🎉`, { id: toastId });
       setCooldown(60); 
       await refreshProfile();
     } catch (err) {
@@ -241,12 +266,12 @@ export default function Dashboard() {
     }
 
     if (profile.withdrawals_count === 0) {
-      if (amount < CONFIG.minWithdrawFirst) {
-        return toast.error(`Minimum amount for first withdrawal is ${CONFIG.minWithdrawFirst} ৳`);
+      if (amount < activeMinWithdrawFirst) {
+        return toast.error(`Minimum amount for first withdrawal is ${activeMinWithdrawFirst} ৳`);
       }
     } else {
-      if (amount < CONFIG.minWithdrawSubsequent) {
-        return toast.error(`Minimum amount for subsequent withdrawals is ${CONFIG.minWithdrawSubsequent} ৳`);
+      if (amount < activeMinWithdrawSubsequent) {
+        return toast.error(`Minimum amount for subsequent withdrawals is ${activeMinWithdrawSubsequent} ৳`);
       }
       if (profile.referral_count < 3) {
         return toast.error('⚠️ You need at least 3 active referrals for subsequent withdrawals!');
@@ -342,9 +367,20 @@ export default function Dashboard() {
     setIsMobileMenuOpen(false); 
   };
 
+  // লাইভ অথবা ব্যাকআপ সেটিংস নির্ধারণ (Fallbacks)
+  const activeActivationFee = dbSettings ? Number(dbSettings.activation_fee) : CONFIG.activationFee;
+  const activePerAdReward = dbSettings ? Number(dbSettings.per_ad_reward) : CONFIG.perAdReward;
+  const activeReferralBonus = dbSettings ? Number(dbSettings.referral_bonus) : CONFIG.referralBonus;
+  const activeAdsterraLink = dbSettings ? dbSettings.adsterra_link : CONFIG.adsterraLink;
+  const activeTelegramChannel = dbSettings ? dbSettings.telegram_channel : CONFIG.telegramLink;
+  const activeTelegramAdmin = dbSettings ? dbSettings.telegram_admin : "https://t.me/your_admin";
+
+  const activeMinWithdrawFirst = CONFIG.minWithdrawFirst;
+  const activeMinWithdrawSubsequent = CONFIG.minWithdrawSubsequent;
+
   // গাণিতিক পরিসংখ্যান ক্যালকুলেট করার ফাংশন
   const totalLifetimeIncome = profile ? profile.balance + profile.total_withdrawn : 0;
-  const referralEarnings = profile ? profile.referral_count * CONFIG.referralBonus : 0;
+  const referralEarnings = profile ? profile.referral_count * activeReferralBonus : 0;
   const adsEarnings = totalLifetimeIncome - referralEarnings > 0 ? totalLifetimeIncome - referralEarnings : 0;
 
   if (loading || !profile) {
@@ -376,7 +412,7 @@ export default function Dashboard() {
 
           <h2 className="text-2xl font-black mb-2 text-textLight">Your Account is <span className="text-red-500">Inactive</span></h2>
           <p className="text-textGray text-sm mb-6 leading-relaxed">
-            Please pay a one-time activation fee of <span className="text-primary font-bold text-base">{CONFIG.activationFee} ৳</span> to unlock the system and start watching ads & completing tasks.
+            Please pay a one-time activation fee of <span className="text-primary font-bold text-base">{activeActivationFee} ৳</span> to unlock the system and start watching ads & completing tasks.
           </p>
 
           <div className="bg-background/50 rounded-2xl p-5 border border-cardBg text-left space-y-4 mb-6">
@@ -395,7 +431,7 @@ export default function Dashboard() {
             disabled={paying || verifyingPayment}
             className="w-full py-4 bg-primary text-background text-lg font-black rounded-2xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
           >
-            {paying ? 'Connecting ZiniPay...' : verifyingPayment ? 'Verifying...' : `Pay ${CONFIG.activationFee} ৳ via ZiniPay`}
+            {paying ? 'Connecting ZiniPay...' : verifyingPayment ? 'Verifying...' : `Pay ${activeActivationFee} ৳ via ZiniPay`}
           </button>
 
           <button
@@ -413,7 +449,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background text-textLight flex flex-col md:flex-row">
       
-      {/* মোবাইল স্ক্রিনের জন্য টপ-বার (Header) */}
+      {/* মোবাইল হেডার */}
       <div className="md:hidden bg-cardBg border-b border-cardBg/50 px-5 py-4 flex items-center justify-between sticky top-0 z-40 relative">
         <button 
           onClick={() => setIsMobileMenuOpen(true)} 
@@ -433,13 +469,13 @@ export default function Dashboard() {
         <div className="w-10"></div> 
       </div>
 
-      {/* মোবাইল মেনুর জন্য ব্লার ব্যাকড্রপ ওভারলে */}
+      {/* মোবাইল ওভারলে */}
       <div 
         className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-50 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
       />
 
-      {/* মোবাইল ড্রয়ার / সাইডবার */}
+      {/* মোবাইল ড্রয়ার */}
       <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-cardBg border-r border-cardBg/50 p-6 z-50 transform transition-transform duration-300 ease-in-out md:hidden flex flex-col justify-between ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div>
           <div className="flex items-center justify-between mb-8">
@@ -486,6 +522,12 @@ export default function Dashboard() {
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'profile-details' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
             >
               <User className="w-5 h-5" /> Profile
+            </button>
+            <button
+              onClick={() => handleTabChange('support-page')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'support-page' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+            >
+              <HelpCircle className="w-5 h-5" /> Support
             </button>
           </nav>
         </div>
@@ -542,6 +584,12 @@ export default function Dashboard() {
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'profile-details' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
             >
               <User className="w-5 h-5" /> Profile
+            </button>
+            <button
+              onClick={() => setActiveTab('support-page')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'support-page' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+            >
+              <HelpCircle className="w-5 h-5" /> Support
             </button>
           </nav>
         </div>
@@ -610,8 +658,8 @@ export default function Dashboard() {
                 <div>
                   <h4 className="font-bold text-textLight mb-1 text-sm md:text-base">Withdrawal Requirements Check:</h4>
                   <ul className="text-xs text-textGray space-y-1 list-disc list-inside">
-                    <li>1st withdrawal requirement: Minimum {CONFIG.minWithdrawFirst} ৳</li>
-                    <li>Subsequent withdrawal requirement: Minimum {CONFIG.minWithdrawSubsequent} ৳ & 3 Active referrals</li>
+                    <li>1st withdrawal requirement: Minimum {activeMinWithdrawFirst} ৳</li>
+                    <li>Subsequent withdrawal requirement: Minimum {activeMinWithdrawSubsequent} ৳ & 3 Active referrals</li>
                     <li>You must watch all 15 daily ads on the day you request a withdrawal</li>
                   </ul>
                 </div>
@@ -632,7 +680,7 @@ export default function Dashboard() {
           <div className="space-y-6 md:space-y-8 max-w-2xl">
             <div>
               <h1 className="text-2xl md:text-3xl font-black">Ad Reward System</h1>
-              <p className="text-textGray text-xs md:text-sm">Watch organic ads and earn {CONFIG.perAdReward}৳ per view.</p>
+              <p className="text-textGray text-xs md:text-sm">Watch organic ads and earn {activePerAdReward}৳ per view.</p>
             </div>
 
             <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
@@ -686,7 +734,7 @@ export default function Dashboard() {
                   onClick={startWatchingAd}
                   className="w-full py-4 md:py-6 bg-primary text-background text-base md:text-lg font-black rounded-2xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-3"
                 >
-                  <Play className="w-5 h-5 fill-background" /> Click to Watch Ad & Earn {CONFIG.perAdReward} ৳
+                  <Play className="w-5 h-5 md:w-6 md:h-6 fill-background" /> Click to Watch Ad & Earn {activePerAdReward} ৳
                 </button>
               )}
             </div>
@@ -841,7 +889,7 @@ export default function Dashboard() {
           <div className="space-y-6 md:space-y-8 max-w-2xl">
             <div>
               <h1 className="text-2xl md:text-3xl font-black">Referral System</h1>
-              <p className="text-textGray text-xs md:text-sm">Earn {CONFIG.referralBonus}৳ reward for every active referral who signs up.</p>
+              <p className="text-textGray text-xs md:text-sm">Earn {activeReferralBonus}৳ reward for every active referral who signs up.</p>
             </div>
 
             <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 space-y-6">
@@ -862,7 +910,7 @@ export default function Dashboard() {
               </div>
 
               <div className="bg-background/50 rounded-xl p-4 border border-cardBg text-xs text-textGray leading-relaxed">
-                👉 <strong>How it works:</strong> Share this referral link with your friends. Once they register using this link and activate their profile with the ৳{CONFIG.activationFee} account setup fee, ৳{CONFIG.referralBonus} will be instantly added to your dashboard balance.
+                👉 <strong>How it works:</strong> Share this referral link with your friends. Once they register using this link and activate their profile with the ৳{activeActivationFee} account setup fee, ৳{activeReferralBonus} will be instantly added to your dashboard balance.
               </div>
             </div>
 
@@ -1003,6 +1051,81 @@ export default function Dashboard() {
                   </form>
                 </div>
 
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 6: SUPPORT PAGE */}
+        {activeTab === 'support-page' && (
+          <div className="space-y-8 max-w-3xl">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black">Support & Help Center</h1>
+              <p className="text-textGray text-xs md:text-sm">Get in touch with us. We are active 24/7 to solve your problems.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Card 1: Official Channel */}
+              <div className="bg-cardBg border border-cardBg/50 p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between space-y-6">
+                <div className="absolute -top-10 -left-10 w-24 h-24 bg-primary/5 rounded-full blur-2xl"></div>
+                
+                <div className="space-y-4">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center">
+                    <Send className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-textLight">Official Telegram Channel</h3>
+                    <p className="text-textGray text-xs mt-2 leading-relaxed">
+                      Join our official Telegram channel to get the latest updates, payment proof screenshots, announcement news, and important notices.
+                    </p>
+                  </div>
+                </div>
+
+                <a
+                  href={activeTelegramChannel}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full py-3.5 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm"
+                >
+                  <Send className="w-4 h-4 fill-background" /> Join Telegram Channel
+                </a>
+              </div>
+
+              {/* Card 2: Personal Support Admin */}
+              <div className="bg-cardBg border border-cardBg/50 p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between space-y-6">
+                <div className="absolute -top-10 -left-10 w-24 h-24 bg-accent/5 rounded-full blur-2xl"></div>
+
+                <div className="space-y-4">
+                  <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 text-accent flex items-center justify-center">
+                    <MessageSquare className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-textLight">Live Admin Support</h3>
+                    <p className="text-textGray text-xs mt-2 leading-relaxed">
+                      Facing account activation issues, withdrawal delays, or have general queries? Click below to chat directly with our active support managers.
+                    </p>
+                  </div>
+                </div>
+
+                <a
+                  href={activeTelegramAdmin}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
+                >
+                  <MessageSquare className="w-4 h-4" /> Contact Support Admin
+                </a>
+              </div>
+            </div>
+
+            {/* Quick Warning Card */}
+            <div className="bg-background border border-cardBg/50 rounded-2xl p-5 flex items-start gap-4">
+              <AlertTriangle className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-xs font-bold text-accent mb-1">Important Safety Notice</h4>
+                <p className="text-[10px] md:text-xs text-textGray leading-relaxed">
+                  Our official admins will never message you first or ask for your account password or bKash PIN. Always communicate only through the official support accounts linked above to stay secure.
+                </p>
               </div>
             </div>
           </div>
