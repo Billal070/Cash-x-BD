@@ -13,14 +13,23 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // ট্যাব এবং পেমেন্ট ভেরিফিকেশন স্টেট
-  const [activeTab, setActiveTab] = useState('overview');
+  // ব্রাউজার মেমোরি থেকে সর্বশেষ সক্রিয় থাকা ট্যাবটি খুঁজে বের করা
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('cashxbd_active_tab') || 'overview';
+  });
+
+  // ট্যাব পরিবর্তন হলে তা ব্রাউজার মেমোরিতে সেভ করে রাখা
+  useEffect(() => {
+    localStorage.setItem('cashxbd_active_tab', activeTab);
+  }, [activeTab]);
+
+  // পেমেন্ট ভেরিফিকেশন স্টেট
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [paying, setPaying] = useState(false);
 
   // বিজ্ঞাপন স্টেটসমূহ
-  const [adTimer, setAdTimer] = useState(0); // বিজ্ঞাপন দেখার টাইমার
-  const [cooldown, setCooldown] = useState(0); // কোলডাউন টাইমার
+  const [adTimer, setAdTimer] = useState(0); 
+  const [cooldown, setCooldown] = useState(0); 
   const [isWatching, setIsWatching] = useState(false);
 
   // উইথড্রল স্টেটসমূহ
@@ -114,7 +123,7 @@ export default function Dashboard() {
           email: user.email,
           username: profile?.username || 'user',
           amount: 150,
-          redirectUrl: window.location.origin + '/dashboard' // পেমেন্ট শেষে এখানে ফেরত পাঠাবে
+          redirectUrl: window.location.origin + '/dashboard'
         })
       });
 
@@ -122,7 +131,7 @@ export default function Dashboard() {
       if (!response.ok) throw new Error(data.error || 'Payment initialization failed');
 
       if (data.payment_url) {
-        window.location.href = data.payment_url; // জিনী পে-র সুরক্ষিত পেমেন্ট পেজে রিডাইরেক্ট
+        window.location.href = data.payment_url;
       }
     } catch (err) {
       toast.error(err.message);
@@ -153,7 +162,7 @@ export default function Dashboard() {
       toast.error(err.message || 'Payment not verified yet', { id: toastId });
     } finally {
       setVerifyingPayment(false);
-      setSearchParams({}); // ইউআরএল থেকে এপিআই প্যারামিটার মুছে ফেলা
+      setSearchParams({});
     }
   };
 
@@ -166,12 +175,11 @@ export default function Dashboard() {
       return toast.error(`Please wait ${cooldown} seconds before watching next ad!`);
     }
 
-    // অ্যাডস্টেরা ডিরেক্ট লিঙ্ক বা ব্যানার বিজ্ঞাপন নতুন ট্যাবে ওপেন করা
     // এখানে আপনার আসল Adsterra Link বসিয়ে দিতে পারেন
     window.open('https://www.example.com', '_blank'); 
 
     setIsWatching(true);
-    setAdTimer(15); // বিজ্ঞাপনটি দেখার সময় (যেমন ১৫ সেকেন্ড বা আপনার ইচ্ছামত)
+    setAdTimer(15); 
     toast.success('Ad loaded! Please do not close this dashboard tab.');
   };
 
@@ -181,10 +189,9 @@ export default function Dashboard() {
     try {
       const todayStr = new Date().toISOString().split('T')[0];
       
-      // আজকের ডেট চেক করে দৈনিক লিমিট হ্যান্ডেল করা
       let adsCount = profile.ads_watched_today;
       if (profile.last_ad_date !== todayStr) {
-        adsCount = 0; // নতুন দিন হলে লিমিট আবার ০ থেকে শুরু হবে
+        adsCount = 0; 
       }
 
       const { error } = await supabase
@@ -200,7 +207,7 @@ export default function Dashboard() {
       if (error) throw error;
 
       toast.success('Successfully earned 5৳! 🎉', { id: toastId });
-      setCooldown(60); // ৬০ সেকেন্ডের কোলডাউন টাইমার চালু
+      setCooldown(60); 
       await refreshProfile();
     } catch (err) {
       toast.error('Failed to claim reward.', { id: toastId });
@@ -216,18 +223,15 @@ export default function Dashboard() {
       return toast.error('Please fill in all withdrawal fields');
     }
 
-    // ১. প্রতিদিন সব কাজ (১৫টি বিজ্ঞাপন) শেষ করে তবেই উইথড্র দেওয়া যাবে
     if (profile.ads_watched_today < 15) {
       return toast.error('⚠️ You must complete all 15 daily ads before withdrawing!');
     }
 
-    // প্রথম উইথড্রল শর্ত (ন্যূনতম ৭৫৳)
     if (profile.withdrawals_count === 0) {
       if (amount < 75) {
         return toast.error('Minimum amount for first withdrawal is 75 ৳');
       }
     } else {
-      // পরবর্তী উইথড্রল শর্ত (ন্যূনতম ২০০৳ এবং অন্তত ৩টি একটিভ রেফারেল)
       if (amount < 200) {
         return toast.error('Minimum amount for subsequent withdrawals is 200 ৳');
       }
@@ -241,11 +245,10 @@ export default function Dashboard() {
     }
 
     setSubmittingWd(true);
-    const fee = Number((amount * 0.067).toFixed(2)); // ৬.৭% চার্জ নির্ধারণ
+    const fee = Number((amount * 0.067).toFixed(2)); 
     const receiveAmount = Number((amount - fee).toFixed(2));
 
     try {
-      // ডেটাবেজে উইথড্রল রিকোয়েস্ট তৈরি
       const { error: insertError } = await supabase
         .from('withdrawals')
         .insert({
@@ -259,7 +262,6 @@ export default function Dashboard() {
 
       if (insertError) throw insertError;
 
-      // প্রোফাইল ব্যালেন্স এবং উইথড্রল সংখ্যা আপডেট
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -289,7 +291,12 @@ export default function Dashboard() {
     toast.success('Referral link copied to clipboard!');
   };
 
-  // লোডিং স্ক্রিন
+  // লগআউট করার সময় মেমোরি রিমুভ করার ফাংশন
+  const handleLogout = () => {
+    localStorage.removeItem('cashxbd_active_tab');
+    signOut();
+  };
+
   if (loading || !profile) {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-center items-center">
@@ -299,12 +306,11 @@ export default function Dashboard() {
     );
   }
 
-  // ১০. অ্যাকাউন্ট অ্যাক্টিভেশন পেজ (যদি ইউজার Inactive থাকে)
+  // ১০. অ্যাকাউন্ট অ্যাক্টিভেশন পেজ
   if (!profile.is_active) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-cardBg border border-cardBg/50 p-8 rounded-3xl text-center shadow-2xl relative overflow-hidden">
-          {/* Background Highlight */}
           <div className="absolute -top-10 -left-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
 
@@ -339,7 +345,7 @@ export default function Dashboard() {
           </button>
 
           <button
-            onClick={signOut}
+            onClick={handleLogout}
             className="mt-6 flex items-center gap-2 mx-auto text-sm font-semibold text-textGray hover:text-red-500 transition-colors"
           >
             <LogOut className="w-4 h-4" /> Sign Out
@@ -349,11 +355,11 @@ export default function Dashboard() {
     );
   }
 
-  // ১১. মূল অ্যাক্টিভ ড্যাশবোর্ড ইন্টারফেস (যদি ইউজার Active থাকে)
+  // ১১. মূল অ্যাক্টিভ ড্যাশবোর্ড ইন্টারফেস
   return (
     <div className="min-h-screen bg-background text-textLight flex flex-col md:flex-row">
       
-      {/* Sidebar for Desktop */}
+      {/* Sidebar */}
       <aside className="w-full md:w-64 bg-cardBg border-r border-cardBg/50 flex flex-col justify-between p-6">
         <div>
           <div className="mb-10 text-center md:text-left">
@@ -392,7 +398,7 @@ export default function Dashboard() {
         </div>
 
         <button
-          onClick={signOut}
+          onClick={handleLogout}
           className="mt-8 flex items-center gap-3 px-4 py-3 text-textGray hover:text-red-500 font-bold transition-colors w-full"
         >
           <LogOut className="w-5 h-5" /> Sign Out
@@ -412,7 +418,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Dashboard Cards Grid */}
+            {/* Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="bg-cardBg border border-cardBg p-6 rounded-2xl relative overflow-hidden">
                 <div className="absolute right-4 top-4 text-primary bg-primary/10 p-2 rounded-xl">
@@ -448,7 +454,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Daily Requirements Status */}
+            {/* Requirements Card */}
             <div className="bg-cardBg/50 border border-cardBg rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div className="flex items-start gap-4">
                 <div className="p-3 rounded-xl bg-accent/10 text-accent mt-1 md:mt-0">
@@ -482,13 +488,11 @@ export default function Dashboard() {
               <p className="text-textGray text-sm">Watch organic ads and earn 5৳ per view.</p>
             </div>
 
-            {/* Ad Progress and Limit Card */}
             <div className="bg-cardBg border border-cardBg rounded-2xl p-6">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-sm font-bold text-textGray">Today's Ads limit:</span>
                 <span className="text-xl font-black text-primary">{profile.ads_watched_today} / 15 Completed</span>
               </div>
-              {/* Progress Bar */}
               <div className="w-full bg-background rounded-full h-3 overflow-hidden border border-cardBg mb-6">
                 <div 
                   className="bg-primary h-full transition-all duration-500" 
@@ -496,7 +500,6 @@ export default function Dashboard() {
                 ></div>
               </div>
 
-              {/* Advertisement Main Screen */}
               {isWatching ? (
                 <div className="bg-background rounded-2xl p-10 border border-primary/20 text-center space-y-4">
                   <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto"></div>
@@ -552,10 +555,8 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Form Card */}
               <div className="bg-cardBg border border-cardBg rounded-2xl p-6 lg:col-span-2">
                 <form onSubmit={handleWithdraw} className="space-y-6">
-                  {/* Select Payment Method */}
                   <div>
                     <label className="block text-sm font-bold text-textGray mb-3">Withdraw Method</label>
                     <div className="grid grid-cols-3 gap-4">
@@ -572,7 +573,6 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* Payment Number */}
                   <div>
                     <label className="block text-sm font-bold text-textGray mb-2">Receiver Account Number</label>
                     <input
@@ -585,7 +585,6 @@ export default function Dashboard() {
                     />
                   </div>
 
-                  {/* Withdrawal Amount */}
                   <div>
                     <label className="block text-sm font-bold text-textGray mb-2">Withdrawal Amount (৳)</label>
                     <input
@@ -606,7 +605,6 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* Submit Button */}
                   <button
                     type="submit"
                     disabled={submittingWd}
@@ -617,7 +615,6 @@ export default function Dashboard() {
                 </form>
               </div>
 
-              {/* Side Requirements card */}
               <div className="bg-cardBg border border-cardBg rounded-2xl p-6 space-y-6">
                 <h3 className="font-bold text-textLight">Your Statistics:</h3>
                 <div className="space-y-4">
@@ -647,7 +644,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Withdrawal History List */}
+            {/* Withdrawal History */}
             <div className="bg-cardBg border border-cardBg rounded-2xl p-6">
               <h3 className="font-bold mb-6">Withdrawal History</h3>
               {wdHistory.length === 0 ? (
@@ -700,7 +697,6 @@ export default function Dashboard() {
               <p className="text-textGray text-sm">Earn 30৳ reward for every active referral who signs up.</p>
             </div>
 
-            {/* Referral Link Card */}
             <div className="bg-cardBg border border-cardBg rounded-2xl p-6 space-y-6">
               <h3 className="font-bold text-textLight">Your Unique Referral Link:</h3>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -723,7 +719,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Referrals stats */}
             <div className="bg-cardBg border border-cardBg rounded-2xl p-6 flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-textGray text-sm">Your Active Referrals:</h3>
