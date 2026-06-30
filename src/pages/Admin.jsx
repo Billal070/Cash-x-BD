@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { 
   LayoutDashboard, Users, ArrowDownToLine, Settings, LogOut,
   Search, Check, X, Plus, ShieldAlert, Landmark, ShieldCheck,
-  CheckCircle, Ban, RefreshCw
+  CheckCircle, Ban, RefreshCw, MessageSquare, Send
 } from 'lucide-react';
 
 export default function Admin() {
@@ -157,20 +157,23 @@ export default function Admin() {
     }
   };
 
-  // ৬. উইথড্রল তালিকা লোড করা
+  // ৬. উইথড্রল তালিকা লোড করা (সংশোধিত ও ত্রুটিমুক্ত)
   const fetchWithdrawals = async () => {
-    setWdHistory([]);
+    setLoadingWd(true);
+    setWithdrawals([]); // সংশোধিত স্টেট
     try {
       const { data, error } = await supabase
         .from('withdrawals')
         .select('*, profiles(username, email)')
-        .eq('status', wdMethod === 'history' ? 'approved' : wdFilter) // filter: pending, approved, rejected
+        .eq('status', wdFilter) // সংশোধিত ফিল্টার
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setWithdrawals(data || []);
     } catch (err) {
       toast.error('Failed to load withdrawals');
+    } finally {
+      setLoadingWd(false);
     }
   };
 
@@ -216,8 +219,8 @@ export default function Admin() {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          balance: userProfile.balance + wd.amount, // ব্যালেন্স ফেরত দেওয়া হলো
-          total_withdrawn: userProfile.total_withdrawn - wd.receive_amount, // মোট উইথড্র থেকে বাদ দেওয়া হলো
+          balance: userProfile.balance + wd.amount, 
+          total_withdrawn: userProfile.total_withdrawn - wd.receive_amount, 
           withdrawals_count: userProfile.withdrawals_count - 1
         })
         .eq('id', wd.user_id);
@@ -462,14 +465,12 @@ export default function Admin() {
                             </span>
                           </td>
                           <td className="py-3 text-right space-x-2">
-                            {/* Activate / Deactivate Toggle Button */}
                             <button
                               onClick={() => toggleUserActive(usr.id, usr.is_active)}
                               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${usr.is_active ? 'bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-textLight' : 'bg-primary/10 text-primary hover:bg-primary hover:text-background'}`}
                             >
                               {usr.is_active ? 'Deactivate' : 'Activate'}
                             </button>
-                            {/* Edit Balance Trigger */}
                             <button
                               onClick={() => setBalanceModal({ userId: usr.id, username: usr.username, currentBalance: usr.balance })}
                               className="px-3 py-1.5 bg-accent/10 text-accent hover:bg-accent hover:text-background rounded-lg text-xs font-bold transition-all"
@@ -485,7 +486,7 @@ export default function Admin() {
               )}
             </div>
 
-            {/* Manual Balance Adjust Modal (Popup Dialog) */}
+            {/* Manual Balance Adjust Modal */}
             {balanceModal && (
               <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                 <div className="max-w-md w-full bg-cardBg border border-cardBg/50 p-6 rounded-2xl relative">
@@ -554,8 +555,10 @@ export default function Admin() {
 
             {/* Withdrawals List Table */}
             <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-6">
-              {withdrawals.length === 0 ? (
-                <p className="text-textGray text-sm text-center py-6">No {wdHistory.status || wdMethod} requests found.</p>
+              {loadingWd ? (
+                <div className="text-center py-6 text-textGray">Loading withdrawals...</div>
+              ) : withdrawals.length === 0 ? (
+                <p className="text-textGray text-sm text-center py-6">No {wdFilter} withdrawal requests found.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse min-w-[700px]">
