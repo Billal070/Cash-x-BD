@@ -3,11 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
-import { CONFIG } from '../config'; // সেন্ট্রাল কনফিগারেশন ইম্পোর্ট করা হলো
+import { CONFIG } from '../config'; 
 import { 
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
-  Menu, X
+  Menu, X, User, Phone, Mail, Award, ArrowUpRight // নতুন আইকনসমূহ ইম্পোর্ট করা হলো
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -44,12 +44,20 @@ export default function Dashboard() {
   const [wdHistory, setWdHistory] = useState([]);
   const [submittingWd, setSubmittingWd] = useState(false);
 
+  // প্রোফাইল এডিট স্টেটসমূহ
+  const [editUsername, setEditUsername] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [updatingProfile, setUpdatingProfile] = useState(false);
+
   // যদি লগইন না থাকে, তবে লগইন পেজে রিডাইরেক্ট করবে
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
+    } else if (profile) {
+      setEditUsername(profile.username || '');
+      setEditPhone(profile.phone || '');
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, profile]);
 
   // ১. জিনী পে (ZiniPay) অটোমেটিক পেমেন্ট ভেরিফিকেশন চেক
   useEffect(() => {
@@ -145,7 +153,7 @@ export default function Dashboard() {
     }
   };
 
-  // 6. জিনী পে পেমেন্ট ভেরিফাই করার ফাংশন
+  // ৬. জিনী পে পেমেন্ট ভেরিফাই করার ফাংশন
   const verifyUserPayment = async (invoiceId) => {
     setVerifyingPayment(true);
     const toastId = toast.loading(`Verifying your ${CONFIG.activationFee}৳ payment...`);
@@ -290,6 +298,32 @@ export default function Dashboard() {
     }
   };
 
+  // প্রোফাইল এডিট/আপডেট সাবমিট করার ফাংশন
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    if (!editUsername) return toast.error('Username cannot be empty');
+
+    setUpdatingProfile(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          username: editUsername.trim().toLowerCase().replace(/\s+/g, ''),
+          phone: editPhone.trim()
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast.success('Profile updated successfully! 🟢');
+      await refreshProfile();
+    } catch (err) {
+      toast.error(err.message || 'Failed to update profile');
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
+
   const copyReferralLink = () => {
     const link = `${window.location.origin}/register?ref=${user.id}`;
     navigator.clipboard.writeText(link);
@@ -307,6 +341,11 @@ export default function Dashboard() {
     setActiveTab(tabName);
     setIsMobileMenuOpen(false); 
   };
+
+  // গাণিতিক পরিসংখ্যান ক্যালকুলেট করার ফাংশন
+  const totalLifetimeIncome = profile ? profile.balance + profile.total_withdrawn : 0;
+  const referralEarnings = profile ? profile.referral_count * CONFIG.referralBonus : 0;
+  const adsEarnings = totalLifetimeIncome - referralEarnings > 0 ? totalLifetimeIncome - referralEarnings : 0;
 
   if (loading || !profile) {
     return (
@@ -326,7 +365,7 @@ export default function Dashboard() {
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
 
           {CONFIG.logoUrl ? (
-            <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-24 md:h-28 w-auto mx-auto mb-4 object-contain" />
+            <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-16 w-auto mx-auto mb-4 object-contain" />
           ) : (
             <span className="text-4xl font-extrabold text-primary mb-2 block">Cash <span className="text-accent">x</span> BD</span>
           )}
@@ -374,7 +413,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background text-textLight flex flex-col md:flex-row">
       
-      {/* মোবাইল স্ক্রিনের জন্য টপ-বার (Header) - মেনু বামে, লোগো মাঝখানে */}
+      {/* মোবাইল স্ক্রিনের জন্য টপ-বার (Header) */}
       <div className="md:hidden bg-cardBg border-b border-cardBg/50 px-5 py-4 flex items-center justify-between sticky top-0 z-40 relative">
         <button 
           onClick={() => setIsMobileMenuOpen(true)} 
@@ -384,7 +423,7 @@ export default function Dashboard() {
         </button>
 
         {CONFIG.logoUrl ? (
-          <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-10 w-auto absolute left-1/2 -translate-x-1/2 object-contain" />
+          <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-11 w-auto absolute left-1/2 -translate-x-1/2 object-contain" />
         ) : (
           <span className="text-xl font-black text-primary absolute left-1/2 -translate-x-1/2 pointer-events-none select-none">
             🟢 Cash <span className="text-accent">x</span> BD
@@ -405,7 +444,7 @@ export default function Dashboard() {
         <div>
           <div className="flex items-center justify-between mb-8">
             {CONFIG.logoUrl ? (
-              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-16 w-auto object-contain" />
+              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-12 w-auto object-contain" />
             ) : (
               <span className="text-xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
             )}
@@ -442,6 +481,12 @@ export default function Dashboard() {
             >
               <Users className="w-5 h-5" /> Referrals
             </button>
+            <button
+              onClick={() => handleTabChange('profile-details')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'profile-details' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+            >
+              <User className="w-5 h-5" /> Profile
+            </button>
           </nav>
         </div>
 
@@ -458,7 +503,7 @@ export default function Dashboard() {
         <div>
           <div className="mb-10 text-left">
             {CONFIG.logoUrl ? (
-              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-20 w-auto mb-2 object-contain" />
+              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-11 w-auto mb-2 object-contain" />
             ) : (
               <span className="text-2xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
             )}
@@ -491,6 +536,12 @@ export default function Dashboard() {
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
             >
               <Users className="w-5 h-5" /> Referrals
+            </button>
+            <button
+              onClick={() => setActiveTab('profile-details')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'profile-details' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+            >
+              <User className="w-5 h-5" /> Profile
             </button>
           </nav>
         </div>
@@ -635,7 +686,7 @@ export default function Dashboard() {
                   onClick={startWatchingAd}
                   className="w-full py-4 md:py-6 bg-primary text-background text-base md:text-lg font-black rounded-2xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-3"
                 >
-                  <Play className="w-5 h-5 md:w-6 md:h-6 fill-background" /> Click to Watch Ad & Earn {CONFIG.perAdReward} ৳
+                  <Play className="w-5 h-5 fill-background" /> Click to Watch Ad & Earn {CONFIG.perAdReward} ৳
                 </button>
               )}
             </div>
@@ -821,6 +872,138 @@ export default function Dashboard() {
                 <p className="text-textGray text-[10px] md:text-xs mt-1">Only active activated referrals are counted.</p>
               </div>
               <div className="text-3xl md:text-4xl font-black text-accent">{profile.referral_count} Users</div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: PROFILE & STATS */}
+        {activeTab === 'profile-details' && (
+          <div className="space-y-8">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black">Profile & Earnings Statistics</h1>
+              <p className="text-textGray text-xs md:text-sm">View your detailed stats and update your personal information.</p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+              {/* Left Column: Avatar and User Details */}
+              <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-6 text-center space-y-6">
+                <div className="relative w-24 h-24 mx-auto">
+                  <div className="w-full h-full rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center text-3xl font-black text-primary select-none shadow-lg shadow-primary/15 uppercase">
+                    {profile.username ? profile.username.substring(0, 2) : 'US'}
+                  </div>
+                  <span className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-primary border-4 border-cardBg flex items-center justify-center" title="Active Member"></span>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-black capitalize text-textLight">{profile.username}</h3>
+                  <span className="text-xs text-primary font-bold bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mt-2 inline-block">
+                    🟢 Active Account
+                  </span>
+                </div>
+
+                <div className="text-left space-y-3 text-xs md:text-sm border-t border-background pt-6">
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-4 h-4 text-textGray shrink-0" />
+                    <span className="text-textGray truncate" title={profile.email}>{profile.email}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-4 h-4 text-textGray shrink-0" />
+                    <span className="text-textGray">{profile.phone || 'Not Added'}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-4 h-4 text-textGray shrink-0" />
+                    <span className="text-textGray">Joined: {new Date(profile.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Earnings breakdown & Editing Info */}
+              <div className="lg:col-span-2 space-y-6">
+                
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-cardBg border border-cardBg/50 p-5 rounded-xl flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-textGray">Total Ads Watched Earnings</h4>
+                      <p className="text-xl font-black text-primary mt-1">৳ {adsEarnings.toFixed(2)}</p>
+                    </div>
+                    <div className="p-3 bg-primary/10 text-primary rounded-xl">
+                      <Play className="w-5 h-5" />
+                    </div>
+                  </div>
+
+                  <div className="bg-cardBg border border-cardBg/50 p-5 rounded-xl flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-textGray">Total Referral Earnings</h4>
+                      <p className="text-xl font-black text-accent mt-1">৳ {referralEarnings.toFixed(2)}</p>
+                    </div>
+                    <div className="p-3 bg-accent/10 text-accent rounded-xl">
+                      <Users className="w-5 h-5" />
+                    </div>
+                  </div>
+
+                  <div className="bg-cardBg border border-cardBg/50 p-5 rounded-xl flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-textGray">Total Received Withdrawals</h4>
+                      <p className="text-xl font-black text-red-500 mt-1">৳ {profile.total_withdrawn.toFixed(2)}</p>
+                    </div>
+                    <div className="p-3 bg-red-500/10 text-red-500 rounded-xl">
+                      <ArrowDownToLine className="w-5 h-5" />
+                    </div>
+                  </div>
+
+                  <div className="bg-cardBg border border-cardBg/50 p-5 rounded-xl flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-textGray">Total Lifetime Income</h4>
+                      <p className="text-xl font-black text-textLight mt-1">৳ {totalLifetimeIncome.toFixed(2)}</p>
+                    </div>
+                    <div className="p-3 bg-textLight/10 text-textLight rounded-xl">
+                      <ArrowUpRight className="w-5 h-5" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Edit Information Form */}
+                <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-6">
+                  <h3 className="font-bold text-textLight mb-6 text-sm md:text-base flex items-center gap-2">
+                    <Award className="w-5 h-5 text-primary" /> Update Personal Information
+                  </h3>
+                  
+                  <form onSubmit={handleUpdateProfile} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-textGray mb-2">Username</label>
+                        <input
+                          type="text"
+                          required
+                          value={editUsername}
+                          onChange={(e) => setEditUsername(e.target.value.replace(/\s+/g, ''))}
+                          className="w-full px-4 py-2.5 bg-background border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-textGray mb-2">Phone Number</label>
+                        <input
+                          type="tel"
+                          required
+                          value={editPhone}
+                          onChange={(e) => setEditPhone(e.target.value.replace(/[^0-9]/g, ''))}
+                          className="w-full px-4 py-2.5 bg-background border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={updatingProfile}
+                      className="py-2.5 px-6 bg-primary text-background font-bold text-xs rounded-xl hover:bg-opacity-90 shadow-md shadow-primary/20 disabled:opacity-50 transition-all flex items-center gap-2"
+                    >
+                      {updatingProfile ? 'Saving Changes...' : 'Save Changes'}
+                    </button>
+                  </form>
+                </div>
+
+              </div>
             </div>
           </div>
         )}
