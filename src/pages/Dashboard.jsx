@@ -326,7 +326,7 @@ export default function Dashboard() {
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
 
           {CONFIG.logoUrl ? (
-            <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-16 w-auto mx-auto mb-4 object-contain" />
+            <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-24 md:h-28 w-auto mx-auto mb-4 object-contain" />
           ) : (
             <span className="text-4xl font-extrabold text-primary mb-2 block">Cash <span className="text-accent">x</span> BD</span>
           )}
@@ -384,7 +384,7 @@ export default function Dashboard() {
         </button>
 
         {CONFIG.logoUrl ? (
-          <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-12 w-auto absolute left-1/2 -translate-x-1/2 object-contain" />
+          <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-16 w-auto absolute left-1/2 -translate-x-1/2 object-contain" />
         ) : (
           <span className="text-xl font-black text-primary absolute left-1/2 -translate-x-1/2 pointer-events-none select-none">
             🟢 Cash <span className="text-accent">x</span> BD
@@ -405,7 +405,7 @@ export default function Dashboard() {
         <div>
           <div className="flex items-center justify-between mb-8">
             {CONFIG.logoUrl ? (
-              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-12 w-auto object-contain" />
+              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-16 w-auto object-contain" />
             ) : (
               <span className="text-xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
             )}
@@ -458,7 +458,7 @@ export default function Dashboard() {
         <div>
           <div className="mb-10 text-left">
             {CONFIG.logoUrl ? (
-              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-16 w-auto mb-2 object-contain" />
+              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-20 w-auto mb-2 object-contain" />
             ) : (
               <span className="text-2xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
             )}
