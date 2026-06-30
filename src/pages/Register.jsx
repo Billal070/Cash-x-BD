@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext.jsx'; // useAuth ইম্পোর্ট
+import { useAuth } from '../context/AuthContext.jsx';
+import { CONFIG } from '../config'; // সেন্ট্রাল কনফিগারেশন ইম্পোর্ট করা হলো
 import { toast } from 'react-hot-toast';
 import { ArrowLeft, User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react';
 
 export default function Register() {
-  const { user, loading } = useAuth(); // অথেনটিকেশন স্টেট নেওয়া হলো
+  const { user, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [username, setUsername] = useState('');
@@ -19,7 +20,6 @@ export default function Register() {
   const [searchParams] = useSearchParams();
   const referralCode = searchParams.get('ref');
 
-  // যদি ইউজার আগে থেকেই লগইন থাকে, তবে সরাসরি ড্যাশবোর্ডে পাঠিয়ে দেবে
   useEffect(() => {
     if (user && !loading) {
       navigate('/dashboard');
@@ -67,7 +67,6 @@ export default function Register() {
     }
   };
 
-  // ডাটা লোড হওয়ার সময় একটি সিম্পল ব্ল্যাঙ্ক স্ক্রিন দেখাবে
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -85,15 +84,21 @@ export default function Register() {
         </Link>
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="text-center text-4xl font-extrabold text-primary flex justify-center items-center gap-1 mb-2">
-          🟢 Cash <span className="text-accent">x</span> BD
-        </h2>
-        <h3 className="text-center text-2xl font-bold tracking-tight text-textLight">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <div className="mb-2 inline-block">
+          {CONFIG.logoUrl ? (
+            <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-14 w-auto object-contain mx-auto" />
+          ) : (
+            <h2 className="text-4xl font-extrabold text-primary">
+              🟢 {CONFIG.siteName}
+            </h2>
+          )}
+        </div>
+        <h3 className="text-2xl font-bold tracking-tight text-textLight">
           Create a new account
         </h3>
         {referralCode && (
-          <p className="text-center text-xs text-accent mt-2 font-medium bg-accent/10 border border-accent/20 px-3 py-1 rounded-full max-w-max mx-auto">
+          <p className="text-center text-xs text-accent mt-2 font-medium bg-accent/10 border border-accent/20 px-3 py-1 rounded-full max-w-max mx-auto animate-bounce">
             🎁 You are being referred by a friend
           </p>
         )}
