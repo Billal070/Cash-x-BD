@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
+import { CONFIG } from '../config'; // সেন্ট্রাল কনফিগারেশন ইম্পোর্ট করা হলো
 import { 
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
@@ -126,7 +127,7 @@ export default function Dashboard() {
           userId: user.id,
           email: user.email,
           username: profile?.username || 'user',
-          amount: 150,
+          amount: CONFIG.activationFee, // কনফিগারেশন থেকে ১৫০৳ নেওয়া হলো
           redirectUrl: window.location.origin + '/dashboard'
         })
       });
@@ -147,7 +148,7 @@ export default function Dashboard() {
   // ৬. জিনী পে পেমেন্ট ভেরিফাই করার ফাংশন
   const verifyUserPayment = async (invoiceId) => {
     setVerifyingPayment(true);
-    const toastId = toast.loading('Verifying your 150৳ payment...');
+    const toastId = toast.loading(`Verifying your ${CONFIG.activationFee}৳ payment...`);
     try {
       const response = await fetch('/api/verify-payment', {
         method: 'POST',
@@ -170,7 +171,7 @@ export default function Dashboard() {
     }
   };
 
-  // ७. বিজ্ঞাপন দেখা শুরু করার ফাংশন
+  // ৭. বিজ্ঞাপন দেখা শুরু করার ফাংশন
   const startWatchingAd = () => {
     if (profile.ads_watched_today >= 15) {
       return toast.error('You have reached the daily limit of 15 Ads!');
@@ -179,8 +180,8 @@ export default function Dashboard() {
       return toast.error(`Please wait ${cooldown} seconds before watching next ad!`);
     }
 
-    // এখানে আপনার আসল Adsterra Link বসিয়ে দিতে পারেন
-    window.open('https://www.example.com', '_blank'); 
+    // কনফিগারেশন ফাইল থেকে আপনার Adsterra Direct Link ওপেন হবে
+    window.open(CONFIG.adsterraLink, '_blank'); 
 
     setIsWatching(true);
     setAdTimer(15); 
@@ -189,7 +190,7 @@ export default function Dashboard() {
 
   // ৮. বিজ্ঞপ্তির রিওয়ার্ড (৫৳) যোগ করার ফাংশন
   const claimAdReward = async () => {
-    const toastId = toast.loading('Adding 5৳ reward to your balance...');
+    const toastId = toast.loading(`Adding ${CONFIG.perAdReward}৳ reward to your balance...`);
     try {
       const todayStr = new Date().toISOString().split('T')[0];
       
@@ -201,7 +202,7 @@ export default function Dashboard() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          balance: profile.balance + 5.00,
+          balance: profile.balance + CONFIG.perAdReward, // ৫৳ রিওয়ার্ড যোগ করা হলো
           ads_watched_today: adsCount + 1,
           last_ad_watched_at: new Date().toISOString(),
           last_ad_date: todayStr
@@ -210,7 +211,7 @@ export default function Dashboard() {
 
       if (error) throw error;
 
-      toast.success('Successfully earned 5৳! 🎉', { id: toastId });
+      toast.success(`Successfully earned ${CONFIG.perAdReward}৳! 🎉`, { id: toastId });
       setCooldown(60); 
       await refreshProfile();
     } catch (err) {
@@ -232,12 +233,12 @@ export default function Dashboard() {
     }
 
     if (profile.withdrawals_count === 0) {
-      if (amount < 75) {
-        return toast.error('Minimum amount for first withdrawal is 75 ৳');
+      if (amount < CONFIG.minWithdrawFirst) {
+        return toast.error(`Minimum amount for first withdrawal is ${CONFIG.minWithdrawFirst} ৳`);
       }
     } else {
-      if (amount < 200) {
-        return toast.error('Minimum amount for subsequent withdrawals is 200 ৳');
+      if (amount < CONFIG.minWithdrawSubsequent) {
+        return toast.error(`Minimum amount for subsequent withdrawals is ${CONFIG.minWithdrawSubsequent} ৳`);
       }
       if (profile.referral_count < 3) {
         return toast.error('⚠️ You need at least 3 active referrals for subsequent withdrawals!');
@@ -324,7 +325,11 @@ export default function Dashboard() {
           <div className="absolute -top-10 -left-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
 
-          <span className="text-4xl font-extrabold text-primary mb-2 block">Cash <span className="text-accent">x</span> BD</span>
+          {CONFIG.logoUrl ? (
+            <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-10 w-auto mx-auto mb-4 object-contain" />
+          ) : (
+            <span className="text-4xl font-extrabold text-primary mb-2 block">Cash <span className="text-accent">x</span> BD</span>
+          )}
           
           <div className="w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto mb-6">
             <Lock className="w-10 h-10 animate-pulse" />
@@ -332,7 +337,7 @@ export default function Dashboard() {
 
           <h2 className="text-2xl font-black mb-2 text-textLight">Your Account is <span className="text-red-500">Inactive</span></h2>
           <p className="text-textGray text-sm mb-6 leading-relaxed">
-            Please pay a one-time activation fee of <span className="text-primary font-bold text-base">150 ৳</span> to unlock the system and start watching ads & completing tasks.
+            Please pay a one-time activation fee of <span className="text-primary font-bold text-base">{CONFIG.activationFee} ৳</span> to unlock the system and start watching ads & completing tasks.
           </p>
 
           <div className="bg-background/50 rounded-2xl p-5 border border-cardBg text-left space-y-4 mb-6">
@@ -351,7 +356,7 @@ export default function Dashboard() {
             disabled={paying || verifyingPayment}
             className="w-full py-4 bg-primary text-background text-lg font-black rounded-2xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
           >
-            {paying ? 'Connecting ZiniPay...' : verifyingPayment ? 'Verifying...' : 'Pay 150 ৳ via ZiniPay'}
+            {paying ? 'Connecting ZiniPay...' : verifyingPayment ? 'Verifying...' : `Pay ${CONFIG.activationFee} ৳ via ZiniPay`}
           </button>
 
           <button
@@ -371,7 +376,6 @@ export default function Dashboard() {
       
       {/* মোবাইল স্ক্রিনের জন্য টপ-বার (Header) - মেনু বামে, লোগো মাঝখানে */}
       <div className="md:hidden bg-cardBg border-b border-cardBg/50 px-5 py-4 flex items-center justify-between sticky top-0 z-40 relative">
-        {/* বাম পাশে মেনু বাটন */}
         <button 
           onClick={() => setIsMobileMenuOpen(true)} 
           className="p-2 -ml-2 text-textLight hover:text-primary transition-colors focus:outline-none z-10"
@@ -379,12 +383,14 @@ export default function Dashboard() {
           <Menu className="w-6 h-6" />
         </button>
 
-        {/* একদম মাঝখানে লোগো */}
-        <span className="text-xl font-black text-primary absolute left-1/2 -translate-x-1/2 pointer-events-none select-none">
-          🟢 Cash <span className="text-accent">x</span> BD
-        </span>
+        {CONFIG.logoUrl ? (
+          <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-8 w-auto absolute left-1/2 -translate-x-1/2 object-contain" />
+        ) : (
+          <span className="text-xl font-black text-primary absolute left-1/2 -translate-x-1/2 pointer-events-none select-none">
+            🟢 Cash <span className="text-accent">x</span> BD
+          </span>
+        )}
 
-        {/* ডানদিকের ব্যালেন্স বজায় রাখার জন্য খালি স্পেস */}
         <div className="w-10"></div> 
       </div>
 
@@ -398,7 +404,11 @@ export default function Dashboard() {
       <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-cardBg border-r border-cardBg/50 p-6 z-50 transform transition-transform duration-300 ease-in-out md:hidden flex flex-col justify-between ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div>
           <div className="flex items-center justify-between mb-8">
-            <span className="text-xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
+            {CONFIG.logoUrl ? (
+              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-8 w-auto object-contain" />
+            ) : (
+              <span className="text-xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
+            )}
             <button 
               onClick={() => setIsMobileMenuOpen(false)} 
               className="p-2 text-textGray hover:text-red-500 transition-colors focus:outline-none"
@@ -437,7 +447,7 @@ export default function Dashboard() {
 
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 text-textGray hover:text-red-500 font-bold transition-colors w-full"
+          className="flex items-center gap-3 px-4 py-3 text-textGray hover:text-red-500 font-bold transition-colors w-full animate-none"
         >
           <LogOut className="w-5 h-5" /> Sign Out
         </button>
@@ -447,7 +457,11 @@ export default function Dashboard() {
       <aside className="hidden md:flex w-64 bg-cardBg border-r border-cardBg/50 flex-col justify-between p-6 shrink-0">
         <div>
           <div className="mb-10 text-left">
-            <span className="text-2xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
+            {CONFIG.logoUrl ? (
+              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-10 w-auto mb-2 object-contain" />
+            ) : (
+              <span className="text-2xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
+            )}
             <div className="mt-2 text-xs text-textGray font-semibold bg-primary/10 border border-primary/25 rounded-full px-3 py-1 max-w-max">
               🟢 Active Profile
             </div>
@@ -545,8 +559,8 @@ export default function Dashboard() {
                 <div>
                   <h4 className="font-bold text-textLight mb-1 text-sm md:text-base">Withdrawal Requirements Check:</h4>
                   <ul className="text-xs text-textGray space-y-1 list-disc list-inside">
-                    <li>1st withdrawal requirement: Minimum 75 ৳</li>
-                    <li>Subsequent withdrawal requirement: Minimum 200 ৳ & 3 Active referrals</li>
+                    <li>1st withdrawal requirement: Minimum {CONFIG.minWithdrawFirst} ৳</li>
+                    <li>Subsequent withdrawal requirement: Minimum {CONFIG.minWithdrawSubsequent} ৳ & 3 Active referrals</li>
                     <li>You must watch all 15 daily ads on the day you request a withdrawal</li>
                   </ul>
                 </div>
@@ -567,7 +581,7 @@ export default function Dashboard() {
           <div className="space-y-6 md:space-y-8 max-w-2xl">
             <div>
               <h1 className="text-2xl md:text-3xl font-black">Ad Reward System</h1>
-              <p className="text-textGray text-xs md:text-sm">Watch organic ads and earn 5৳ per view.</p>
+              <p className="text-textGray text-xs md:text-sm">Watch organic ads and earn {CONFIG.perAdReward}৳ per view.</p>
             </div>
 
             <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
@@ -621,7 +635,7 @@ export default function Dashboard() {
                   onClick={startWatchingAd}
                   className="w-full py-4 md:py-6 bg-primary text-background text-base md:text-lg font-black rounded-2xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-3"
                 >
-                  <Play className="w-5 h-5 fill-background" /> Click to Watch Ad & Earn 5 ৳
+                  <Play className="w-5 h-5 md:w-6 md:h-6 fill-background" /> Click to Watch Ad & Earn {CONFIG.perAdReward} ৳
                 </button>
               )}
             </div>
@@ -776,7 +790,7 @@ export default function Dashboard() {
           <div className="space-y-6 md:space-y-8 max-w-2xl">
             <div>
               <h1 className="text-2xl md:text-3xl font-black">Referral System</h1>
-              <p className="text-textGray text-xs md:text-sm">Earn 30৳ reward for every active referral who signs up.</p>
+              <p className="text-textGray text-xs md:text-sm">Earn {CONFIG.referralBonus}৳ reward for every active referral who signs up.</p>
             </div>
 
             <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 space-y-6">
@@ -785,3 +799,32 @@ export default function Dashboard() {
                 <input
                   type="text"
                   readOnly
+                  value={`${window.location.origin}/register?ref=${user.id}`}
+                  className="flex-1 px-4 py-3 bg-background border border-cardBg rounded-xl text-[10px] sm:text-xs text-primary font-medium focus:outline-none"
+                />
+                <button
+                  onClick={copyReferralLink}
+                  className="px-6 py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2 text-sm"
+                >
+                  <Copy className="w-4 h-4" /> Copy Link
+                </button>
+              </div>
+
+              <div className="bg-background/50 rounded-xl p-4 border border-cardBg text-xs text-textGray leading-relaxed">
+                👉 <strong>How it works:</strong> Share this referral link with your friends. Once they register using this link and activate their profile with the ৳{CONFIG.activationFee} account setup fee, ৳{CONFIG.referralBonus} will be instantly added to your dashboard balance.
+              </div>
+            </div>
+
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-textGray text-xs md:text-sm">Your Active Referrals:</h3>
+                <p className="text-textGray text-[10px] md:text-xs mt-1">Only active activated referrals are counted.</p>
+              </div>
+              <div className="text-3xl md:text-4xl font-black text-accent">{profile.referral_count} Users</div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
