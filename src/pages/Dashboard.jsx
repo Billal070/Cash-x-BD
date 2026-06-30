@@ -380,24 +380,24 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* মোবাইল মেনুর জন্য ব্লার ব্যাকড্রপ ওভারলে */}
-      <div 
-        className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-50 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-        onClick={() => setIsMobileMenuOpen(false)}
-      />
+      {/* মোবাইল স্ক্রিনের জন্য টপ-বার (Header) - মেনু বামে, লোগো মাঝখানে */}
+      <div className="md:hidden bg-cardBg border-b border-cardBg/50 px-5 py-4 flex items-center justify-between sticky top-0 z-40 relative">
+        {/* বাম পাশে মেনু বাটন */}
+        <button 
+          onClick={() => setIsMobileMenuOpen(true)} 
+          className="p-2 -ml-2 text-textLight hover:text-primary transition-colors focus:outline-none z-10"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
 
-      {/* মোবাইল ড্রয়ার / সাইডবার (মসৃণ স্লাইড-ইন ও আউট অ্যানিমেশনসহ) */}
-      <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-cardBg border-r border-cardBg/50 p-6 z-50 transform transition-transform duration-300 ease-in-out md:hidden flex flex-col justify-between ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div>
-          <div className="flex items-center justify-between mb-8">
-            <span className="text-xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
-            <button 
-              onClick={() => setIsMobileMenuOpen(false)} 
-              className="p-2 text-textGray hover:text-red-500 transition-colors focus:outline-none"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
+        {/* একদম মাঝখানে লোগো (আপাতত টেক্সট লোগো) */}
+        <span className="text-xl font-black text-primary absolute left-1/2 -translate-x-1/2 pointer-events-none select-none">
+          🟢 Cash <span className="text-accent">x</span> BD
+        </span>
+
+        {/* ডানদিকের ব্যালেন্স বজায় রাখার জন্য খালি স্পেস */}
+        <div className="w-10"></div> 
+      </div>
 
           <nav className="space-y-2">
             <button
