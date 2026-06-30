@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext.jsx'; // useAuth ইম্পোর্ট
 import { toast } from 'react-hot-toast';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
+  const { user, loading } = useAuth(); // অথেনটিকেশন স্টেট নেওয়া হলো
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
   
   const navigate = useNavigate();
+
+  // যদি ইউজার আগে থেকেই লগইন থাকে, তবে সরাসরি ড্যাশবোর্ডে পাঠিয়ে দেবে
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -19,10 +28,9 @@ export default function Login() {
       return toast.error('Please fill all fields');
     }
 
-    setLoading(true);
+    setLoginLoading(true);
 
     try {
-      // সুপাবেসে লগইন প্রসেস শুরু
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password,
@@ -32,14 +40,23 @@ export default function Login() {
 
       if (data.user) {
         toast.success('Logged in successfully!');
-        navigate('/dashboard'); // লগইন সফল হলে ড্যাশবোর্ডে পাঠিয়ে দেবে
+        navigate('/dashboard');
       }
     } catch (error) {
       toast.error(error.message || 'Invalid email or password');
     } finally {
-      setLoading(false);
+      setLoginLoading(false);
     }
   };
+
+  // ডাটা লোড হওয়ার সময় একটি সিম্পল ব্ল্যাঙ্ক স্ক্রিন দেখাবে
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -104,10 +121,10 @@ export default function Login() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loginLoading}
               className="w-full py-3 px-4 bg-primary text-background font-bold rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {loading ? 'Signing in...' : 'Login'}
+              {loginLoading ? 'Signing in...' : 'Login'}
             </button>
           </form>
 
