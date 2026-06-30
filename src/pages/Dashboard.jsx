@@ -384,7 +384,7 @@ export default function Dashboard() {
         </button>
 
         {CONFIG.logoUrl ? (
-          <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-11 w-auto absolute left-1/2 -translate-x-1/2 object-contain" />
+          <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-10 w-auto absolute left-1/2 -translate-x-1/2 object-contain" />
         ) : (
           <span className="text-xl font-black text-primary absolute left-1/2 -translate-x-1/2 pointer-events-none select-none">
             🟢 Cash <span className="text-accent">x</span> BD
