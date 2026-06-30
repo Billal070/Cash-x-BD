@@ -1,9 +1,63 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Play, Users, Shield, CheckCircle } from 'lucide-react';
-import { CONFIG } from '../config'; // সেন্ট্রাল কনফিগারেশন ইম্পোর্ট করা হলো
+import { ArrowRight, Play, Users, Shield, CheckCircle, Landmark, Star, Send } from 'lucide-react';
+import { CONFIG } from '../config'; // কনফিগারেশন ইম্পোর্ট
+
+// হাই-পারফরম্যান্স ৬০FPS কাউন্ট-আপ কম্পোনেন্ট (Native requestAnimationFrame)
+function CountUp({ end, prefix = "", suffix = "", duration = 2000, trigger }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!trigger) return;
+    let startTime = null;
+    const cleanEnd = typeof end === 'string' ? parseFloat(end.replace(/[^0-9.]/g, '')) : end;
+    const isDecimal = String(end).includes('.');
+
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      
+      let currentVal = progress * cleanEnd;
+      if (isDecimal) {
+        setCount(currentVal.toFixed(1));
+      } else {
+        setCount(Math.floor(currentVal).toLocaleString());
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [end, duration, trigger]);
+
+  return <span>{prefix}{count}{suffix}</span>;
+}
 
 export default function Home() {
+  const [isVisible, setIsVisible] = useState(false);
+  const statsSectionRef = useRef(null);
+
+  // স্ক্রিনে সেকশনটি আসলে তবেই অ্যানিমেশন ট্র্রিগার হবে (Intersection Observer)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target); // একবার অ্যানিমেশন হয়ে গেলে অবজার্ভ বন্ধ হবে
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    if (statsSectionRef.current) {
+      observer.observe(statsSectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-textLight">
       {/* Navbar */}
@@ -51,7 +105,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Stats Section */}
+      {/* Earning Stats Section */}
       <section className="border-y border-cardBg bg-cardBg/20 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <div>
@@ -104,6 +158,86 @@ export default function Home() {
               Cash out at just ৳{CONFIG.minWithdrawFirst} on your first withdrawal. Subsequent minimum withdrawals are ৳{CONFIG.minWithdrawSubsequent} with at least 3 active referrals.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* NEW: Premium Live Statistics Section (Trusted by Thousands) */}
+      <section 
+        ref={statsSectionRef}
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 overflow-hidden"
+      >
+        <div className={`text-center transition-all duration-700 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <h2 className="text-3xl sm:text-5xl font-extrabold mb-4">
+            Trusted by Thousands of Earners
+          </h2>
+          <p className="max-w-2xl mx-auto text-textGray text-sm sm:text-base mb-16 leading-relaxed">
+            Join a growing community earning real rewards every day through simple online tasks with {CONFIG.siteName}.
+          </p>
+        </div>
+
+        {/* Responsive Grid with Staggered Entrance Animation */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          
+          {/* Card 1: Registered Users */}
+          <div 
+            className={`group bg-cardBg border border-cardBg/50 hover:border-primary/30 rounded-[22px] p-6 shadow-xl transition-all duration-300 ease-in-out hover:-translate-y-1.5 hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(34,197,94,0.12)] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'} delay-[100ms]`}
+            style={{ transitionDelay: isVisible ? '100ms' : '0ms' }}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300">
+              <Users className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-bold text-textGray mb-1">Registered Users</h4>
+            <p className="text-3xl font-black text-textLight">
+              <CountUp end="25000" suffix="+" trigger={isVisible} />
+            </p>
+            <p className="text-xs text-textGray mt-2 font-medium">Active Members</p>
+          </div>
+
+          {/* Card 2: Total Paid */}
+          <div 
+            className={`group bg-cardBg border border-cardBg/50 hover:border-primary/30 rounded-[22px] p-6 shadow-xl transition-all duration-300 ease-in-out hover:-translate-y-1.5 hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(34,197,94,0.12)] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+            style={{ transitionDelay: isVisible ? '250ms' : '0ms' }}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300">
+              <Landmark className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-bold text-textGray mb-1">Total Paid</h4>
+            <p className="text-3xl font-black text-accent">
+              <CountUp end="3580000" prefix="৳" suffix="+" trigger={isVisible} />
+            </p>
+            <p className="text-xs text-textGray mt-2 font-medium">Successfully Withdrawn</p>
+          </div>
+
+          {/* Card 3: Tasks Completed */}
+          <div 
+            className={`group bg-cardBg border border-cardBg/50 hover:border-primary/30 rounded-[22px] p-6 shadow-xl transition-all duration-300 ease-in-out hover:-translate-y-1.5 hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(34,197,94,0.12)] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+            style={{ transitionDelay: isVisible ? '400ms' : '0ms' }}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300">
+              <CheckCircle className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-bold text-textGray mb-1">Tasks Completed</h4>
+            <p className="text-3xl font-black text-textLight">
+              <CountUp end="1250000" suffix="+" trigger={isVisible} />
+            </p>
+            <p className="text-xs text-textGray mt-2 font-medium">Completed Successfully</p>
+          </div>
+
+          {/* Card 4: Trust Rating */}
+          <div 
+            className={`group bg-cardBg border border-cardBg/50 hover:border-primary/30 rounded-[22px] p-6 shadow-xl transition-all duration-300 ease-in-out hover:-translate-y-1.5 hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(34,197,94,0.12)] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+            style={{ transitionDelay: isVisible ? '550ms' : '0ms' }}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300">
+              <Star className="w-6 h-6 fill-accent" />
+            </div>
+            <h4 className="text-sm font-bold text-textGray mb-1">Trust Rating</h4>
+            <p className="text-3xl font-black text-accent">
+              <CountUp end="4.9" suffix="/5" trigger={isVisible} />
+            </p>
+            <p className="text-xs text-textGray mt-2 font-medium">User Satisfaction</p>
+          </div>
+
         </div>
       </section>
 
