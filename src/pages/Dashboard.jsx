@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { 
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
-  Menu, X // মোবাইল মেনুর জন্য Menu এবং X আইকন যুক্ত করা হয়েছে
+  Menu, X
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -170,7 +170,7 @@ export default function Dashboard() {
     }
   };
 
-  // ৭. বিজ্ঞাপন দেখা শুরু করার ফাংশন
+  // ७. বিজ্ঞাপন দেখা শুরু করার ফাংশন
   const startWatchingAd = () => {
     if (profile.ads_watched_today >= 15) {
       return toast.error('You have reached the daily limit of 15 Ads!');
@@ -304,7 +304,7 @@ export default function Dashboard() {
   // মোবাইল মেনু বন্ধ করে ট্যাব পরিবর্তন করার জন্য হেল্পার ফাংশন
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
-    setIsMobileMenuOpen(false); // মোবাইল ড্রয়ার বন্ধ হবে
+    setIsMobileMenuOpen(false); 
   };
 
   if (loading || !profile) {
@@ -369,17 +369,6 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background text-textLight flex flex-col md:flex-row">
       
-      {/* মোবাইল স্ক্রিনের জন্য টপ-বার (Header) - শুধুমাত্র মোবাইলে দেখাবে */}
-      <div className="md:hidden bg-cardBg border-b border-cardBg/50 px-5 py-4 flex items-center justify-between sticky top-0 z-40">
-        <span className="text-xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
-        <button 
-          onClick={() => setIsMobileMenuOpen(true)} 
-          className="p-2 text-textLight hover:text-primary transition-colors focus:outline-none"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
-      </div>
-
       {/* মোবাইল স্ক্রিনের জন্য টপ-বার (Header) - মেনু বামে, লোগো মাঝখানে */}
       <div className="md:hidden bg-cardBg border-b border-cardBg/50 px-5 py-4 flex items-center justify-between sticky top-0 z-40 relative">
         {/* বাম পাশে মেনু বাটন */}
@@ -390,7 +379,7 @@ export default function Dashboard() {
           <Menu className="w-6 h-6" />
         </button>
 
-        {/* একদম মাঝখানে লোগো (আপাতত টেক্সট লোগো) */}
+        {/* একদম মাঝখানে লোগো */}
         <span className="text-xl font-black text-primary absolute left-1/2 -translate-x-1/2 pointer-events-none select-none">
           🟢 Cash <span className="text-accent">x</span> BD
         </span>
@@ -398,6 +387,25 @@ export default function Dashboard() {
         {/* ডানদিকের ব্যালেন্স বজায় রাখার জন্য খালি স্পেস */}
         <div className="w-10"></div> 
       </div>
+
+      {/* মোবাইল মেনুর জন্য ব্লার ব্যাকড্রপ ওভারলে */}
+      <div 
+        className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-50 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+
+      {/* মোবাইল ড্রয়ার / সাইডবার */}
+      <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-cardBg border-r border-cardBg/50 p-6 z-50 transform transition-transform duration-300 ease-in-out md:hidden flex flex-col justify-between ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div>
+          <div className="flex items-center justify-between mb-8">
+            <span className="text-xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
+            <button 
+              onClick={() => setIsMobileMenuOpen(false)} 
+              className="p-2 text-textGray hover:text-red-500 transition-colors focus:outline-none"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
 
           <nav className="space-y-2">
             <button
@@ -435,7 +443,7 @@ export default function Dashboard() {
         </button>
       </aside>
 
-      {/* ডেস্কটপ সাইডবার - শুধুমাত্র বড় স্ক্রিনে (Desktop) দেখাবে */}
+      {/* ডেস্কটপ সাইডবার */}
       <aside className="hidden md:flex w-64 bg-cardBg border-r border-cardBg/50 flex-col justify-between p-6 shrink-0">
         <div>
           <div className="mb-10 text-left">
@@ -492,13 +500,13 @@ export default function Dashboard() {
               <p className="text-textGray text-xs md:text-sm">Monitor your earnings and complete tasks to cash out.</p>
             </div>
 
-            {/* Cards Grid - মোবাইলে এক কলাম এবং ডেস্কটপে ৩ কলাম */}
+            {/* Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
               <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 rounded-2xl relative overflow-hidden">
                 <div className="absolute right-4 top-4 text-primary bg-primary/10 p-2 rounded-xl">
                   <Landmark className="w-6 h-6" />
                 </div>
-                <h3 className="text-xs md:text-sm font-bold text-textGray mb-1">Current Balance</h3>
+                <h3 className="text-sm font-bold text-textGray mb-1">Current Balance</h3>
                 <p className="text-2xl md:text-3xl font-black text-primary">৳ {profile.balance.toFixed(2)}</p>
                 <button onClick={() => setActiveTab('withdraw')} className="mt-4 text-xs font-bold text-accent hover:underline flex items-center gap-1">
                   Go to Withdraw <ArrowDownToLine className="w-3.5 h-3.5" />
@@ -509,7 +517,7 @@ export default function Dashboard() {
                 <div className="absolute right-4 top-4 text-accent bg-accent/10 p-2 rounded-xl">
                   <Users className="w-6 h-6" />
                 </div>
-                <h3 className="text-xs md:text-sm font-bold text-textGray mb-1">Total Referrals</h3>
+                <h3 className="text-sm font-bold text-textGray mb-1">Total Referrals</h3>
                 <p className="text-2xl md:text-3xl font-black text-accent">{profile.referral_count} Users</p>
                 <button onClick={() => setActiveTab('referrals')} className="mt-4 text-xs font-bold text-primary hover:underline flex items-center gap-1">
                   View Referrals <Users className="w-3.5 h-3.5" />
@@ -520,7 +528,7 @@ export default function Dashboard() {
                 <div className="absolute right-4 top-4 text-textLight bg-textLight/10 p-2 rounded-xl">
                   <Play className="w-6 h-6" />
                 </div>
-                <h3 className="text-xs md:text-sm font-bold text-textGray mb-1">Today's Ads completed</h3>
+                <h3 className="text-sm font-bold text-textGray mb-1">Today's Ads completed</h3>
                 <p className="text-2xl md:text-3xl font-black text-textLight">{profile.ads_watched_today} / 15</p>
                 <button onClick={() => setActiveTab('watch-ads')} className="mt-4 text-xs font-bold text-accent hover:underline flex items-center gap-1">
                   Watch Ads <Play className="w-3.5 h-3.5" />
@@ -613,7 +621,7 @@ export default function Dashboard() {
                   onClick={startWatchingAd}
                   className="w-full py-4 md:py-6 bg-primary text-background text-base md:text-lg font-black rounded-2xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-3"
                 >
-                  <Play className="w-5 h-5 md:w-6 md:h-6 fill-background" /> Click to Watch Ad & Earn 5 ৳
+                  <Play className="w-5 h-5 fill-background" /> Click to Watch Ad & Earn 5 ৳
                 </button>
               )}
             </div>
@@ -777,32 +785,3 @@ export default function Dashboard() {
                 <input
                   type="text"
                   readOnly
-                  value={`${window.location.origin}/register?ref=${user.id}`}
-                  className="flex-1 px-4 py-3 bg-background border border-cardBg rounded-xl text-[10px] sm:text-xs text-primary font-medium focus:outline-none"
-                />
-                <button
-                  onClick={copyReferralLink}
-                  className="px-6 py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2 text-sm"
-                >
-                  <Copy className="w-4 h-4" /> Copy Link
-                </button>
-              </div>
-
-              <div className="bg-background/50 rounded-xl p-4 border border-cardBg text-xs text-textGray leading-relaxed">
-                👉 <strong>How it works:</strong> Share this referral link with your friends. Once they register using this link and activate their profile with the ৳150 account setup fee, ৳30 will be instantly added to your dashboard balance.
-              </div>
-            </div>
-
-            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-textGray text-xs md:text-sm">Your Active Referrals:</h3>
-                <p className="text-textGray text-[10px] md:text-xs mt-1">Only active activated referrals are counted.</p>
-              </div>
-              <div className="text-3xl md:text-4xl font-black text-accent">{profile.referral_count} Users</div>
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
-}
