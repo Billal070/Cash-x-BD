@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { CONFIG } from '../config'; // সেন্ট্রাল কনফিগারেশন ইম্পোর্ট
 import { toast } from 'react-hot-toast';
 import { 
   LayoutDashboard, Users, ArrowDownToLine, Settings, LogOut,
@@ -13,7 +14,7 @@ export default function Admin() {
   const { user, profile, loading, signOut } = useAuth();
   const navigate = useNavigate();
 
-  // অ্যাডমিন ড্যাশবোর্ড স্টেটসমূহ
+  // সেটিংস স্টেটসমূহ
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -26,13 +27,13 @@ export default function Admin() {
   const [usersList, setUsersList] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [balanceModal, setBalanceModal] = useState(null); // { userId, username, currentBalance }
+  const [balanceModal, setBalanceModal] = useState(null); 
   const [adjustAmount, setAdjustAmount] = useState('');
 
   // উইথড্রল ম্যানেজমেন্ট স্টেটসমূহ
   const [withdrawals, setWithdrawals] = useState([]);
   const [loadingWd, setLoadingWd] = useState(false);
-  const [wdFilter, setWdFilter] = useState('pending'); // pending, approved, rejected
+  const [wdFilter, setWdFilter] = useState('pending'); 
 
   // সিস্টেম সেটিংস স্টেটসমূহ
   const [settings, setSettings] = useState({
@@ -45,7 +46,7 @@ export default function Admin() {
   });
   const [savingSettings, setSavingSettings] = useState(false);
 
-  // ১. অ্যাডমিন সিকিউরিটি গেটওয়ে চেক (অননুমোদিত প্রবেশ ঠেকাতে)
+  // ১. অ্যাডমিন সিকিউরিটি গেটওয়ে চেক
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
@@ -65,13 +66,9 @@ export default function Admin() {
   // ২. ওভারভিউ স্ট্যাটস লোড করা
   const fetchStats = async () => {
     try {
-      // মোট ইউজার সংখ্যা
       const { count: total, error: err1 } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-      // মোট একটিভ ইউজার সংখ্যা
       const { count: active, error: err2 } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_active', true);
-      // মোট পেন্ডিং উইথড্রল সংখ্যা
       const { count: pending, error: err3 } = await supabase.from('withdrawals').select('*', { count: 'exact', head: true }).eq('status', 'pending');
-      // মোট সফল উইথড্র অ্যামাউন্ট (৳)
       const { data: withdrawalsData, error: err4 } = await supabase.from('withdrawals').select('amount').eq('status', 'approved');
 
       if (err1 || err2 || err3 || err4) throw new Error('Failed to load stats');
@@ -157,15 +154,15 @@ export default function Admin() {
     }
   };
 
-  // ৬. উইথড্রল তালিকা লোড করা (সংশোধিত ও ত্রুটিমুক্ত)
+  // ৬. উইথড্রল তালিকা লোড করা
   const fetchWithdrawals = async () => {
     setLoadingWd(true);
-    setWithdrawals([]); // সংশোধিত স্টেট
+    setWithdrawals([]); 
     try {
       const { data, error } = await supabase
         .from('withdrawals')
         .select('*, profiles(username, email)')
-        .eq('status', wdFilter) // সংশোধিত ফিল্টার
+        .eq('status', wdFilter) 
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -195,11 +192,10 @@ export default function Admin() {
     }
   };
 
-  // ৮. উইথড্রল রিজেক্ট করার ফাংশন (টাকা স্বয়ংক্রিয়ভাবে ইউজারের ব্যালেন্সে ফেরত যাবে)
+  // ৮. উইথড্রল রিজেক্ট করার ফাংশন
   const handleRejectWithdrawal = async (wd) => {
     const toastId = toast.loading('Rejecting and refunding user...');
     try {
-      // ১. উইথড্রল স্ট্যাটাস 'rejected' করা
       const { error: wdError } = await supabase
         .from('withdrawals')
         .update({ status: 'rejected' })
@@ -207,7 +203,6 @@ export default function Admin() {
 
       if (wdError) throw wdError;
 
-      // ২. ইউজারের প্রোফাইল ব্যালেন্স থেকে রিফান্ড করা
       const { data: userProfile, error: fetchError } = await supabase
         .from('profiles')
         .select('balance, total_withdrawn, withdrawals_count')
@@ -276,17 +271,16 @@ export default function Admin() {
     }
   };
 
-  // যদি ডাটা লোড হতে সময় নেয় বা ইউজার অ্যাডমিন না হয়
+  // লোড স্ক্রিন (Earnova দিয়ে ডাইনামিক করা হয়েছে)
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-center items-center">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-textGray font-semibold">Loading Admin Dashboard...</p>
+        <p className="mt-4 text-textGray font-semibold">Loading {CONFIG.siteName} Admin Panel...</p>
       </div>
     );
   }
 
-  // যদি লগড-ইন ইউজার এডমিন না হয়, তবে এক্সেস ডিনাইড দেখাবে
   if (!profile || !profile.is_admin) {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-center items-center text-center p-6">
@@ -307,7 +301,11 @@ export default function Admin() {
       <aside className="w-full md:w-64 bg-cardBg border-r border-cardBg/50 flex flex-col justify-between p-6 shrink-0">
         <div>
           <div className="mb-10 text-left">
-            <span className="text-2xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
+            {CONFIG.logoUrl ? (
+              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-10 w-auto mb-2 object-contain" />
+            ) : (
+              <span className="text-2xl font-black text-primary">🟢 {CONFIG.siteName}</span>
+            )}
             <div className="mt-2 text-xs text-red-500 font-bold bg-red-500/10 border border-red-500/25 rounded-full px-3 py-1 max-w-max">
               🛡️ Admin Terminal
             </div>
@@ -357,7 +355,7 @@ export default function Admin() {
           <div className="space-y-8">
             <div>
               <h1 className="text-3xl font-black">Admin Panel Overview</h1>
-              <p className="text-textGray text-sm">Real-time statistics of Cash x BD network.</p>
+              <p className="text-textGray text-sm">Real-time statistics of {CONFIG.siteName} network.</p>
             </div>
 
             {/* Statistics Cards */}
@@ -701,7 +699,7 @@ export default function Admin() {
                 <button
                   type="submit"
                   disabled={savingSettings}
-                  className="py-3 px-8 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/20 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="py-3 px-8 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   {savingSettings ? 'Saving Settings...' : 'Save Global Settings'}
                 </button>
