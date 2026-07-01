@@ -222,6 +222,13 @@ export default function Dashboard() {
     try {
       const today = new Date().toISOString().split('T')[0];
       
+        const [taskCompletions, setTaskCompletions] = useState([]);
+
+  const fetchLiveTasks = async () => {
+    setLoadingTasks(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
       const [tasksRes, completionsRes] = await Promise.all([
         supabase.from('tasks').select('*').eq('is_active', true).order('created_at'),
         supabase.from('task_completions').select('task_id, reward_earned').eq('user_id', user.id).gte('completed_at', today)
@@ -239,9 +246,13 @@ export default function Dashboard() {
       setLoadingTasks(false);
     }
   };
-      setLoadingTasks(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchLiveTasks();
     }
-  };
+  }, [user]);
+
 
   // যদি লগইন না থাকে, তবে লগইন পেজে রিডাইরেক্ট করবে
   useEffect(() => {
