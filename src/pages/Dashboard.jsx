@@ -7,11 +7,10 @@ import { CONFIG as ImportedConfig } from '../config';
 import { 
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
-  Menu, X, User, Phone, Mail, Award, ArrowUpRight,
-  HelpCircle, Send, MessageSquare 
+  Menu, X, User, Phone, Mail, Award, ArrowUpRight
 } from 'lucide-react';
 
-// গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
+// গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস
 const CONFIG = ImportedConfig || {
   siteName: "Earnova",
   logoUrl: "", 
@@ -28,6 +27,13 @@ const CONFIG = ImportedConfig || {
 const formatCurrency = (value) => {
   const num = Number(value);
   return isNaN(num) ? "0.00" : num.toFixed(2);
+};
+
+// উইকিমিডিয়া কমন্সের লাইভ এবং অফিশিয়াল স্বচ্ছ CDN লোগো লিঙ্কসমূহ (১০০% স্থায়ী ও নিরাপদ)
+const METHOD_LOGOS = {
+  bkash: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/BKash_Logo.svg/320px-BKash_Logo.svg.png",
+  nagad: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Nagad-png.png",
+  rocket: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Rocket_mobile_banking_logo.svg/320px-Rocket_mobile_banking_logo.svg.png"
 };
 
 export default function Dashboard() {
@@ -199,7 +205,7 @@ export default function Dashboard() {
 
   const verifyUserPayment = async (invoiceId) => {
     setVerifyingPayment(true);
-    const toastId = toast.loading(`Verifying your ${activeActivationFee}৳ payment...`);
+    const toastId = toast.loading('Verifying your payment...');
     try {
       const response = await fetch('/api/verify-payment', {
         method: 'POST',
@@ -427,7 +433,7 @@ export default function Dashboard() {
         <h4 className="text-sm font-extrabold text-textLight truncate capitalize">@{profile?.username || 'user'}</h4>
         <p className="text-[10px] text-textGray font-semibold mb-2">{profile?.phone || 'No Phone'}</p>
         
-        {/* জ্বলজ্বলে অ্যানিমেটেড অন/অফ ডট (Glowing Pulse Animation) */}
+        {/* জ্বলজ্বলে অন/অফ ডট (Glowing Pulse Animation) */}
         <div className="flex items-center justify-center gap-2 mb-3">
           <span className="relative flex h-2 w-2">
             {profile?.is_active ? (
@@ -481,7 +487,7 @@ export default function Dashboard() {
 
       {/* মোবাইল ওভারলে */}
       <div 
-        className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-50 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
       />
 
@@ -680,30 +686,6 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
-
-            {/* Requirements Card */}
-            <div className="bg-cardBg/30 border border-cardBg/50 rounded-2xl p-5 md:p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-accent/10 text-accent shrink-0">
-                  <AlertTriangle className="w-6 h-6" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-textLight mb-1 text-sm md:text-base">Withdrawal Requirements Check:</h4>
-                  <ul className="text-xs text-textGray space-y-1 list-disc list-inside">
-                    <li>1st withdrawal requirement: Minimum {activeMinWithdrawFirst} ৳</li>
-                    <li>Subsequent withdrawal requirement: Minimum {activeMinWithdrawSubsequent} ৳ & 3 Active referrals</li>
-                    <li>You must watch all 15 daily ads on the day you request a withdrawal</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="w-full lg:w-auto flex items-center justify-center bg-background border border-cardBg rounded-xl px-4 py-2 text-xs font-semibold">
-                {profile.ads_watched_today === 15 ? (
-                  <span className="text-primary flex items-center gap-1">🟢 Ads Completed for Today</span>
-                ) : (
-                  <span className="text-red-500 flex items-center gap-1">🔴 Remaining Ads: {15 - profile.ads_watched_today}</span>
-                )}
-              </div>
-            </div>
           </div>
         )}
 
@@ -773,7 +755,7 @@ export default function Dashboard() {
                     </div>
                   ) : profile.ads_watched_today >= 15 ? (
                     <div className="bg-background rounded-2xl p-6 md:p-10 border border-primary/20 text-center space-y-4">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/25 text-primary flex items-center justify-center mx-auto">
                         <CheckCircle className="w-6 h-6" />
                       </div>
                       <h3 className="text-lg md:text-xl font-bold">Limit Reached!</h3>
@@ -815,7 +797,7 @@ export default function Dashboard() {
                 </p>
                 <button
                   onClick={() => setShowActivationModal(true)}
-                  className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all"
+                  className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/20 transition-all"
                 >
                   Activate Account Now
                 </button>
@@ -894,7 +876,7 @@ export default function Dashboard() {
                   </form>
                 </div>
 
-                <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 space-y-6">
+                <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 space-y-6">
                   <h3 className="font-bold text-textLight text-sm md:text-base">Your Statistics:</h3>
                   <div className="space-y-4">
                     <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3">
@@ -971,7 +953,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* TAB 4: REFERRALS */}
+        {/* TAB 4: REFERRALS (ইনঅ্যাক্টিভ ইউজারদের লকড স্ক্রিন দেখাবে) */}
         {activeTab === 'referrals' && (
           <div className="space-y-6 md:space-y-8 max-w-2xl">
             <div>
@@ -979,34 +961,56 @@ export default function Dashboard() {
               <p className="text-textGray text-xs md:text-sm">Earn {activeReferralBonus}৳ reward for every active referral who signs up.</p>
             </div>
 
-            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 space-y-6">
-              <h3 className="font-bold text-textLight text-sm md:text-base">Your Unique Referral Link:</h3>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <input
-                  type="text"
-                  readOnly
-                  value={`${window.location.origin}/register?ref=${user.id}`}
-                  className="flex-1 px-4 py-3 bg-background border border-cardBg rounded-xl text-[10px] sm:text-xs text-primary font-medium focus:outline-none"
-                />
-                <button
-                  onClick={copyReferralLink}
-                  className="px-6 py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2 text-sm"
-                >
-                  <Copy className="w-4 h-4" /> Copy Link
-                </button>
-              </div>
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
+              {!profile.is_active ? (
+                // ইনঅ্যাক্টিভ রেফারেল লকড স্ক্রিন
+                <div className="bg-background rounded-2xl p-8 border border-cardBg text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto">
+                    <Lock className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-lg md:text-xl font-bold">Referrals Locked 🔒</h3>
+                  <p className="text-textGray text-xs max-w-sm mx-auto leading-relaxed">
+                    Account activation is required to unlock your unique referral link and start building your team.
+                  </p>
+                  <button
+                    onClick={() => setShowActivationModal(true)}
+                    className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all"
+                  >
+                    Activate Account Now
+                  </button>
+                </div>
+              ) : (
+                // অ্যাক্টিভ ইউজারদের রেফারেল লিঙ্ক পেজ
+                <div className="space-y-6">
+                  <h3 className="font-bold text-textLight text-sm md:text-base">Your Unique Referral Link:</h3>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <input
+                      type="text"
+                      readOnly
+                      value={`${window.location.origin}/register?ref=${user.id}`}
+                      className="flex-1 px-4 py-3 bg-background border border-cardBg rounded-xl text-[10px] sm:text-xs text-primary font-medium focus:outline-none"
+                    />
+                    <button
+                      onClick={copyReferralLink}
+                      className="px-6 py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2 text-sm"
+                    >
+                      <Copy className="w-4 h-4" /> Copy Link
+                    </button>
+                  </div>
 
-              <div className="bg-background/50 rounded-xl p-4 border border-cardBg text-xs text-textGray leading-relaxed">
-                👉 <strong>How it works:</strong> Share this referral link with your friends. Once they register using this link and activate their profile with the ৳{activeActivationFee} account setup fee, ৳{activeReferralBonus} will be instantly added to your dashboard balance.
-              </div>
-            </div>
+                  <div className="bg-background/50 rounded-xl p-4 border border-cardBg text-xs text-textGray leading-relaxed">
+                    👉 <strong>How it works:</strong> Share this referral link with your friends. Once they register using this link and activate their profile, the referral bonus will be instantly added to your dashboard balance.
+                  </div>
 
-            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-textGray text-xs md:text-sm">Your Active Referrals:</h3>
-                <p className="text-textGray text-[10px] md:text-xs mt-1">Only active activated referrals are counted.</p>
-              </div>
-              <div className="text-3xl md:text-4xl font-black text-accent">{profile.referral_count} Users</div>
+                  <div className="bg-cardBg/50 border border-cardBg rounded-2xl p-5 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-textGray text-xs md:text-sm">Your Active Referrals:</h3>
+                      <p className="text-textGray text-[10px] md:text-xs mt-1">Only active activated referrals are counted.</p>
+                    </div>
+                    <div className="text-3xl md:text-4xl font-black text-accent">{profile.referral_count} Users</div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1031,8 +1035,8 @@ export default function Dashboard() {
 
                 <div>
                   <h3 className="text-xl font-black capitalize text-textLight">{profile.username}</h3>
-                  <span className="text-xs text-primary font-bold bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mt-2 inline-block">
-                    🟢 Active Account
+                  <span className={`text-xs font-bold bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mt-2 inline-block ${profile.is_active ? 'text-primary bg-primary/10 border-primary/20' : 'text-red-500 bg-red-500/10 border-red-500/20'}`}>
+                    {profile.is_active ? '🟢 Active Account' : '🔴 Inactive Account'}
                   </span>
                 </div>
 
@@ -1172,7 +1176,7 @@ export default function Dashboard() {
                   href={activeTelegramChannel}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <Send className="w-4 h-4 fill-background" /> Join Telegram Channel
                 </a>
@@ -1198,7 +1202,7 @@ export default function Dashboard() {
                   href={activeTelegramAdmin}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <MessageSquare className="w-4 h-4" /> Contact Support Admin
                 </a>
@@ -1242,17 +1246,17 @@ export default function Dashboard() {
 
             <h2 className="text-xl font-black mb-2 text-textLight">Activate Your Account</h2>
             <p className="text-textGray text-xs mb-6 leading-relaxed">
-              Pay a one-time activation fee of <span className="text-primary font-bold">৳ {activeActivationFee}</span> to unlock unlimited ads watching, daily tasks, and fast withdrawals.
+              Activate your account to unlock unlimited ads watching, daily tasks, and fast withdrawals.
             </p>
 
             <div className="bg-background/50 rounded-2xl p-4 border border-cardBg text-left space-y-3 mb-6">
-              <h4 className="font-bold text-accent text-sm flex items-center gap-1.5">
+              <h4 className="font-bold text-accent text-xs flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-accent" /> Security Information:
               </h4>
               <ul className="text-[10px] text-textGray space-y-1.5 list-disc list-inside">
                 <li>Instant automated payment verification</li>
                 <li>Secure transactions via bKash, Nagad, and Rocket</li>
-                <li>Automatic referral bonus payout of ৳ {activeReferralBonus}</li>
+                <li>Automatic referral bonus payout setup</li>
               </ul>
             </div>
 
@@ -1261,7 +1265,7 @@ export default function Dashboard() {
               disabled={paying || verifyingPayment}
               className="w-full py-3.5 bg-primary text-background text-sm font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
             >
-              {paying ? 'Connecting ZiniPay...' : verifyingPayment ? 'Verifying...' : `Pay ৳ ${activeActivationFee} via ZiniPay`}
+              {paying ? 'Connecting Payment...' : verifyingPayment ? 'Verifying...' : 'Pay via bKash / Nagad / Rocket'}
             </button>
           </div>
         </div>
