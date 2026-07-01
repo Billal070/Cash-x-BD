@@ -52,7 +52,8 @@ export default function Admin() {
     adsterra_link: '',
     referral_bonus: 30,
     per_ad_reward: 5,
-    activation_fee: 150
+    activation_fee: 150,
+    announcement_text: '' // ডাটাবেজ থেকে নোটিশ রিড করার জন্য যুক্ত করা হলো
   });
   const [savingSettings, setSavingSettings] = useState(false);
 
@@ -268,7 +269,8 @@ export default function Admin() {
           adsterra_link: settings.adsterra_link,
           referral_bonus: Number(settings.referral_bonus),
           per_ad_reward: Number(settings.per_ad_reward),
-          activation_fee: Number(settings.activation_fee)
+          activation_fee: Number(settings.activation_fee),
+          announcement_text: settings.announcement_text // নোটিশ ডাটাবেজে সেভ করার লাইন
         })
         .eq('id', 'config');
 
@@ -675,8 +677,19 @@ export default function Admin() {
                   </div>
                 </div>
 
-                {/* Telegram & Ads links */}
+         {/* Telegram & Ads links */}
                 <div className="space-y-4">
+                  {/* Live Announcement Input (নোটিশ লেখার কাস্টম বক্স) */}
+                  <div>
+                    <label className="block text-xs font-bold text-textGray mb-2">Live Announcement / Notice Text</label>
+                    <textarea
+                      required
+                      value={settings.announcement_text}
+                      onChange={(e) => setSettings({ ...settings, announcement_text: e.target.value })}
+                      rows={3}
+                      className="w-full px-4 py-3 bg-[#0D1117] border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors resize-none"
+                    />
+                  </div>
                   <div>
                     <label className="block text-xs font-bold text-textGray mb-2">Official Telegram Channel URL</label>
                     <input
