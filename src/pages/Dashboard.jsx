@@ -9,7 +9,7 @@ import {
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
   HelpCircle, Send, MessageSquare,
-  Megaphone, Download, Headphones, MousePointer2,  MousePointer2, Eye, ArrowRight 
+     Megaphone, Download, Headphones, MousePointer2, Eye, ArrowRight 
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস
@@ -198,7 +198,7 @@ export default function Dashboard() {
     if (user && activeTab === 'overview') {
       fetchLiveTasks();
     }
-  }, [user, activeTab]);
+   [user, activeTab]);
 
   const fetchLiveSettings = async () => {
     try {
