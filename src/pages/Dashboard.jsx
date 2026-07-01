@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
-  HelpCircle, Send, MessageSquare // <-- এখানে আইকন তিনটি সফলভাবে ইম্পোর্ট করা হলো
+  HelpCircle, Send, MessageSquare 
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
@@ -30,39 +30,56 @@ const formatCurrency = (value) => {
   return isNaN(num) ? "0.00" : num.toFixed(2);
 };
 
+// মেথড লোগোর লাইভ এবং অফিশিয়াল স্বচ্ছ CDN লিঙ্কসমূহ
+const METHOD_LOGOS = {
+  bkash: "https://raw.githubusercontent.com/shurjopay/shurjopay-plugin-wordpress/master/images/bkash.png",
+  nagad: "https://raw.githubusercontent.com/shurjopay/shurjopay-plugin-wordpress/master/images/nagad.png",
+  rocket: "https://raw.githubusercontent.com/shurjopay/shurjopay-plugin-wordpress/master/images/rocket.png"
+};
+
 export default function Dashboard() {
   const { user, profile, loading, refreshProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
+  // ব্রাউজার মেমোরি থেকে সর্বশেষ সক্রিয় থাকা ট্যাবটি খুঁজে বের করা
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem('cashxbd_active_tab') || 'overview';
   });
 
+  // মোবাইল মেনু কন্ট্রোল করার স্টেট
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // লাইভ সেটিংস ডাটাবেজ থেকে লোড করার স্টেট
   const [dbSettings, setDbSettings] = useState(null);
 
+  // ট্যাব পরিবর্তন হলে তা ব্রাউজার মেমোরিতে সেভ করে রাখা
   useEffect(() => {
     localStorage.setItem('cashxbd_active_tab', activeTab);
   }, [activeTab]);
 
+  // পেমেন্ট ভেরিফিকেশন স্টেট
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [paying, setPaying] = useState(false);
 
+  // বিজ্ঞাপন স্টেটসমূহ
   const [adTimer, setAdTimer] = useState(0); 
   const [cooldown, setCooldown] = useState(0); 
   const [isWatching, setIsWatching] = useState(false);
 
+  // উইথড্রল স্টেটসমূহ
   const [wdMethod, setWdMethod] = useState('bkash');
   const [wdNumber, setWdNumber] = useState('');
   const [wdAmount, setWdAmount] = useState('');
   const [wdHistory, setWdHistory] = useState([]);
   const [submittingWd, setSubmittingWd] = useState(false);
 
+  // প্রোফাইল এডিট স্টেটসমূহ
   const [editUsername, setEditUsername] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [updatingProfile, setUpdatingProfile] = useState(false);
 
+  // লাইভ সুপাবেস সেটিংস টেবিল থেকে ডাটা লোড করা
   useEffect(() => {
     fetchLiveSettings();
   }, []);
@@ -83,6 +100,7 @@ export default function Dashboard() {
     }
   };
 
+  // যদি লগইন না থাকে, তবে লগইন পেজে রিডাইরেক্ট করবে
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
@@ -92,6 +110,7 @@ export default function Dashboard() {
     }
   }, [user, loading, navigate, profile]);
 
+  // ১. জিনী পে (ZiniPay) অটোমেটিক পেমেন্ট ভেরিফিকেশন চেক
   useEffect(() => {
     const invoiceId = searchParams.get('invoice_id');
     if (invoiceId && user && profile && !profile.is_active && !verifyingPayment) {
@@ -99,6 +118,7 @@ export default function Dashboard() {
     }
   }, [searchParams, user, profile]);
 
+  // ২. বিজ্ঞপ্তির কোলডাউন টাইমার কন্ট্রোল
   useEffect(() => {
     if (profile?.last_ad_watched_at) {
       const lastWatched = new Date(profile.last_ad_watched_at).getTime();
@@ -120,6 +140,7 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [cooldown]);
 
+  // ৩. বিজ্ঞাপন দেখার কাউন্টডাউন টাইমার
   useEffect(() => {
     let interval;
     if (isWatching && adTimer > 0) {
@@ -133,6 +154,7 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [isWatching, adTimer]);
 
+  // ৪. উইথড্রল হিস্ট্রি লোড করা
   useEffect(() => {
     if (user && activeTab === 'withdraw') {
       fetchWithdrawalHistory();
@@ -441,7 +463,7 @@ export default function Dashboard() {
     );
   }
 
-  // মূল অ্যাক্টিভ ড্যাশবোর্ড ইন্টারফেস
+  // ১১. মূল অ্যাক্টিভ ড্যাশবোর্ড ইন্টারফেস
   return (
     <div className="min-h-screen bg-background text-textLight flex flex-col md:flex-row">
       
@@ -748,6 +770,8 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
               <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 lg:col-span-2">
                 <form onSubmit={handleWithdraw} className="space-y-6">
+                  
+                  {/* glowing withdrawal buttons with transparent PNG cdn logos */}
                   <div>
                     <label className="block text-sm font-bold text-textGray mb-3">Withdraw Method</label>
                     <div className="grid grid-cols-3 gap-3">
@@ -756,9 +780,18 @@ export default function Dashboard() {
                           key={method}
                           type="button"
                           onClick={() => setWdMethod(method)}
-                          className={`py-3 px-2 md:px-4 rounded-xl border text-xs md:text-sm font-bold capitalize transition-all ${wdMethod === method ? 'bg-primary border-primary text-background shadow-lg shadow-primary/10' : 'bg-background border-cardBg text-textGray hover:text-textLight'}`}
+                          className={`py-4 px-2 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 ${
+                            wdMethod === method 
+                              ? 'border-primary bg-primary/5 text-textLight shadow-[0_0_15px_rgba(34,197,94,0.15)] scale-[1.02]' 
+                              : 'bg-background border-cardBg text-textGray hover:border-textGray/30 hover:text-textLight'
+                          }`}
                         >
-                          {method}
+                          <img 
+                            src={METHOD_LOGOS[method]} 
+                            alt={method} 
+                            className="h-9 md:h-11 w-auto object-contain filter brightness-100 group-hover:scale-110 transition-transform duration-300" 
+                          />
+                          <span className="text-[10px] md:text-xs font-bold capitalize">{method}</span>
                         </button>
                       ))}
                     </div>
@@ -1107,7 +1140,7 @@ export default function Dashboard() {
                   href={activeTelegramAdmin}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <MessageSquare className="w-4 h-4" /> Contact Support Admin
                 </a>
