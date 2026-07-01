@@ -10,4 +10,6 @@ export const CONFIG = {
   referralBonus: 30,
   minWithdrawFirst: 75,
   minWithdrawSubsequent: 200,
+  adTimer: 15, // বিজ্ঞপ্তির সময় (সেকেন্ডে)
+  dailyAdLimit: 15, // দৈনিক বিজ্ঞপ্তির সংখ্যা
 };
