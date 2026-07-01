@@ -8,7 +8,8 @@ import {
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
-  HelpCircle, Send, MessageSquare 
+  HelpCircle, Send, MessageSquare,
+  Megaphone, Download, Headphones, MousePointer2 
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
@@ -30,11 +31,11 @@ const formatCurrency = (value) => {
   return isNaN(num) ? "0.00" : num.toFixed(2);
 };
 
-// আপনার নিজের হোস্টিং সার্ভার (public ফোল্ডার) থেকে সরাসরি ইমেজ লোড করা হচ্ছে (১০০% স্থায়ী ও নিরাপদ)
+// উইকিমিডিয়া কমন্সের লাইভ এবং অফিশিয়াল স্বচ্ছ CDN লোগো লিঙ্কসমূহ
 const METHOD_LOGOS = {
-  bkash: "/bkash.png",
-  nagad: "/nagad.png",
-  rocket: "/rocket.png"
+  bkash: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/BKash_Logo.svg/320px-BKash_Logo.svg.png",
+  nagad: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Nagad-png.png",
+  rocket: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Rocket_mobile_banking_logo.svg/320px-Rocket_mobile_banking_logo.svg.png"
 };
 
 // ডাটাবেজ খালি বা টেবিল অনুপস্থিত থাকলে টেস্টিং করার জন্য ডামি ফ্যালব্যাক টাস্ক
@@ -434,7 +435,7 @@ export default function Dashboard() {
   const activeTelegramChannel = dbSettings ? dbSettings.telegram_channel : (CONFIG?.telegramLink || "https://t.me/your_channel");
   const activeTelegramAdmin = dbSettings ? dbSettings.telegram_admin : "https://t.me/your_admin";
   
-  // ডাইনামিক লাইভ অ্যানাউন্সমেন্ট টেক্সট
+  // ডাইনামিক লাইভ নোটিশ টেক্সট
   const activeAnnouncementText = dbSettings?.announcement_text || "🎉 New tasks available! Complete all tasks today and earn bonus rewards.";
 
   const activeMinWithdrawFirst = CONFIG?.minWithdrawFirst || 75;
@@ -520,7 +521,7 @@ export default function Dashboard() {
         <div className="w-10"></div> 
       </div>
 
-      {/* মোবাইল ওভারলে */}
+      {/* mobile overlay */}
       <div 
         className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
@@ -663,7 +664,7 @@ export default function Dashboard() {
         {activeTab === 'overview' && (
           <div className="space-y-6 md:space-y-8">
             
-            {/* ১. ডিসমিসিবল অ্যানাউন্সমেন্ট বার (Megaphone Icon সহ) */}
+            {/* ১. ডিসমিসিবল অ্যানাউন্সমেন্ট বার */}
             {showAnnouncement && (
               <div className="bg-[#FBBF24]/10 border border-[#FBBF24]/30 rounded-xl px-3 py-3 sm:px-4 flex items-center justify-between gap-3 text-left">
                 <div className="flex items-center gap-2">
@@ -742,7 +743,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* ৬. Quick Action Buttons (NEW) */}
+            {/* ৬. Quick Action Buttons */}
             <div className="space-y-4">
               <h3 className="font-bold text-[#F0F6FF] text-sm md:text-base">Quick Actions</h3>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -796,7 +797,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* 7. Available Tasks preview (NEW) */}
+            {/* 7. Available Tasks preview */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="font-bold text-[#F0F6FF] text-sm md:text-base">Available Tasks</h3>
@@ -1262,7 +1263,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  <div className="bg-cardBg border border-cardBg/50 p-5 rounded-xl flex items-center justify-between">
+                  <div className="bg-[#1A2332] border border-cardBg/50 p-5 rounded-xl flex items-center justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-textGray">Total Lifetime Income</h4>
                       <p className="text-xl font-black text-textLight mt-1">৳ {formatCurrency(totalLifetimeIncome)}</p>
@@ -1373,7 +1374,7 @@ export default function Dashboard() {
                   href={activeTelegramAdmin}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <MessageSquare className="w-4 h-4" /> Contact Support Admin
                 </a>
