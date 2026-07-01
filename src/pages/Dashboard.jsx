@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
-  HelpCircle, Send, MessageSquare // <-- এই তিনটি আইকন এখানে ১০০% যুক্ত আছে
+  HelpCircle, Send, MessageSquare 
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
@@ -28,6 +28,13 @@ const CONFIG = ImportedConfig || {
 const formatCurrency = (value) => {
   const num = Number(value);
   return isNaN(num) ? "0.00" : num.toFixed(2);
+};
+
+// আপনার নিজের হোস্টিং সার্ভার (public ফোল্ডার) থেকে সরাসরি ইমেজ লোড করা হচ্ছে (১০০% স্থায়ী ও নিরাপদ)
+const METHOD_LOGOS = {
+  bkash: "/bkash.png",
+  nagad: "/nagad.png",
+  rocket: "/rocket.png"
 };
 
 export default function Dashboard() {
@@ -556,12 +563,15 @@ export default function Dashboard() {
       {/* ডেস্কটপ সাইডবার */}
       <aside className="hidden md:flex w-64 bg-cardBg border-r border-cardBg/50 flex-col justify-between p-6 shrink-0">
         <div>
-          <div className="mb-8 text-left">
+          <div className="mb-10 text-left">
             {CONFIG?.logoUrl ? (
               <img src={CONFIG.logoUrl} alt={CONFIG?.siteName || "Earnova"} className="h-11 w-auto mb-2 object-contain" />
             ) : (
               <span className="text-2xl font-black text-primary">🟢 {CONFIG?.siteName || "Earnova"}</span>
             )}
+            <div className="mt-2 text-xs text-textGray font-semibold bg-primary/10 border border-primary/25 rounded-full px-3 py-1 max-w-max">
+              🟢 Active Profile
+            </div>
           </div>
 
           {/* ডেস্কটপ প্রোফাইল কার্ড */}
@@ -732,6 +742,12 @@ export default function Dashboard() {
                       </p>
                       <div className="text-2xl md:text-3xl font-black text-accent flex items-center justify-center gap-1">
                         <Clock className="w-5 h-5 animate-pulse" /> {adTimer} Seconds
+                      </div>
+                    </div>
+                  ) : cooldown > 0 ? (
+                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-primary/20 text-center space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mx-auto">
+                        <Clock className="w-6 h-6 animate-pulse" /> {adTimer} Seconds
                       </div>
                     </div>
                   ) : cooldown > 0 ? (
@@ -1178,7 +1194,7 @@ export default function Dashboard() {
 
               {/* Card 2: Personal Support Admin */}
               <div className="bg-cardBg border border-cardBg/50 p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between space-y-6">
-                <div className="absolute -top-10 -left-10 w-24 h-24 bg-accent/5 rounded-full blur-3xl"></div>
+                <div className="absolute -top-10 -left-10 w-24 h-24 bg-accent/5 rounded-full blur-2xl"></div>
 
                 <div className="space-y-4">
                   <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 text-accent flex items-center justify-center">
@@ -1244,7 +1260,7 @@ export default function Dashboard() {
             </p>
 
             <div className="bg-background/50 rounded-2xl p-4 border border-cardBg text-left space-y-3 mb-6">
-              <h4 className="font-bold text-accent text-sm flex items-center gap-1.5">
+              <h4 className="font-bold text-accent text-xs flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-accent" /> Security Information:
               </h4>
               <ul className="text-[10px] text-textGray space-y-1.5 list-disc list-inside">
