@@ -12,7 +12,7 @@ import {
   Megaphone, Download, Headphones, MousePointer2 
 } from 'lucide-react';
 
-// গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
+// গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস
 const CONFIG = ImportedConfig || {
   siteName: "Earnova",
   logoUrl: "", 
@@ -31,11 +31,11 @@ const formatCurrency = (value) => {
   return isNaN(num) ? "0.00" : num.toFixed(2);
 };
 
-// উইকিমিডিয়া কমন্সের লাইভ এবং অফিশিয়াল স্বচ্ছ CDN লোগো লিঙ্কসমূহ
+// আপনার নিজের হোস্টিং সার্ভার (public ফোল্ডার) থেকে লোকাল ইমেজ পাথ
 const METHOD_LOGOS = {
-  bkash: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/BKash_Logo.svg/320px-BKash_Logo.svg.png",
-  nagad: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Nagad-png.png",
-  rocket: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Rocket_mobile_banking_logo.svg/320px-Rocket_mobile_banking_logo.svg.png"
+  bkash: "/bkash.png",
+  nagad: "/nagad.png",
+  rocket: "/rocket.png"
 };
 
 // ডাটাবেজ খালি বা টেবিল অনুপস্থিত থাকলে টেস্টিং করার জন্য ডামি ফ্যালব্যাক টাস্ক
@@ -446,7 +446,7 @@ export default function Dashboard() {
   const referralEarnings = profile ? Number(profile.referral_count) * activeReferralBonus : 0;
   const adsEarnings = totalLifetimeIncome - referralEarnings > 0 ? totalLifetimeIncome - referralEarnings : 0;
 
-  // লোডিং স্ক্রিন
+  // লোडिंग স্ক্রিন
   if (loading || !profile) {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-center items-center">
@@ -595,7 +595,7 @@ export default function Dashboard() {
         </button>
       </aside>
 
-      {/* ডেস্কটপ সাইডবার */}
+      {/* ডেস্কটপ সাইдবার */}
       <aside className="hidden md:flex w-64 bg-cardBg border-r border-cardBg/50 flex-col justify-between p-6 shrink-0">
         <div>
           <div className="mb-8 text-left">
@@ -664,7 +664,7 @@ export default function Dashboard() {
         {activeTab === 'overview' && (
           <div className="space-y-6 md:space-y-8">
             
-            {/* ১. ডিসমিসিবল অ্যানাউন্সমেন্ট বার */}
+            {/* ১. ডিসমিসিবল অ্যানাউन्সমেন্ট বার (Megaphone Icon সহ) */}
             {showAnnouncement && (
               <div className="bg-[#FBBF24]/10 border border-[#FBBF24]/30 rounded-xl px-3 py-3 sm:px-4 flex items-center justify-between gap-3 text-left">
                 <div className="flex items-center gap-2">
@@ -743,7 +743,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* ৬. Quick Action Buttons */}
+            {/* ৬. Quick Action Buttons (NEW) */}
             <div className="space-y-4">
               <h3 className="font-bold text-[#F0F6FF] text-sm md:text-base">Quick Actions</h3>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -797,7 +797,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* 7. Available Tasks preview */}
+            {/* 7. Available Tasks preview (NEW) */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="font-bold text-[#F0F6FF] text-sm md:text-base">Available Tasks</h3>
@@ -907,7 +907,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                   ) : cooldown > 0 ? (
-                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-cardBg text-center space-y-4">
+                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-[#0D1117] text-center space-y-4">
                       <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mx-auto">
                         <Clock className="w-6 h-6 animate-pulse" /> {adTimer} Seconds
                       </div>
@@ -924,6 +924,10 @@ export default function Dashboard() {
                       <div className="text-xl md:text-2xl font-black text-accent">
                         Cooldown: {cooldown} Seconds
                       </div>
+                    </div>
+                  ) : profile.ads_watched_today >= 15 ? (
+                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-primary/25 text-primary flex items-center justify-center mx-auto">
+                      <CheckCircle className="w-6 h-6" />
                     </div>
                   ) : profile.ads_watched_today >= 15 ? (
                     <div className="bg-background rounded-2xl p-6 md:p-10 border border-primary/20 text-center space-y-4">
@@ -1141,7 +1145,7 @@ export default function Dashboard() {
                     <Lock className="w-8 h-8" />
                   </div>
                   <h3 className="text-lg md:text-xl font-bold">Referrals Locked 🔒</h3>
-                  <p className="text-textGray text-xs max-w-sm mx-auto leading-relaxed">
+                  <p className="text-[#8AA8B8] text-xs max-w-sm mx-auto leading-relaxed">
                     Account activation is required to unlock your unique referral link and start building your team.
                   </p>
                   <button
@@ -1348,7 +1352,7 @@ export default function Dashboard() {
                   href={activeTelegramChannel}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <Send className="w-4 h-4 fill-background" /> Join Telegram Channel
                 </a>
@@ -1356,7 +1360,7 @@ export default function Dashboard() {
 
               {/* Card 2: Personal Support Admin */}
               <div className="bg-cardBg border border-cardBg/50 p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between space-y-6">
-                <div className="absolute -top-10 -left-10 w-24 h-24 bg-accent/5 rounded-full blur-2xl"></div>
+                <div className="absolute -top-10 -left-10 w-24 h-24 bg-accent/5 rounded-full blur-3xl"></div>
 
                 <div className="space-y-4">
                   <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 text-accent flex items-center justify-center">
@@ -1374,7 +1378,7 @@ export default function Dashboard() {
                   href={activeTelegramAdmin}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <MessageSquare className="w-4 h-4" /> Contact Support Admin
                 </a>
