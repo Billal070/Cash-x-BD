@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // CORS Headers (অন্য ডোমেইন থেকে অ্যাক্সেস করার জন্য)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -18,7 +17,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  // ভার্সেলের Environment Variable থেকে এপিআই কী নেওয়া হবে
   const apiKey = process.env.ZINIPAY_API_KEY;
 
   try {
@@ -29,8 +27,8 @@ export default async function handler(req, res) {
         'zini-api-key': apiKey
       },
       body: JSON.stringify({
-        cus_name: username || 'Cash x BD User',
-        cus_email: email || 'user@cashxbd.com',
+        cus_name: username || 'Earnova User', // Earnova আপডেট করা হয়েছে
+        cus_email: email || 'user@earnova.com', // Earnova আপডেট করা হয়েছে
         amount: Number(amount),
         redirect_url: redirectUrl,
         metadata: { userId }
