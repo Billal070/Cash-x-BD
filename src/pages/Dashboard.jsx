@@ -3,56 +3,59 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
-import { CONFIG } from '../config'; 
+import { CONFIG as ImportedConfig } from '../config'; 
 import { 
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight
 } from 'lucide-react';
 
+// গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
+const CONFIG = ImportedConfig || {
+  siteName: "Earnova",
+  logoUrl: "", 
+  telegramLink: "https://t.me/your_channel_username", 
+  adsterraLink: "https://www.example.com", 
+  activationFee: 150,
+  perAdReward: 5,
+  referralBonus: 30,
+  minWithdrawFirst: 75,
+  minWithdrawSubsequent: 200,
+};
+
 export default function Dashboard() {
   const { user, profile, loading, refreshProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // ব্রাউজার মেমোরি থেকে সর্বশেষ সক্রিয় থাকা ট্যাবটি খুঁজে বের করা
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem('cashxbd_active_tab') || 'overview';
   });
 
-  // মোবাইল মেনু কন্ট্রোল করার স্টেট
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // লাইভ সেটিংস ডাটাবেজ থেকে লোড করার স্টেট
   const [dbSettings, setDbSettings] = useState(null);
 
-  // ট্যাব পরিবর্তন হলে তা ব্রাউজার মেমোরিতে সেভ করে রাখা
   useEffect(() => {
     localStorage.setItem('cashxbd_active_tab', activeTab);
   }, [activeTab]);
 
-  // পেমেন্ট ভেরিফিকেশন স্টেট
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [paying, setPaying] = useState(false);
 
-  // বিজ্ঞাপন স্টেটসমূহ
   const [adTimer, setAdTimer] = useState(0); 
   const [cooldown, setCooldown] = useState(0); 
   const [isWatching, setIsWatching] = useState(false);
 
-  // উইথড্রল স্টেটসমূহ
   const [wdMethod, setWdMethod] = useState('bkash');
   const [wdNumber, setWdNumber] = useState('');
   const [wdAmount, setWdAmount] = useState('');
   const [wdHistory, setWdHistory] = useState([]);
   const [submittingWd, setSubmittingWd] = useState(false);
 
-  // প্রোফাইল এডিট স্টেটসমূহ
   const [editUsername, setEditUsername] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [updatingProfile, setUpdatingProfile] = useState(false);
 
-  // লাইভ সুপাবেস সেটিংস টেবিল থেকে ডাটা লোড করা
   useEffect(() => {
     fetchLiveSettings();
   }, []);
@@ -73,7 +76,6 @@ export default function Dashboard() {
     }
   };
 
-  // যদি লগইন না থাকে, তবে লগইন পেজে রিডাইরেক্ট করবে
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
@@ -83,7 +85,6 @@ export default function Dashboard() {
     }
   }, [user, loading, navigate, profile]);
 
-  // ১. জিনী পে (ZiniPay) অটোমেটিক পেমেন্ট ভেরিফিকেশন চেক
   useEffect(() => {
     const invoiceId = searchParams.get('invoice_id');
     if (invoiceId && user && profile && !profile.is_active && !verifyingPayment) {
@@ -91,7 +92,6 @@ export default function Dashboard() {
     }
   }, [searchParams, user, profile]);
 
-  // ২. বিজ্ঞপ্তির কোলডাউন টাইমার কন্ট্রোল
   useEffect(() => {
     if (profile?.last_ad_watched_at) {
       const lastWatched = new Date(profile.last_ad_watched_at).getTime();
@@ -113,7 +113,6 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [cooldown]);
 
-  // ৩. বিজ্ঞাপন দেখার কাউন্টডাউন টাইমার
   useEffect(() => {
     let interval;
     if (isWatching && adTimer > 0) {
@@ -127,7 +126,6 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [isWatching, adTimer]);
 
-  // ৪. উইথড্রল হিস্ট্রি লোড করা
   useEffect(() => {
     if (user && activeTab === 'withdraw') {
       fetchWithdrawalHistory();
@@ -148,7 +146,6 @@ export default function Dashboard() {
     }
   };
 
-  // ৫. জিনী পে (ZiniPay) পেমেন্ট তৈরি করার ফাংশন
   const handlePayment = async () => {
     setPaying(true);
     try {
@@ -177,7 +174,6 @@ export default function Dashboard() {
     }
   };
 
-  // ৬. জিনী পে পেমেন্ট ভেরিফাই করার ফাংশন
   const verifyUserPayment = async (invoiceId) => {
     setVerifyingPayment(true);
     const toastId = toast.loading(`Verifying your ${activeActivationFee}৳ payment...`);
@@ -203,7 +199,6 @@ export default function Dashboard() {
     }
   };
 
-  // ৭. বিজ্ঞাপন দেখা শুরু করার ফাংশন
   const startWatchingAd = () => {
     if (profile.ads_watched_today >= 15) {
       return toast.error('You have reached the daily limit of 15 Ads!');
@@ -212,7 +207,6 @@ export default function Dashboard() {
       return toast.error(`Please wait ${cooldown} seconds before watching next ad!`);
     }
 
-    // কনফিগারেশন বা লাইভ ডাটাবেজ থেকে আপনার Adsterra Direct Link ওপেন হবে
     window.open(activeAdsterraLink, '_blank'); 
 
     setIsWatching(true);
@@ -220,7 +214,6 @@ export default function Dashboard() {
     toast.success('Ad loaded! Please do not close this dashboard tab.');
   };
 
-  // ৮. বিজ্ঞপ্তির রিওয়ার্ড যোগ করার ফাংশন
   const claimAdReward = async () => {
     const toastId = toast.loading(`Adding ${activePerAdReward}৳ reward to your balance...`);
     try {
@@ -251,7 +244,6 @@ export default function Dashboard() {
     }
   };
 
-  // ৯. উইথড্রল সাবমিট করার ফাংশন
   const handleWithdraw = async (e) => {
     e.preventDefault();
     const amount = Number(wdAmount);
@@ -322,7 +314,6 @@ export default function Dashboard() {
     }
   };
 
-  // প্রোফাইল এডিট/আপডেট সাবমিট করার ফাংশন
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     if (!editUsername) return toast.error('Username cannot be empty');
@@ -354,13 +345,11 @@ export default function Dashboard() {
     toast.success('Referral link copied to clipboard!');
   };
 
-  // লগআউট করার সময় মেমোরি রিমুভ করার ফাংশন
   const handleLogout = () => {
     localStorage.removeItem('cashxbd_active_tab');
     signOut();
   };
 
-  // মোবাইল মেনু বন্ধ করে ট্যাব পরিবর্তন করার জন্য হেল্পার ফাংশন
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
     setIsMobileMenuOpen(false); 
@@ -734,7 +723,7 @@ export default function Dashboard() {
                   onClick={startWatchingAd}
                   className="w-full py-4 md:py-6 bg-primary text-background text-base md:text-lg font-black rounded-2xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-3"
                 >
-                  <Play className="w-5 h-5 fill-background" /> Click to Watch Ad & Earn {activePerAdReward} ৳
+                  <Play className="w-5 h-5 md:w-6 md:h-6 fill-background" /> Click to Watch Ad & Earn {activePerAdReward} ৳
                 </button>
               )}
             </div>
@@ -1085,7 +1074,7 @@ export default function Dashboard() {
                   href={activeTelegramChannel}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <Send className="w-4 h-4 fill-background" /> Join Telegram Channel
                 </a>
@@ -1111,7 +1100,7 @@ export default function Dashboard() {
                   href={activeTelegramAdmin}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <MessageSquare className="w-4 h-4" /> Contact Support Admin
                 </a>
