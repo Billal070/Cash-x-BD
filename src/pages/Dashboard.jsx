@@ -313,11 +313,6 @@ export default function Dashboard() {
 
   const handleWithdraw = async (e) => {
     e.preventDefault();
-    if (!profile.is_active) {
-      setShowActivationModal(true); 
-      return;
-    }
-
     const amount = Number(wdAmount);
 
     if (!wdNumber || !wdAmount) {
@@ -427,13 +422,16 @@ export default function Dashboard() {
     setIsMobileMenuOpen(false); 
   };
 
-  // সুপাবেস বা লোকাল কনফিগারেশন থেকে সেটিংস নির্ধারণ
+  // লাইভ অথবা ব্যাকআপ সেটিংস নির্ধারণ (Fallbacks with absolute safety checks)
   const activeActivationFee = dbSettings ? Number(dbSettings.activation_fee) : (CONFIG?.activationFee || 150);
   const activePerAdReward = dbSettings ? Number(dbSettings.per_ad_reward) : (CONFIG?.perAdReward || 5);
   const activeReferralBonus = dbSettings ? Number(dbSettings.referral_bonus) : (CONFIG?.referralBonus || 30);
   const activeAdsterraLink = dbSettings ? dbSettings.adsterra_link : (CONFIG?.adsterraLink || "https://www.example.com");
   const activeTelegramChannel = dbSettings ? dbSettings.telegram_channel : (CONFIG?.telegramLink || "https://t.me/your_channel");
   const activeTelegramAdmin = dbSettings ? dbSettings.telegram_admin : "https://t.me/your_admin";
+  
+  // ডাইনামিক লাইভ অ্যানাউন্সমেন্ট টেক্সট
+  const activeAnnouncementText = dbSettings?.announcement_text || "🎉 New tasks available! Complete all tasks today and earn bonus rewards.";
 
   const activeMinWithdrawFirst = CONFIG?.minWithdrawFirst || 75;
   const activeMinWithdrawSubsequent = CONFIG?.minWithdrawSubsequent || 200;
@@ -661,13 +659,13 @@ export default function Dashboard() {
         {activeTab === 'overview' && (
           <div className="space-y-6 md:space-y-8">
             
-            {/* ১. ডিসমিসিবল অ্যানাউন্সমেন্ট বার (Megaphone Icon সহ) */}
+            {/* ১. ডিসমিসিবল লাইভ অ্যানাউন্সমেন্ট বার (Megaphone Icon সহ) */}
             {showAnnouncement && (
               <div className="bg-[#FBBF24]/10 border border-[#FBBF24]/30 rounded-xl px-3 py-3 sm:px-4 flex items-center justify-between gap-3 text-left">
                 <div className="flex items-center gap-2">
                   <Megaphone className="text-[#FBBF24] shrink-0" size={18} />
                   <p className="text-[#FBBF24] text-xs sm:text-sm font-medium">
-                    🎉 New tasks available! Complete all tasks today and earn bonus rewards.
+                    {activeAnnouncementText}
                   </p>
                 </div>
                 <button 
@@ -901,6 +899,12 @@ export default function Dashboard() {
                       </p>
                       <div className="text-2xl md:text-3xl font-black text-accent flex items-center justify-center gap-1">
                         <Clock className="w-5 h-5 animate-pulse" /> {adTimer} Seconds
+                      </div>
+                    </div>
+                  ) : cooldown > 0 ? (
+                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-cardBg text-center space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mx-auto">
+                        <Clock className="w-6 h-6 animate-pulse" /> {adTimer} Seconds
                       </div>
                     </div>
                   ) : cooldown > 0 ? (
