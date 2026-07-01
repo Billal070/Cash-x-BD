@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
-  HelpCircle, Send, MessageSquare // <-- এখানে আইকন ৩টি সফলভাবে যুক্ত করা হয়েছে
+  HelpCircle, Send, MessageSquare 
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
@@ -28,13 +28,6 @@ const CONFIG = ImportedConfig || {
 const formatCurrency = (value) => {
   const num = Number(value);
   return isNaN(num) ? "0.00" : num.toFixed(2);
-};
-
-// উইকিমিডিয়া কমন্সের লাইভ এবং অফিশিয়াল স্বচ্ছ CDN লোগো লিঙ্কসমূহ
-const METHOD_LOGOS = {
-  bkash: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/BKash_Logo.svg/320px-BKash_Logo.svg.png",
-  nagad: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Nagad-png.png",
-  rocket: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Rocket_mobile_banking_logo.svg/320px-Rocket_mobile_banking_logo.svg.png"
 };
 
 export default function Dashboard() {
@@ -219,7 +212,7 @@ export default function Dashboard() {
 
       if (data.success) {
         toast.success('Your profile is now Active! 🟢', { id: toastId });
-        setShowActivationModal(false); // পপআপ বন্ধ করা হবে
+        setShowActivationModal(false); 
         await refreshProfile();
       }
     } catch (err) {
@@ -232,7 +225,7 @@ export default function Dashboard() {
 
   const startWatchingAd = () => {
     if (!profile.is_active) {
-      setShowActivationModal(true); // ইনঅ্যাক্টিভ হলে পপআপ দেখাবে
+      setShowActivationModal(true); 
       return;
     }
     if (profile.ads_watched_today >= 15) {
@@ -282,7 +275,7 @@ export default function Dashboard() {
   const handleWithdraw = async (e) => {
     e.preventDefault();
     if (!profile.is_active) {
-      setShowActivationModal(true); // ইনঅ্যাক্টিভ হলে পপআপ দেখাবে
+      setShowActivationModal(true); 
       return;
     }
 
@@ -421,23 +414,44 @@ export default function Dashboard() {
     );
   }
 
-  // ১২. রিইউজেবল মিনিমাল সাইডবার প্রোফাইল কার্ড
+  // ১২. রিইউজেবল মিনিমাল ভার্টিকাল সাইডবার প্রোফাইল কার্ড (Centered & Glowing Animation)
   const renderSidebarProfileCard = () => (
-    <div className="bg-background/40 border border-cardBg/60 rounded-2xl p-4 mb-6 flex items-center gap-3">
-      {/* Avatar */}
-      <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-sm shrink-0">
-        {profile?.username ? profile.username.substring(0, 1).toUpperCase() : 'U'}
+    <div className="bg-background/30 border border-cardBg/50 rounded-2xl p-4 mb-6 flex flex-col items-center text-center">
+      {/* glowing avatar ring */}
+      <div className="relative w-12 h-12 rounded-full bg-primary/10 border-2 border-primary/20 text-primary flex items-center justify-center font-black text-lg shadow-[0_0_12px_rgba(34,197,94,0.15)] mb-3 uppercase">
+        {profile?.username ? profile.username.substring(0, 1) : 'U'}
       </div>
-      {/* User Info */}
-      <div className="min-w-0 flex-1">
-        <h4 className="text-xs font-bold text-textLight mb-0.5 truncate capitalize">@{profile?.username}</h4>
-        <div className="flex items-center gap-1.5 mb-1">
-          <span className={`w-1.5 h-1.5 rounded-full ${profile?.is_active ? 'bg-primary' : 'bg-red-500 animate-pulse'}`}></span>
-          <span className={`text-[10px] font-bold ${profile?.is_active ? 'text-primary' : 'text-red-500'}`}>
-            {profile?.is_active ? 'Active' : 'Inactive'}
+
+      {/* User info lists */}
+      <div className="w-full">
+        <h4 className="text-sm font-extrabold text-textLight truncate capitalize">@{profile?.username || 'user'}</h4>
+        <p className="text-[10px] text-textGray font-semibold mb-2">{profile?.phone || 'No Phone'}</p>
+        
+        {/* জ্বলজ্বলে অ্যানিমেটেড অন/অফ ডট (Glowing Pulse Animation) */}
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <span className="relative flex h-2 w-2">
+            {profile?.is_active ? (
+              <>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </>
+            ) : (
+              <>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+              </>
+            )}
+          </span>
+          <span className={`text-[10px] font-bold uppercase tracking-wider ${profile?.is_active ? 'text-primary' : 'text-red-500'}`}>
+            {profile?.is_active ? 'Active Profile' : 'Inactive'}
           </span>
         </div>
-        <p className="text-xs font-black text-primary">৳ {formatCurrency(profile?.balance)}</p>
+
+        {/* মিনিমাল ওয়ালেট ব্যাজ */}
+        <div className="inline-block bg-primary/5 border border-primary/15 rounded-lg px-3 py-1">
+          <span className="text-[10px] font-bold text-textGray mr-1">Wallet:</span>
+          <span className="text-xs font-black text-primary">৳ {formatCurrency(profile?.balance)}</span>
+        </div>
       </div>
     </div>
   );
@@ -612,14 +626,14 @@ export default function Dashboard() {
               <p className="text-textGray text-xs md:text-sm">Monitor your earnings and complete tasks to cash out.</p>
             </div>
 
-            {/* Inactive Alert Box (ইউজারদের আইডি একটিভ করার উদ্বুদ্ধ করবে) */}
+            {/* Inactive Alert Box */}
             {!profile.is_active && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex gap-3">
                   <Lock className="w-5 h-5 text-red-500 shrink-0 mt-0.5 animate-pulse" />
                   <div>
                     <h4 className="font-bold text-textLight text-sm">Account Activation Required</h4>
-                    <p className="text-xs text-textGray leading-relaxed mt-1">To start watching daily ads and unlock payment withdrawal, please sctivate your profile.</p>
+                    <p className="text-xs text-textGray leading-relaxed mt-1">To start watching daily ads and unlock payment withdrawal, please activate your profile.</p>
                   </div>
                 </div>
                 <button 
@@ -666,6 +680,30 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
+
+            {/* Requirements Card */}
+            <div className="bg-cardBg/30 border border-cardBg/50 rounded-2xl p-5 md:p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+              <div className="flex items-start gap-4">
+                <div className="p-3 rounded-xl bg-accent/10 text-accent shrink-0">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-textLight mb-1 text-sm md:text-base">Withdrawal Requirements Check:</h4>
+                  <ul className="text-xs text-textGray space-y-1 list-disc list-inside">
+                    <li>1st withdrawal requirement: Minimum {activeMinWithdrawFirst} ৳</li>
+                    <li>Subsequent withdrawal requirement: Minimum {activeMinWithdrawSubsequent} ৳ & 3 Active referrals</li>
+                    <li>You must watch all 15 daily ads on the day you request a withdrawal</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="w-full lg:w-auto flex items-center justify-center bg-background border border-cardBg rounded-xl px-4 py-2 text-xs font-semibold">
+                {profile.ads_watched_today === 15 ? (
+                  <span className="text-primary flex items-center gap-1">🟢 Ads Completed for Today</span>
+                ) : (
+                  <span className="text-red-500 flex items-center gap-1">🔴 Remaining Ads: {15 - profile.ads_watched_today}</span>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -690,7 +728,7 @@ export default function Dashboard() {
                   </p>
                   <button
                     onClick={() => setShowActivationModal(true)}
-                    className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/20 transition-all"
+                    className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all"
                   >
                     Activate Account Now
                   </button>
@@ -777,7 +815,7 @@ export default function Dashboard() {
                 </p>
                 <button
                   onClick={() => setShowActivationModal(true)}
-                  className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/20 transition-all"
+                  className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all"
                 >
                   Activate Account Now
                 </button>
@@ -785,8 +823,10 @@ export default function Dashboard() {
             ) : (
               // অ্যাক্টিভ ইউজারদের উইথড্রল ফর্ম
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 lg:col-span-2">
+                <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 lg:col-span-2">
                   <form onSubmit={handleWithdraw} className="space-y-6">
+                    
+                    {/* glowing withdrawal buttons with transparent PNG cdn logos */}
                     <div>
                       <label className="block text-sm font-bold text-textGray mb-3">Withdraw Method</label>
                       <div className="grid grid-cols-3 gap-3">
@@ -981,7 +1021,7 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
               {/* Left Column: Avatar and User Details */}
-              <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-6 text-center space-y-6">
+              <div className="bg-cardBg border border-cardBg/50 p-6 text-center space-y-6">
                 <div className="relative w-24 h-24 mx-auto">
                   <div className="w-full h-full rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center text-3xl font-black text-primary select-none shadow-lg shadow-primary/15 uppercase">
                     {profile.username ? profile.username.substring(0, 2) : 'US'}
@@ -1132,7 +1172,7 @@ export default function Dashboard() {
                   href={activeTelegramChannel}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <Send className="w-4 h-4 fill-background" /> Join Telegram Channel
                 </a>
@@ -1158,7 +1198,7 @@ export default function Dashboard() {
                   href={activeTelegramAdmin}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <MessageSquare className="w-4 h-4" /> Contact Support Admin
                 </a>
