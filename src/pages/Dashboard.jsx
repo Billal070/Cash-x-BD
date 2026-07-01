@@ -197,7 +197,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (user && activeTab === 'overview') {
       fetchLiveTasks();
-    }
+    
    [user, activeTab]);
 
   const fetchLiveSettings = async () => {
