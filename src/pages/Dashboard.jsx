@@ -3,12 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
-import { CONFIG } from '../config'; 
+import { CONFIG } from '../config'; // সেন্ট্রাল কনফিগারেশন ইম্পোর্ট করা হলো
 import { 
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
-  Menu, X, User, Phone, Mail, Award, ArrowUpRight,
-  HelpCircle, Send, MessageSquare // নতুন সাপোর্ট আইকনসমূহ
+  Menu, X, User, Phone, Mail, Award, ArrowUpRight
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -383,11 +382,12 @@ export default function Dashboard() {
   const referralEarnings = profile ? profile.referral_count * activeReferralBonus : 0;
   const adsEarnings = totalLifetimeIncome - referralEarnings > 0 ? totalLifetimeIncome - referralEarnings : 0;
 
+  // লোডিং স্ক্রিন (Earnova দিয়ে পরিবর্তন করা হয়েছে)
   if (loading || !profile) {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-center items-center">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-textGray font-semibold">Loading Cash x BD Dashboard...</p>
+        <p className="mt-4 text-textGray font-semibold">Loading {CONFIG.siteName} Dashboard...</p>
       </div>
     );
   }
@@ -403,7 +403,7 @@ export default function Dashboard() {
           {CONFIG.logoUrl ? (
             <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-16 w-auto mx-auto mb-4 object-contain" />
           ) : (
-            <span className="text-4xl font-extrabold text-primary mb-2 block">Cash <span className="text-accent">x</span> BD</span>
+            <span className="text-4xl font-extrabold text-primary mb-2 block">{CONFIG.siteName}</span>
           )}
           
           <div className="w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto mb-6">
@@ -462,7 +462,7 @@ export default function Dashboard() {
           <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-11 w-auto absolute left-1/2 -translate-x-1/2 object-contain" />
         ) : (
           <span className="text-xl font-black text-primary absolute left-1/2 -translate-x-1/2 pointer-events-none select-none">
-            🟢 Cash <span className="text-accent">x</span> BD
+            🟢 {CONFIG.siteName}
           </span>
         )}
 
@@ -482,7 +482,7 @@ export default function Dashboard() {
             {CONFIG.logoUrl ? (
               <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-12 w-auto object-contain" />
             ) : (
-              <span className="text-xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
+              <span className="text-xl font-black text-primary">🟢 {CONFIG.siteName}</span>
             )}
             <button 
               onClick={() => setIsMobileMenuOpen(false)} 
@@ -547,7 +547,7 @@ export default function Dashboard() {
             {CONFIG.logoUrl ? (
               <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-11 w-auto mb-2 object-contain" />
             ) : (
-              <span className="text-2xl font-black text-primary">🟢 Cash <span className="text-accent">x</span> BD</span>
+              <span className="text-2xl font-black text-primary">🟢 {CONFIG.siteName}</span>
             )}
             <div className="mt-2 text-xs text-textGray font-semibold bg-primary/10 border border-primary/25 rounded-full px-3 py-1 max-w-max">
               🟢 Active Profile
@@ -734,7 +734,7 @@ export default function Dashboard() {
                   onClick={startWatchingAd}
                   className="w-full py-4 md:py-6 bg-primary text-background text-base md:text-lg font-black rounded-2xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-3"
                 >
-                  <Play className="w-5 h-5 md:w-6 md:h-6 fill-background" /> Click to Watch Ad & Earn {activePerAdReward} ৳
+                  <Play className="w-5 h-5 fill-background" /> Click to Watch Ad & Earn {activePerAdReward} ৳
                 </button>
               )}
             </div>
@@ -1093,7 +1093,7 @@ export default function Dashboard() {
 
               {/* Card 2: Personal Support Admin */}
               <div className="bg-cardBg border border-cardBg/50 p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between space-y-6">
-                <div className="absolute -top-10 -left-10 w-24 h-24 bg-accent/5 rounded-full blur-2xl"></div>
+                <div className="absolute -top-10 -left-10 w-24 h-24 bg-accent/5 rounded-full blur-3xl"></div>
 
                 <div className="space-y-4">
                   <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 text-accent flex items-center justify-center">
