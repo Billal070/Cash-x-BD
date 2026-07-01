@@ -7,7 +7,8 @@ import { CONFIG as ImportedConfig } from '../config';
 import { 
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
-  Menu, X, User, Phone, Mail, Award, ArrowUpRight
+  Menu, X, User, Phone, Mail, Award, ArrowUpRight,
+  HelpCircle, Send, MessageSquare // <-- এখানে আইকন ৩টি সফলভাবে যুক্ত করা হয়েছে
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
@@ -78,6 +79,27 @@ export default function Dashboard() {
   const [editUsername, setEditUsername] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [updatingProfile, setUpdatingProfile] = useState(false);
+
+  // লাইভ সুপাবেস সেটিংস টেবিল থেকে ডাটা লোড করা
+  useEffect(() => {
+    fetchLiveSettings();
+  }, []);
+
+  const fetchLiveSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('id', 'config')
+        .single();
+      if (error) throw error;
+      if (data) {
+        setDbSettings(data);
+      }
+    } catch (err) {
+      console.error('Database settings failed to load, using config.js backup:', err.message);
+    }
+  };
 
   // যদি লগইন না থাকে, তবে লগইন পেজে রিডাইরেক্ট করবে
   useEffect(() => {
@@ -154,7 +176,6 @@ export default function Dashboard() {
     }
   };
 
-  // ৫. জিনী পে (ZiniPay) পেমেন্ট তৈরি করার ফাংশন
   const handlePayment = async () => {
     setPaying(true);
     try {
@@ -183,7 +204,6 @@ export default function Dashboard() {
     }
   };
 
-  // ৬. জিনী পে পেমেন্ট ভেরিফাই করার ফাংশন
   const verifyUserPayment = async (invoiceId) => {
     setVerifyingPayment(true);
     const toastId = toast.loading(`Verifying your ${activeActivationFee}৳ payment...`);
@@ -210,7 +230,6 @@ export default function Dashboard() {
     }
   };
 
-  // ৭. বিজ্ঞাপন দেখা শুরু করার ফাংশন
   const startWatchingAd = () => {
     if (!profile.is_active) {
       setShowActivationModal(true); // ইনঅ্যাক্টিভ হলে পপআপ দেখাবে
@@ -230,7 +249,6 @@ export default function Dashboard() {
     toast.success('Ad loaded! Please do not close this dashboard tab.');
   };
 
-  // ৮. বিজ্ঞপ্তির রিওয়ার্ড যোগ করার ফাংশন
   const claimAdReward = async () => {
     const toastId = toast.loading(`Adding ${activePerAdReward}৳ reward to your balance...`);
     try {
@@ -261,7 +279,6 @@ export default function Dashboard() {
     }
   };
 
-  // ৯. উইথড্রল সাবমিট করার ফাংশন
   const handleWithdraw = async (e) => {
     e.preventDefault();
     if (!profile.is_active) {
@@ -337,7 +354,6 @@ export default function Dashboard() {
     }
   };
 
-  // প্রোফাইল এডিট/আপডেট সাবমিট করার ফাংশন
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     if (!editUsername) return toast.error('Username cannot be empty');
@@ -369,13 +385,11 @@ export default function Dashboard() {
     toast.success('Referral link copied to clipboard!');
   };
 
-  // লগআউট করার সময় মেমোরি রিমুভ করার ফাংশন
   const handleLogout = () => {
     localStorage.removeItem('cashxbd_active_tab');
     signOut();
   };
 
-  // মোবাইল মেনু বন্ধ করে ট্যাব পরিবর্তন করার জন্য হেল্পার ফাংশน
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
     setIsMobileMenuOpen(false); 
@@ -407,7 +421,7 @@ export default function Dashboard() {
     );
   }
 
-  // ১২. রিইউজেবল মিনিমাল সাইডবার প্রোফাইল কার্ড (Sidebar Profile Card Component)
+  // ১২. রিইউজেবল মিনিমাল সাইডবার প্রোফাইল কার্ড
   const renderSidebarProfileCard = () => (
     <div className="bg-background/40 border border-cardBg/60 rounded-2xl p-4 mb-6 flex items-center gap-3">
       {/* Avatar */}
@@ -431,7 +445,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background text-textLight flex flex-col md:flex-row">
       
-      {/* মোবাইল স্ক্রিনের জন্য টপ-বার (Header) */}
+      {/* মোবাইল হেডার */}
       <div className="md:hidden bg-cardBg border-b border-cardBg/50 px-5 py-4 flex items-center justify-between sticky top-0 z-40 relative">
         <button 
           onClick={() => setIsMobileMenuOpen(true)} 
@@ -451,13 +465,13 @@ export default function Dashboard() {
         <div className="w-10"></div> 
       </div>
 
-      {/* মোবাইল মেনুর জন্য ব্লার ব্যাকড্রপ ওভারলে */}
+      {/* মোবাইল ওভারলে */}
       <div 
         className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
       />
 
-      {/* মোবাইল ড্রয়ার / সাইডবার */}
+      {/* মোবাইল ড্রয়ার */}
       <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-cardBg border-r border-cardBg/50 p-6 z-50 transform transition-transform duration-300 ease-in-out md:hidden flex flex-col justify-between ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div>
           <div className="flex items-center justify-between mb-8">
@@ -655,7 +669,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* TAB 2: WATCH ADS (ইনঅ্যাক্টিভ ইউজারদের পপআপ দেখাবে) */}
+        {/* TAB 2: WATCH ADS */}
         {activeTab === 'watch-ads' && (
           <div className="space-y-6 md:space-y-8 max-w-2xl">
             <div>
@@ -743,7 +757,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* TAB 3: WITHDRAW (ইনঅ্যাক্টিভ ইউজারদের পপআপ দেখাবে) */}
+        {/* TAB 3: WITHDRAW */}
         {activeTab === 'withdraw' && (
           <div className="space-y-6 md:space-y-8">
             <div>
@@ -1144,7 +1158,7 @@ export default function Dashboard() {
                   href={activeTelegramAdmin}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <MessageSquare className="w-4 h-4" /> Contact Support Admin
                 </a>
@@ -1192,7 +1206,7 @@ export default function Dashboard() {
             </p>
 
             <div className="bg-background/50 rounded-2xl p-4 border border-cardBg text-left space-y-3 mb-6">
-              <h4 className="font-bold text-accent text-xs flex items-center gap-1.5">
+              <h4 className="font-bold text-accent text-sm flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-accent" /> Security Information:
               </h4>
               <ul className="text-[10px] text-textGray space-y-1.5 list-disc list-inside">
