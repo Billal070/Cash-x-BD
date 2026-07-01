@@ -7,10 +7,11 @@ import { CONFIG as ImportedConfig } from '../config';
 import { 
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
-  Menu, X, User, Phone, Mail, Award, ArrowUpRight
+  Menu, X, User, Phone, Mail, Award, ArrowUpRight,
+  HelpCircle, Send, MessageSquare // <-- এই তিনটি আইকন এখানে ১০০% যুক্ত আছে
 } from 'lucide-react';
 
-// গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস
+// গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
 const CONFIG = ImportedConfig || {
   siteName: "Earnova",
   logoUrl: "", 
@@ -27,13 +28,6 @@ const CONFIG = ImportedConfig || {
 const formatCurrency = (value) => {
   const num = Number(value);
   return isNaN(num) ? "0.00" : num.toFixed(2);
-};
-
-// উইকিমিডিয়া কমন্সের লাইভ এবং অফিশিয়াল স্বচ্ছ CDN লোগো লিঙ্কসমূহ (১০০% স্থায়ী ও নিরাপদ)
-const METHOD_LOGOS = {
-  bkash: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/BKash_Logo.svg/320px-BKash_Logo.svg.png",
-  nagad: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Nagad-png.png",
-  rocket: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Rocket_mobile_banking_logo.svg/320px-Rocket_mobile_banking_logo.svg.png"
 };
 
 export default function Dashboard() {
@@ -205,7 +199,7 @@ export default function Dashboard() {
 
   const verifyUserPayment = async (invoiceId) => {
     setVerifyingPayment(true);
-    const toastId = toast.loading('Verifying your payment...');
+    const toastId = toast.loading(`Verifying your ${activeActivationFee}৳ payment...`);
     try {
       const response = await fetch('/api/verify-payment', {
         method: 'POST',
@@ -876,7 +870,7 @@ export default function Dashboard() {
                   </form>
                 </div>
 
-                <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 space-y-6">
+                <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 space-y-6">
                   <h3 className="font-bold text-textLight text-sm md:text-base">Your Statistics:</h3>
                   <div className="space-y-4">
                     <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3">
@@ -1250,7 +1244,7 @@ export default function Dashboard() {
             </p>
 
             <div className="bg-background/50 rounded-2xl p-4 border border-cardBg text-left space-y-3 mb-6">
-              <h4 className="font-bold text-accent text-xs flex items-center gap-1.5">
+              <h4 className="font-bold text-accent text-sm flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-accent" /> Security Information:
               </h4>
               <ul className="text-[10px] text-textGray space-y-1.5 list-disc list-inside">
