@@ -195,10 +195,11 @@ export default function Dashboard() {
 
   // ডাটাবেজ থেকে লাইভ টাস্ক লোড করা (যদি টেবিল থাকে, নয়তো মক টাস্ক দেখাবে)
   useEffect(() => {
-    if (user && activeTab === 'overview') {
+     useEffect(() => {
+    if (user) {
       fetchLiveTasks();
-    
-   [user, activeTab]);
+    }
+  }, [user]);
 
   const fetchLiveSettings = async () => {
     try {
