@@ -30,11 +30,11 @@ const formatCurrency = (value) => {
   return isNaN(num) ? "0.00" : num.toFixed(2);
 };
 
-// উইকিমিডিয়া কমন্সের লাইভ এবং অফিশিয়াল লোগো লিঙ্কসমূহ (wsrv.nl প্রক্সি দিয়ে Anti-Hotlink সিকিউরড)
+// আপনার নিজের হোস্টিং সার্ভার থেকে সরাসরি ইমেজ লোড করা হচ্ছে (১০০% স্থায়ী ও নিরাপদ)
 const METHOD_LOGOS = {
-  bkash: "https://images.weserv.nl/?url=upload.wikimedia.org/wikipedia/commons/thumb/8/8c/BKash_Logo.svg/320px-BKash_Logo.svg.png",
-  nagad: "https://images.weserv.nl/?url=upload.wikimedia.org/wikipedia/commons/9/9e/Nagad-png.png",
-  rocket: "https://images.weserv.nl/?url=upload.wikimedia.org/wikipedia/commons/thumb/8/86/Rocket_mobile_banking_logo.svg/320px-Rocket_mobile_banking_logo.svg.png"
+  bkash: "/bkash.png",
+  nagad: "/nagad.png",
+  rocket: "/rocket.png"
 };
 
 export default function Dashboard() {
