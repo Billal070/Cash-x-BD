@@ -9,7 +9,7 @@ import {
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
   HelpCircle, Send, MessageSquare,
-  Megaphone, Download, Headphones, MousePointer2 
+  Megaphone, Download, Headphones, MousePointer2,  MousePointer2, Eye, ArrowRight 
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস
@@ -44,7 +44,113 @@ const mockTasks = [
   { id: 2, title: "Subscribe Official YouTube Channel", task_type: "ptc", reward: 10.00 },
   { id: 3, title: "Join Official Telegram Announcement Group", task_type: "ptc", reward: 8.00 }
 ];
+// ==========================================
+// NEW WATCH ADS TASK CARD COMPONENT START
+// ==========================================
+const TaskCard = ({ task, completedCount, onClaimed, user, profile, refreshProfile }) => {
+  const [watching, setWatching] = useState(false);
+  const [timerDone, setTimerDone] = useState(false);
+  const [claiming, setClaiming] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
 
+  const isLimitReached = completedCount >= task.daily_limit;
+  const progressPercent = Math.min((completedCount / task.daily_limit) * 100, 100);
+
+  useEffect(() => {
+    let interval;
+    if (watching && timeLeft > 0) {
+      interval = setInterval(() => { setTimeLeft((prev) => prev - 1); }, 1000);
+    } else if (watching && timeLeft === 0) {
+      setTimerDone(true);
+    }
+    return () => clearInterval(interval);
+  }, [watching, timeLeft]);
+
+  const handleWatch = () => {
+    window.open(task.ad_url, '_blank');
+    setWatching(true);
+    setTimeLeft(task.timer_seconds);
+  };
+
+  const handleClaim = async () => {
+    setClaiming(true);
+    try {
+      const { error: insertError } = await supabase.from('task_completions').insert({
+        user_id: user.id, task_id: task.id, reward_earned: task.reward
+      });
+      if (insertError) throw insertError;
+
+      const { error: profileError } = await supabase.from('profiles').update({
+        balance: profile.balance + task.reward,
+        total_earned: (profile.total_earned || 0) + task.reward,
+        today_earned: (profile.today_earned || 0) + task.reward,
+        updated_at: new Date().toISOString()
+      }).eq('id', user.id);
+      if (profileError) throw profileError;
+
+      toast.success(`৳${task.reward.toFixed(2)} credited to your balance!`);
+      await refreshProfile();
+      onClaimed();
+      setWatching(false);
+      setTimerDone(false);
+    } catch (err) {
+      toast.error('Failed to claim. Try again.');
+    } finally {
+      setClaiming(false);
+    }
+  };
+
+  return (
+    <div className={`bg-[#1A2332] border border-[#1E3A2F] rounded-xl p-3 md:p-4 space-y-3 transition-opacity ${isLimitReached ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className="flex justify-between items-center">
+        <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full border ${task.task_type === 'watch_ad' ? 'bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/20' : 'bg-[#FBBF24]/10 text-[#FBBF24] border-[#FBBF24]/20'}`}>
+          {task.task_type === 'watch_ad' ? 'Watch Ad' : 'PTC Task'}
+        </span>
+        <Eye className="w-4 h-4 text-[#8AA8B8]" />
+      </div>
+      <div>
+        <h3 className="font-semibold text-[#F0F6FF] text-sm md:text-base leading-snug">{task.title}</h3>
+        {task.description && <p className="text-sm text-[#8AA8B8] mt-1 line-clamp-2">{task.description}</p>}
+      </div>
+      <div className="flex items-end justify-between">
+        <span className="text-2xl font-bold text-[#FBBF24]">৳ {task.reward.toFixed(2)}</span>
+        <span className="text-xs text-[#8AA8B8] flex items-center gap-1">⏱ {task.timer_seconds}s</span>
+      </div>
+      <div className="space-y-1.5">
+        <div className="w-full h-1.5 bg-[#0D1117] rounded-full">
+          <div className="h-1.5 bg-[#22C55E] rounded-full transition-all" style={{ width: `${progressPercent}%` }}></div>
+        </div>
+        <p className="text-xs text-[#8AA8B8]">{completedCount}/{task.daily_limit} completed today</p>
+      </div>
+
+      {isLimitReached ? (
+        <div className="bg-[#8AA8B8]/10 border border-[#8AA8B8]/20 rounded-lg py-2.5 w-full text-center">
+          <span className="text-[#8AA8B8] text-sm font-medium">✅ Completed for today</span>
+        </div>
+      ) : watching ? (
+        <div className="bg-[#0D1117] border border-[#1E3A2F] rounded-xl p-4 space-y-4 text-center">
+          <p className="text-xs text-[#8AA8B8]">Keep the ad tab open...</p>
+          <div className="text-5xl md:text-6xl font-bold text-[#FBBF24]">{timeLeft}</div>
+          <p className="text-sm text-[#8AA8B8] -mt-2">seconds left</p>
+          <div className="w-full h-1.5 bg-[#0D1117] rounded-full">
+            <div className="h-1.5 bg-[#22C55E] rounded-full transition-all" style={{ width: `${((task.timer_seconds - timeLeft) / task.timer_seconds) * 100}%` }}></div>
+          </div>
+          <p className="text-xs text-[#8AA8B8]">Watching to earn ৳{task.reward.toFixed(2)}</p>
+          <button disabled={!timerDone || claiming} onClick={handleClaim} className={`w-full py-3 rounded-xl font-bold text-sm min-h-[48px] flex items-center justify-center gap-2 transition-all ${timerDone ? 'bg-[#22C55E] text-[#0D1117] hover:bg-opacity-90' : 'bg-[#1A2332] text-[#8AA8B8] cursor-not-allowed'}`}>
+            {claiming ? <div className="w-5 h-5 border-2 border-[#0D1117] border-t-transparent rounded-full animate-spin"></div> : `Claim ৳${task.reward.toFixed(2)}`}
+          </button>
+        </div>
+      ) : (
+        <button onClick={handleWatch} className="w-full py-3 bg-[#22C55E] text-[#0D1117] font-bold rounded-xl hover:bg-opacity-90 transition-all flex items-center justify-center gap-2 text-sm min-h-[48px]">
+          <Play className="w-4 h-4 fill-[#0D1117]" /> Watch & Earn
+        </button>
+      )}
+    </div>
+  );
+};
+// ==========================================
+// NEW WATCH ADS TASK CARD COMPONENT END
+// ==========================================
 export default function Dashboard() {
   const { user, profile, loading, refreshProfile, signOut } = useAuth();
   const navigate = useNavigate();
@@ -64,7 +170,7 @@ export default function Dashboard() {
   const [dbSettings, setDbSettings] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
-
+  const [taskCompletions, setTaskCompletions] = useState([]);
   // বিজ্ঞাপন স্টেটসমূহ
   const [adTimer, setAdTimer] = useState(0); 
   const [cooldown, setCooldown] = useState(0); 
@@ -110,25 +216,28 @@ export default function Dashboard() {
     }
   };
 
-  const fetchLiveTasks = async () => {
+    const fetchLiveTasks = async () => {
     setLoadingTasks(true);
     try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('is_active', true)
-        .limit(3);
+      const today = new Date().toISOString().split('T')[0];
       
-      if (error) throw error;
-      if (data && data.length > 0) {
-        setTasks(data);
-      } else {
-        setTasks(mockTasks); 
-      }
+      const [tasksRes, completionsRes] = await Promise.all([
+        supabase.from('tasks').select('*').eq('is_active', true).order('created_at'),
+        supabase.from('task_completions').select('task_id, reward_earned').eq('user_id', user.id).gte('completed_at', today)
+      ]);
+
+      if (tasksRes.error) throw tasksRes.error;
+      if (completionsRes.error) throw completionsRes.error;
+
+      setTasks(tasksRes.data.length > 0 ? tasksRes.data : mockTasks);
+      setTaskCompletions(completionsRes.data || []);
     } catch (err) {
-      console.error('Tasks table empty or missing, using fallbacks:', err.message);
-      setTasks(mockTasks); 
+      console.error('Failed to load tasks:', err.message);
+      setTasks(mockTasks);
     } finally {
+      setLoadingTasks(false);
+    }
+  };
       setLoadingTasks(false);
     }
   };
@@ -855,101 +964,81 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* TAB 2: WATCH ADS */}
+               {/* TAB 2: WATCH ADS */}
         {activeTab === 'watch-ads' && (
-          <div className="space-y-6 md:space-y-8 max-w-2xl">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-black">Ad Reward System</h1>
-              <p className="text-textGray text-xs md:text-sm">Watch organic ads and earn {activePerAdReward}৳ per view.</p>
-            </div>
+          <div className="space-y-6 md:space-y-8">
+            {(() => {
+              const countMap = {};
+              taskCompletions.forEach(c => { countMap[c.task_id] = (countMap[c.task_id] || 0) + 1; });
+              const todayEarned = taskCompletions.reduce((acc, c) => acc + (Number(c.reward_earned) || 0), 0);
+              const totalCompletedToday = Object.values(countMap).reduce((a, b) => a + b, 0);
+              const totalDailySlots = tasks.reduce((acc, t) => acc + (t.daily_limit || 0), 0);
+              const remaining = totalDailySlots - totalCompletedToday;
 
-            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
-              {!profile.is_active ? (
-                // ইনঅ্যাক্টিভ ইউজারদের লকড স্ক্রিন
-                <div className="bg-background rounded-2xl p-8 border border-cardBg text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto">
-                    <Lock className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-lg md:text-xl font-bold">Earning Feature Locked 🔒</h3>
-                  <p className="text-[#8AA8B8] text-xs max-w-sm mx-auto leading-relaxed">
-                    Account activation is required to watch daily advertisements and earn real wallet rewards.
-                  </p>
-                  <button
-                    onClick={() => setShowActivationModal(true)}
-                    className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all"
-                  >
-                    Activate Account Now
-                  </button>
-                </div>
-              ) : (
-                // অ্যাক্টিভ ইউজারদের বিজ্ঞাপন দেখার মূল কোড
+              return (
                 <>
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-xs md:text-sm font-bold text-textGray">Today's Ads limit:</span>
-                    <span className="text-sm md:text-base font-black text-primary">{profile.ads_watched_today} / 15 Completed</span>
-                  </div>
-                  <div className="w-full bg-background rounded-full h-3 overflow-hidden border border-cardBg mb-6">
-                    <div 
-                      className="bg-primary h-full transition-all duration-500" 
-                      style={{ width: `${(profile.ads_watched_today / 15) * 100}%` }}
-                    ></div>
+                  {/* TOP STATS BAR */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-[#1A2332] border border-[#1E3A2F] rounded-xl p-3 text-center">
+                      <p className="text-[#8AA8B8] text-xs mb-1">Today Earned</p>
+                      <p className="text-[#22C55E] font-bold text-base md:text-lg">৳{todayEarned.toFixed(2)}</p>
+                    </div>
+                    <div className="bg-[#1A2332] border border-[#1E3A2F] rounded-xl p-3 text-center">
+                      <p className="text-[#8AA8B8] text-xs mb-1">Ads Watched</p>
+                      <p className="text-[#F0F6FF] font-bold text-base md:text-lg">{totalCompletedToday}/{totalDailySlots}</p>
+                    </div>
+                    <div className="bg-[#1A2332] border border-[#1E3A2F] rounded-xl p-3 text-center">
+                      <p className="text-[#8AA8B8] text-xs mb-1">Remaining</p>
+                      {remaining === 0 ? (
+                        <p className="text-[#22C55E] font-bold text-base md:text-lg">Done! 🎉</p>
+                      ) : (
+                        <p className="text-[#FBBF24] font-bold text-base md:text-lg">{remaining} left</p>
+                      )}
+                    </div>
                   </div>
 
-                  {isWatching ? (
-                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-primary/20 text-center space-y-4">
-                      <div className="w-12 h-12 border-4 border-primary border-t-transparent animate-spin mx-auto"></div>
-                      <h3 className="text-lg md:text-xl font-bold">Watching Advertisement...</h3>
-                      <p className="text-textGray text-xs max-w-sm mx-auto leading-relaxed">
-                        Please do not navigate away or close this dashboard. Your reward will claim automatically in:
-                      </p>
-                      <div className="text-2xl md:text-3xl font-black text-accent flex items-center justify-center gap-1">
-                        <Clock className="w-5 h-5 animate-pulse" /> {adTimer} Seconds
-                      </div>
-                    </div>
-                  ) : cooldown > 0 ? (
-                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-[#0D1117] text-center space-y-4">
-                      <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mx-auto">
-                        <Clock className="w-6 h-6 animate-pulse" /> {adTimer} Seconds
-                      </div>
-                    </div>
-                  ) : cooldown > 0 ? (
-                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-cardBg text-center space-y-4">
-                      <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mx-auto">
-                        <Clock className="w-6 h-6" />
-                      </div>
-                      <h3 className="text-lg md:text-xl font-bold">Cooldown Active</h3>
-                      <p className="text-textGray text-xs max-w-sm mx-auto leading-relaxed">
-                        To keep organic values for our sponsors, please wait 60 seconds before watching another ad.
-                      </p>
-                      <div className="text-xl md:text-2xl font-black text-accent">
-                        Cooldown: {cooldown} Seconds
-                      </div>
-                    </div>
-                  ) : profile.ads_watched_today >= 15 ? (
-                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-primary/25 text-primary flex items-center justify-center mx-auto">
-                      <CheckCircle className="w-6 h-6" />
-                    </div>
-                  ) : profile.ads_watched_today >= 15 ? (
-                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-primary/20 text-center space-y-4">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/25 text-primary flex items-center justify-center mx-auto">
-                        <CheckCircle className="w-6 h-6" />
-                      </div>
-                      <h3 className="text-lg md:text-xl font-bold">Limit Reached!</h3>
-                      <p className="text-textGray text-xs max-w-sm mx-auto">
-                        Amazing job! You have watched all 15 ads for today. Please come back tomorrow to watch more.
-                      </p>
+                  {/* TASKS TITLE */}
+                  <div>
+                    <h2 className="text-xl font-bold text-[#F0F6FF]">Available Tasks</h2>
+                    <p className="text-sm text-[#8AA8B8]">{tasks.length} tasks available today</p>
+                  </div>
+
+                  {/* TASK CARDS GRID */}
+                  {loadingTasks ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[1, 2, 3, 4].map(i => <div key={i} className="bg-[#1A2332] border border-[#1E3A2F] rounded-xl h-48 animate-pulse"></div>)}
                     </div>
                   ) : (
-                    <button
-                      onClick={startWatchingAd}
-                      className="w-full py-4 md:py-6 bg-primary text-background text-base md:text-lg font-black rounded-2xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-3"
-                    >
-                      <Play className="w-5 h-5 fill-background" /> Click to Watch Ad & Earn {activePerAdReward} ৳
-                    </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {tasks.map(task => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          completedCount={countMap[task.id] || 0}
+                          onClaimed={fetchLiveTasks}
+                          user={user}
+                          profile={profile}
+                          refreshProfile={refreshProfile}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ALL TASKS DONE STATE */}
+                  {remaining === 0 && tasks.length > 0 && (
+                    <div className="bg-[#0A1F10] border border-[#22C55E]/30 rounded-xl p-8 text-center space-y-3 mt-6">
+                      <div className="text-4xl">🎉</div>
+                      <h3 className="text-xl font-bold text-[#F0F6FF]">All Tasks Done for Today!</h3>
+                      <p className="text-[#22C55E] font-semibold">You earned ৳{todayEarned.toFixed(2)} today</p>
+                      <p className="text-sm text-[#8AA8B8]">New tasks available tomorrow.<br/>Come back to earn more!</p>
+                      <button onClick={() => setActiveTab('overview')} className="mt-4 px-6 py-2.5 border border-[#22C55E]/50 text-[#22C55E] rounded-xl font-bold text-sm hover:bg-[#22C55E]/10 transition-all">
+                        Go to Dashboard <ArrowRight className="inline w-4 h-4 ml-1" />
+                      </button>
+                    </div>
                   )}
                 </>
-              )}
-            </div>
+              );
+            })()}
           </div>
         )}
 
