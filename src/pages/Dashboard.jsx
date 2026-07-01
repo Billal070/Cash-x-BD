@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
-import { CONFIG } from '../config'; // সেন্ট্রাল কনফিগারেশন ইম্পোর্ট করা হলো
+import { CONFIG } from '../config'; 
 import { 
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
@@ -203,7 +203,7 @@ export default function Dashboard() {
     }
   };
 
-  // ७. বিজ্ঞাপন দেখা শুরু করার ফাংশন
+  // ৭. বিজ্ঞাপন দেখা শুরু করার ফাংশন
   const startWatchingAd = () => {
     if (profile.ads_watched_today >= 15) {
       return toast.error('You have reached the daily limit of 15 Ads!');
@@ -366,28 +366,28 @@ export default function Dashboard() {
     setIsMobileMenuOpen(false); 
   };
 
-  // লাইভ অথবা ব্যাকআপ সেটিংস নির্ধারণ (Fallbacks)
-  const activeActivationFee = dbSettings ? Number(dbSettings.activation_fee) : CONFIG.activationFee;
-  const activePerAdReward = dbSettings ? Number(dbSettings.per_ad_reward) : CONFIG.perAdReward;
-  const activeReferralBonus = dbSettings ? Number(dbSettings.referral_bonus) : CONFIG.referralBonus;
-  const activeAdsterraLink = dbSettings ? dbSettings.adsterra_link : CONFIG.adsterraLink;
-  const activeTelegramChannel = dbSettings ? dbSettings.telegram_channel : CONFIG.telegramLink;
+  // লাইভ অথবা ব্যাকআপ সেটিংস নির্ধারণ (Fallbacks with absolute safety checks)
+  const activeActivationFee = dbSettings ? Number(dbSettings.activation_fee) : (CONFIG?.activationFee || 150);
+  const activePerAdReward = dbSettings ? Number(dbSettings.per_ad_reward) : (CONFIG?.perAdReward || 5);
+  const activeReferralBonus = dbSettings ? Number(dbSettings.referral_bonus) : (CONFIG?.referralBonus || 30);
+  const activeAdsterraLink = dbSettings ? dbSettings.adsterra_link : (CONFIG?.adsterraLink || "https://www.example.com");
+  const activeTelegramChannel = dbSettings ? dbSettings.telegram_channel : (CONFIG?.telegramLink || "https://t.me/your_channel");
   const activeTelegramAdmin = dbSettings ? dbSettings.telegram_admin : "https://t.me/your_admin";
 
-  const activeMinWithdrawFirst = CONFIG.minWithdrawFirst;
-  const activeMinWithdrawSubsequent = CONFIG.minWithdrawSubsequent;
+  const activeMinWithdrawFirst = CONFIG?.minWithdrawFirst || 75;
+  const activeMinWithdrawSubsequent = CONFIG?.minWithdrawSubsequent || 200;
 
   // গাণিতিক পরিসংখ্যান ক্যালকুলেট করার ফাংশন
   const totalLifetimeIncome = profile ? profile.balance + profile.total_withdrawn : 0;
   const referralEarnings = profile ? profile.referral_count * activeReferralBonus : 0;
   const adsEarnings = totalLifetimeIncome - referralEarnings > 0 ? totalLifetimeIncome - referralEarnings : 0;
 
-  // লোডিং স্ক্রিন (Earnova দিয়ে পরিবর্তন করা হয়েছে)
+  // লোডিং স্ক্রিন
   if (loading || !profile) {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-center items-center">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-textGray font-semibold">Loading {CONFIG.siteName} Dashboard...</p>
+        <p className="mt-4 text-textGray font-semibold">Loading {CONFIG?.siteName || "Earnova"} Dashboard...</p>
       </div>
     );
   }
@@ -400,10 +400,10 @@ export default function Dashboard() {
           <div className="absolute -top-10 -left-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
 
-          {CONFIG.logoUrl ? (
-            <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-16 w-auto mx-auto mb-4 object-contain" />
+          {CONFIG?.logoUrl ? (
+            <img src={CONFIG.logoUrl} alt={CONFIG?.siteName || "Earnova"} className="h-16 w-auto mx-auto mb-4 object-contain" />
           ) : (
-            <span className="text-4xl font-extrabold text-primary mb-2 block">{CONFIG.siteName}</span>
+            <span className="text-4xl font-extrabold text-primary mb-2 block">{CONFIG?.siteName || "Earnova"}</span>
           )}
           
           <div className="w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto mb-6">
@@ -458,11 +458,11 @@ export default function Dashboard() {
           <Menu className="w-6 h-6" />
         </button>
 
-        {CONFIG.logoUrl ? (
-          <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-11 w-auto absolute left-1/2 -translate-x-1/2 object-contain" />
+        {CONFIG?.logoUrl ? (
+          <img src={CONFIG.logoUrl} alt={CONFIG?.siteName || "Earnova"} className="h-11 w-auto absolute left-1/2 -translate-x-1/2 object-contain" />
         ) : (
           <span className="text-xl font-black text-primary absolute left-1/2 -translate-x-1/2 pointer-events-none select-none">
-            🟢 {CONFIG.siteName}
+            🟢 {CONFIG?.siteName || "Earnova"}
           </span>
         )}
 
@@ -479,10 +479,10 @@ export default function Dashboard() {
       <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-cardBg border-r border-cardBg/50 p-6 z-50 transform transition-transform duration-300 ease-in-out md:hidden flex flex-col justify-between ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div>
           <div className="flex items-center justify-between mb-8">
-            {CONFIG.logoUrl ? (
-              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-12 w-auto object-contain" />
+            {CONFIG?.logoUrl ? (
+              <img src={CONFIG.logoUrl} alt={CONFIG?.siteName || "Earnova"} className="h-12 w-auto object-contain" />
             ) : (
-              <span className="text-xl font-black text-primary">🟢 {CONFIG.siteName}</span>
+              <span className="text-xl font-black text-primary">🟢 {CONFIG?.siteName || "Earnova"}</span>
             )}
             <button 
               onClick={() => setIsMobileMenuOpen(false)} 
@@ -544,10 +544,10 @@ export default function Dashboard() {
       <aside className="hidden md:flex w-64 bg-cardBg border-r border-cardBg/50 flex-col justify-between p-6 shrink-0">
         <div>
           <div className="mb-10 text-left">
-            {CONFIG.logoUrl ? (
-              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-11 w-auto mb-2 object-contain" />
+            {CONFIG?.logoUrl ? (
+              <img src={CONFIG.logoUrl} alt={CONFIG?.siteName || "Earnova"} className="h-11 w-auto mb-2 object-contain" />
             ) : (
-              <span className="text-2xl font-black text-primary">🟢 {CONFIG.siteName}</span>
+              <span className="text-2xl font-black text-primary">🟢 {CONFIG?.siteName || "Earnova"}</span>
             )}
             <div className="mt-2 text-xs text-textGray font-semibold bg-primary/10 border border-primary/25 rounded-full px-3 py-1 max-w-max">
               🟢 Active Profile
