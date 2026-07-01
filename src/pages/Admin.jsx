@@ -54,7 +54,8 @@ export default function Admin() {
     per_ad_reward: 5,
     activation_fee: 150,
     announcement_text: '' // ডাটাবেজ থেকে নোটিশ রিড করার জন্য যুক্ত করা হলো
-  });
+  });    daily_ad_limit: 15,
+    ad_timer_seconds: 15,
   const [savingSettings, setSavingSettings] = useState(false);
 
   // ১. অ্যাডমিন সিকিউরিটি গেটওয়ে চেক
@@ -271,7 +272,8 @@ export default function Admin() {
           per_ad_reward: Number(settings.per_ad_reward),
           activation_fee: Number(settings.activation_fee),
           announcement_text: settings.announcement_text // নোটিশ ডাটাবেজে সেভ করার লাইন
-        })
+        })          daily_ad_limit: Number(settings.daily_ad_limit),
+          ad_timer_seconds: Number(settings.ad_timer_seconds),
         .eq('id', 'config');
 
       if (error) throw error;
@@ -672,6 +674,29 @@ export default function Admin() {
                       required
                       value={settings.referral_bonus}
                       onChange={(e) => setSettings({ ...settings, referral_bonus: e.target.value })}
+                      className="w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+                {/* Daily Ad Control */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-bold text-textGray mb-2">Daily Ad Limit (How many ads/day)</label>
+                    <input
+                      type="number"
+                      required
+                      value={settings.daily_ad_limit}
+                      onChange={(e) => setSettings({ ...settings, daily_ad_limit: e.target.value })}
+                      className="w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-textGray mb-2">Ad Timer (Seconds)</label>
+                    <input
+                      type="number"
+                      required
+                      value={settings.ad_timer_seconds}
+                      onChange={(e) => setSettings({ ...settings, ad_timer_seconds: e.target.value })}
                       className="w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
                     />
                   </div>
