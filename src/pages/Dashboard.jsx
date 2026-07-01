@@ -9,7 +9,7 @@ import {
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
   HelpCircle, Send, MessageSquare,
-  Megaphone, Download, Headphones, MousePointer2 // সকল নতুন আইকন সঠিকভাবে ইম্পোর্ট করা হলো
+  Megaphone, Download, Headphones, MousePointer2 
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
@@ -65,7 +65,7 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
 
-  // বিজ্ঞাপন স্টেটসমূহ (সফলভাবে পুনরায় যুক্ত করা হলো)
+  // বিজ্ঞাপন স্টেটসমূহ
   const [adTimer, setAdTimer] = useState(0); 
   const [cooldown, setCooldown] = useState(0); 
   const [isWatching, setIsWatching] = useState(false);
@@ -590,7 +590,7 @@ export default function Dashboard() {
         >
           <LogOut className="w-5 h-5" /> Sign Out
         </button>
-      </</aside>
+      </aside>
 
       {/* ডেস্কটপ সাইডবার */}
       <aside className="hidden md:flex w-64 bg-cardBg border-r border-cardBg/50 flex-col justify-between p-6 shrink-0">
@@ -879,7 +879,7 @@ export default function Dashboard() {
                   </button>
                 </div>
               ) : (
-                // অ্যাক্টিভ ইউজারদের বিজ্ঞাপন দেখার মূল কোড
+                // অ্যাক্টিভ ইউজারদের বিজ্ঞাপন দেখার মূল কোড (সংশোধিত ও বাগমুক্ত)
                 <>
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-xs md:text-sm font-bold text-textGray">Today's Ads limit:</span>
@@ -960,13 +960,13 @@ export default function Dashboard() {
                 </p>
                 <button
                   onClick={() => setShowActivationModal(true)}
-                  className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/20 transition-all"
+                  className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all"
                 >
                   Activate Account Now
                 </button>
               </div>
             ) : (
-              //্যাক্টিভ ইউজারদের উইথড্রল ফর্ম
+              // অ্যাক্টিভ ইউজারদের উইথড্রল ফর্ম
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                 <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 lg:col-span-2">
                   <form onSubmit={handleWithdraw} className="space-y-6">
@@ -983,7 +983,7 @@ export default function Dashboard() {
                             className={`py-4 px-2 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 ${
                               wdMethod === method 
                                 ? 'border-primary bg-primary/5 text-textLight shadow-[0_0_15px_rgba(34,197,94,0.15)] scale-[1.02]' 
-                                : 'bg-background border-cardBg text-textGray hover:border-textGray/30 hover:text-textLight'
+                                : 'bg-background border-cardBg text-[#8AA8B8] hover:border-textGray/30 hover:text-textLight'
                             }`}
                           >
                             <img 
@@ -1290,7 +1290,7 @@ export default function Dashboard() {
                           required
                           value={editPhone}
                           onChange={(e) => setEditPhone(e.target.value.replace(/[^0-9]/g, ''))}
-                          className="w-full px-4 py-2.5 bg-background border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
+                          className="w-full px-4 py-2.5 bg-[#0D1117] border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
                         />
                       </div>
                     </div>
@@ -1365,7 +1365,7 @@ export default function Dashboard() {
                   href={activeTelegramAdmin}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <MessageSquare className="w-4 h-4" /> Contact Support Admin
                 </a>
