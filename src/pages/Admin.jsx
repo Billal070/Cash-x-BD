@@ -54,7 +54,8 @@ export default function Admin() {
     per_ad_reward: 5,
     activation_fee: 150,
     announcement_text: '' // ডাটাবেজ থেকে নোটিশ রিড করার জন্য যুক্ত করা হলো
-  });    daily_ad_limit: 15,
+  });    
+  daily_ad_limit: 15,
     ad_timer_seconds: 15,
   const [savingSettings, setSavingSettings] = useState(false);
 
