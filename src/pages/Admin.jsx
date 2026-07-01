@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { CONFIG as ImportedConfig } from '../config'; 
+import { toast } from 'react-hot-toast';
 import { 
   LayoutDashboard, Users, ArrowDownToLine, Settings, LogOut,
   Search, Check, X, Plus, ShieldAlert, Landmark, ShieldCheck,
@@ -23,6 +24,7 @@ export default function Admin() {
   const { user, profile, loading, signOut } = useAuth();
   const navigate = useNavigate();
 
+  // অ্যাডমিন ড্যাশবোর্ড স্টেটসমূহ
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -31,16 +33,19 @@ export default function Admin() {
     totalPaid: 0
   });
 
+  // ইউজার ম্যানেজমেন্ট স্টেটসমূহ
   const [usersList, setUsersList] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [balanceModal, setBalanceModal] = useState(null); 
   const [adjustAmount, setAdjustAmount] = useState('');
 
+  // উইথড্রল ম্যানেজমেন্ট স্টেটসমূহ
   const [withdrawals, setWithdrawals] = useState([]);
   const [loadingWd, setLoadingWd] = useState(false);
   const [wdFilter, setWdFilter] = useState('pending'); 
 
+  // সিস্টেম সেটিংস স্টেটসমূহ
   const [settings, setSettings] = useState({
     telegram_channel: '',
     telegram_admin: '',
@@ -51,12 +56,14 @@ export default function Admin() {
   });
   const [savingSettings, setSavingSettings] = useState(false);
 
+  // ১. অ্যাডমিন সিকিউরিটি গেটওয়ে চেক
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
     }
   }, [user, loading, navigate]);
 
+  // ড্যাশবোর্ড ট্যাব পরিবর্তন হলে ডাটা লোড করা
   useEffect(() => {
     if (user && profile?.is_admin) {
       if (activeTab === 'overview') fetchStats();
@@ -66,6 +73,7 @@ export default function Admin() {
     }
   }, [user, profile, activeTab, wdFilter]);
 
+  // ২. ওভারভিউ স্ট্যাটস লোড করা
   const fetchStats = async () => {
     try {
       const { count: total, error: err1 } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
@@ -88,6 +96,7 @@ export default function Admin() {
     }
   };
 
+  // ৩. ইউজার তালিকা লোড করা ও সার্চ করা
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
@@ -107,8 +116,9 @@ export default function Admin() {
     }
   };
 
+  // ৪. ডাইনামিক স্লাইডিং টগল বাটন ফাংশন
   const toggleUserActive = async (userId, currentStatus) => {
-    const toastId = toast.loading('Updating user status...');
+    const toastId = toast.loading('Updating account status...');
     try {
       const { error } = await supabase
         .from('profiles')
@@ -117,13 +127,14 @@ export default function Admin() {
 
       if (error) throw error;
 
-      toast.success('User status updated! 🟢', { id: toastId });
+      toast.success(!currentStatus ? 'User Activated! 🟢' : 'User Deactivated! 🔴', { id: toastId });
       fetchUsers();
     } catch (err) {
       toast.error('Failed to update status', { id: toastId });
     }
   };
 
+  // ৫. ম্যানুয়ালি ব্যালেন্স অ্যাড/মাইনাস করার ফাংশন
   const handleAdjustBalance = async (isAdd) => {
     const amount = Number(adjustAmount);
     if (!amount || amount <= 0) return toast.error('Enter a valid amount');
@@ -153,13 +164,14 @@ export default function Admin() {
     }
   };
 
+  // ৬. উইথড্রল তালিকা লোড করা (profiles:user_id দিয়ে জয়েন সুরক্ষিত করা হয়েছে)
   const fetchWithdrawals = async () => {
     setLoadingWd(true);
     setWithdrawals([]); 
     try {
       const { data, error } = await supabase
         .from('withdrawals')
-        .select('*, profiles(username, email)')
+        .select('*, profiles:user_id(username, email)')
         .eq('status', wdFilter) 
         .order('created_at', { ascending: false });
 
@@ -172,6 +184,7 @@ export default function Admin() {
     }
   };
 
+  // ৭. উইথড্রল অ্যাপ্রুভ করার ফাংশন
   const handleApproveWithdrawal = async (id) => {
     const toastId = toast.loading('Approving withdrawal...');
     try {
@@ -189,6 +202,7 @@ export default function Admin() {
     }
   };
 
+  // ৮. উইথড্রল রিজেক্ট করার ফাংশন
   const handleRejectWithdrawal = async (wd) => {
     const toastId = toast.loading('Rejecting and refunding user...');
     try {
@@ -225,6 +239,7 @@ export default function Admin() {
     }
   };
 
+  // ৯. সেটিংস লোড করা
   const fetchSettings = async () => {
     try {
       const { data, error } = await supabase
@@ -239,6 +254,7 @@ export default function Admin() {
     }
   };
 
+  // ১০. সেটিংস ড্যাশবোর্ড থেকে সেভ করার ফাংশন
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     setSavingSettings(true);
@@ -451,17 +467,21 @@ export default function Admin() {
                           <td className="py-3 text-primary font-bold">৳ {formatCurrency(usr.balance)}</td>
                           <td className="py-3 font-medium text-accent">{usr.referral_count} Users</td>
                           <td className="py-3">
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${usr.is_active ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
-                              {usr.is_active ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
-                          <td className="py-3 text-right space-x-2">
+                            {/* iOS-style প্রফেশনাল স্লাইডিং টগল বাটন */}
                             <button
                               onClick={() => toggleUserActive(usr.id, usr.is_active)}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${usr.is_active ? 'bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-textLight' : 'bg-primary/10 text-primary hover:bg-primary hover:text-background'}`}
+                              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                usr.is_active ? 'bg-primary' : 'bg-red-500/30'
+                              }`}
                             >
-                              {usr.is_active ? 'Deactivate' : 'Activate'}
+                              <span
+                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-textLight shadow ring-0 transition duration-200 ease-in-out ${
+                                  usr.is_active ? 'translate-x-5' : 'translate-x-0'
+                                }`}
+                              />
                             </button>
+                          </td>
+                          <td className="py-3 text-right">
                             <button
                               onClick={() => setBalanceModal({ userId: usr.id, username: usr.username, currentBalance: usr.balance })}
                               className="px-3 py-1.5 bg-accent/10 text-accent hover:bg-accent hover:text-background rounded-lg text-xs font-bold transition-all"
@@ -503,13 +523,13 @@ export default function Admin() {
                     <div className="grid grid-cols-2 gap-4">
                       <button
                         onClick={() => handleAdjustBalance(true)}
-                        className="py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-primary/15"
+                        className="py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/15"
                       >
                         <Plus className="w-4 h-4" /> Add Balance
                       </button>
                       <button
                         onClick={() => handleAdjustBalance(false)}
-                        className="py-3 bg-red-500 text-textLight font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-red-500/15"
+                        className="py-3 bg-red-500 text-textLight font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-red-500/15"
                       >
                         <X className="w-4 h-4" /> Subtract Balance
                       </button>
