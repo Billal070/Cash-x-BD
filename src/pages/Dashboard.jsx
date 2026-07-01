@@ -8,7 +8,8 @@ import {
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
-  HelpCircle, Send, MessageSquare 
+  HelpCircle, Send, MessageSquare,
+  Megaphone, Download, Headphones, MousePointer2 // নতুন আইকনসমূহ ইম্পোর্ট করা হলো
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
@@ -30,12 +31,19 @@ const formatCurrency = (value) => {
   return isNaN(num) ? "0.00" : num.toFixed(2);
 };
 
-// আপনার নিজের হোস্টিং সার্ভার (public ফোল্ডার) থেকে সরাসরি ইমেজ লোড করা হচ্ছে (১০০% স্থায়ী ও নিরাপদ)
+// উইকিমিডিয়া কমন্সের লাইভ এবং অফিশিয়াল স্বচ্ছ CDN লোগো লিঙ্কসমূহ
 const METHOD_LOGOS = {
-  bkash: "/bkash.png",
-  nagad: "/nagad.png",
-  rocket: "/rocket.png"
+  bkash: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/BKash_Logo.svg/320px-BKash_Logo.svg.png",
+  nagad: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Nagad-png.png",
+  rocket: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Rocket_mobile_banking_logo.svg/320px-Rocket_mobile_banking_logo.svg.png"
 };
+
+// ডাটাবেজ খালি বা টেবিল অনুপস্থিত থাকলে টেস্টিং করার জন্য ডামি ফ্যালব্যাক টাস্ক
+const mockTasks = [
+  { id: 1, title: "Watch Earnova Video Ad 1", task_type: "watch_ad", reward: 5.00 },
+  { id: 2, title: "Subscribe Official YouTube Channel", task_type: "ptc", reward: 10.00 },
+  { id: 3, title: "Join Official Telegram Announcement Group", task_type: "ptc", reward: 8.00 }
+];
 
 export default function Dashboard() {
   const { user, profile, loading, refreshProfile, signOut } = useAuth();
@@ -47,26 +55,15 @@ export default function Dashboard() {
     return localStorage.getItem('cashxbd_active_tab') || 'overview';
   });
 
-  // মোবাইল মেনু এবং অ্যাক্টিভেশন পপআপ কন্ট্রোল স্টেট
+  // মোবাইল মেনু, অ্যাক্টিভেশন পপআপ এবং নতুন অ্যানাউন্সমেন্ট কন্ট্রোল স্টেট
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showActivationModal, setShowActivationModal] = useState(false);
+  const [showAnnouncement, setShowAnnouncement] = useState(true);
 
-  // লাইভ সেটিংস ডাটাবেজ থেকে লোড করার স্টেট
+  // লাইভ সেটিংস ও টাস্ক লোড করার স্টেট
   const [dbSettings, setDbSettings] = useState(null);
-
-  // ট্যাব পরিবর্তন হলে তা ব্রাউজার মেমোরিতে সেভ করে রাখা
-  useEffect(() => {
-    localStorage.setItem('cashxbd_active_tab', activeTab);
-  }, [activeTab]);
-
-  // পেমেন্ট ভেরিফিকেশন স্টেট
-  const [verifyingPayment, setVerifyingPayment] = useState(false);
-  const [paying, setPaying] = useState(false);
-
-  // বিজ্ঞাপন স্টেটসমূহ
-  const [adTimer, setAdTimer] = useState(0); 
-  const [cooldown, setCooldown] = useState(0); 
-  const [isWatching, setIsWatching] = useState(false);
+  const [tasks, setTasks] = useState([]);
+  const [loadingTasks, setLoadingTasks] = useState(true);
 
   // উইথড্রল স্টেটসমূহ
   const [wdMethod, setWdMethod] = useState('bkash');
@@ -85,6 +82,13 @@ export default function Dashboard() {
     fetchLiveSettings();
   }, []);
 
+  // ডাটাবেজ থেকে লাইভ টাস্ক লোড করা (যদি টেবিল থাকে, নয়তো মক টাস্ক দেখাবে)
+  useEffect(() => {
+    if (user && activeTab === 'overview') {
+      fetchLiveTasks();
+    }
+  }, [user, activeTab]);
+
   const fetchLiveSettings = async () => {
     try {
       const { data, error } = await supabase
@@ -98,6 +102,29 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error('Database settings failed to load, using config.js backup:', err.message);
+    }
+  };
+
+  const fetchLiveTasks = async () => {
+    setLoadingTasks(true);
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('is_active', true)
+        .limit(3);
+      
+      if (error) throw error;
+      if (data && data.length > 0) {
+        setTasks(data);
+      } else {
+        setTasks(mockTasks); // ফ্যালব্যাক
+      }
+    } catch (err) {
+      console.error('Tasks table empty or missing, using fallbacks:', err.message);
+      setTasks(mockTasks); // সুরক্ষিত ব্যাকআপ লোড
+    } finally {
+      setLoadingTasks(false);
     }
   };
 
@@ -432,7 +459,7 @@ export default function Dashboard() {
       {/* User info lists */}
       <div className="w-full">
         <h4 className="text-sm font-extrabold text-textLight truncate capitalize">@{profile?.username || 'user'}</h4>
-        <p className="text-[10px] text-textGray font-semibold mb-2">{profile?.phone || 'No Phone'}</p>
+        <p className="text-[10px] text-[#8AA8B8] font-semibold mb-2">{profile?.phone || 'No Phone'}</p>
         
         {/* জ্বলজ্বলে অন/অফ ডট (Glowing Pulse Animation) */}
         <div className="flex items-center justify-center gap-2 mb-3">
@@ -488,7 +515,7 @@ export default function Dashboard() {
 
       {/* মোবাইল ওভারলে */}
       <div 
-        className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-50 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-45 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
       />
 
@@ -515,37 +542,37 @@ export default function Dashboard() {
           <nav className="space-y-2">
             <button
               onClick={() => handleTabChange('overview')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'overview' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'overview' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
               <LayoutDashboard className="w-5 h-5" /> Dashboard
             </button>
             <button
               onClick={() => handleTabChange('watch-ads')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
               <Play className="w-5 h-5" /> Watch Ads
             </button>
             <button
               onClick={() => handleTabChange('withdraw')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
               <ArrowDownToLine className="w-5 h-5" /> Withdraw
             </button>
             <button
               onClick={() => handleTabChange('referrals')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
               <Users className="w-5 h-5" /> Referrals
             </button>
             <button
               onClick={() => handleTabChange('profile-details')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'profile-details' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'profile-details' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
               <User className="w-5 h-5" /> Profile
             </button>
             <button
               onClick={() => handleTabChange('support-page')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'support-page' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'support-page' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
               <HelpCircle className="w-5 h-5" /> Support
             </button>
@@ -563,15 +590,12 @@ export default function Dashboard() {
       {/* ডেস্কটপ সাইডবার */}
       <aside className="hidden md:flex w-64 bg-cardBg border-r border-cardBg/50 flex-col justify-between p-6 shrink-0">
         <div>
-          <div className="mb-10 text-left">
+          <div className="mb-8 text-left">
             {CONFIG?.logoUrl ? (
               <img src={CONFIG.logoUrl} alt={CONFIG?.siteName || "Earnova"} className="h-11 w-auto mb-2 object-contain" />
             ) : (
               <span className="text-2xl font-black text-primary">🟢 {CONFIG?.siteName || "Earnova"}</span>
             )}
-            <div className="mt-2 text-xs text-textGray font-semibold bg-primary/10 border border-primary/25 rounded-full px-3 py-1 max-w-max">
-              🟢 Active Profile
-            </div>
           </div>
 
           {/* ডেস্কটপ প্রোফাইল কার্ড */}
@@ -580,37 +604,37 @@ export default function Dashboard() {
           <nav className="space-y-2">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'overview' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'overview' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
               <LayoutDashboard className="w-5 h-5" /> Dashboard
             </button>
             <button
               onClick={() => setActiveTab('watch-ads')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
               <Play className="w-5 h-5" /> Watch Ads
             </button>
             <button
               onClick={() => setActiveTab('withdraw')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
               <ArrowDownToLine className="w-5 h-5" /> Withdraw
             </button>
             <button
               onClick={() => setActiveTab('referrals')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
               <Users className="w-5 h-5" /> Referrals
             </button>
             <button
               onClick={() => setActiveTab('profile-details')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'profile-details' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'profile-details' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
               <User className="w-5 h-5" /> Profile
             </button>
             <button
               onClick={() => setActiveTab('support-page')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'support-page' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'support-page' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
               <HelpCircle className="w-5 h-5" /> Support
             </button>
@@ -631,9 +655,29 @@ export default function Dashboard() {
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="space-y-6 md:space-y-8">
+            
+            {/* ১. ডিসমিসিবল অ্যানাউন্সমেন্ট বার (Megaphone Icon সহ) */}
+            {showAnnouncement && (
+              <div className="bg-[#FBBF24]/10 border border-[#FBBF24]/30 rounded-xl px-3 py-3 sm:px-4 flex items-center justify-between gap-3 text-left">
+                <div className="flex items-center gap-2">
+                  <Megaphone className="text-[#FBBF24] shrink-0" size={18} />
+                  <p className="text-[#FBBF24] text-xs sm:text-sm font-medium">
+                    🎉 New tasks available! Complete all tasks today and earn bonus rewards.
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setShowAnnouncement(false)} 
+                  className="text-[#FBBF24]/60 hover:text-[#FBBF24] transition-colors focus:outline-none"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            )}
+
+            {/* ২. স্বাগত হেডার */}
             <div>
               <h1 className="text-2xl md:text-3xl font-black">Welcome Back, {profile.username}!</h1>
-              <p className="text-textGray text-xs md:text-sm">Monitor your earnings and complete tasks to cash out.</p>
+              <p className="text-[#8AA8B8] text-xs md:text-sm">Monitor your earnings and complete tasks to cash out.</p>
             </div>
 
             {/* Inactive Alert Box */}
@@ -655,13 +699,13 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Cards Grid */}
+            {/* ৩, ৪, ৫. Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
               <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 rounded-2xl relative overflow-hidden">
                 <div className="absolute right-4 top-4 text-primary bg-primary/10 p-2 rounded-xl">
                   <Landmark className="w-6 h-6" />
                 </div>
-                <h3 className="text-sm font-bold text-textGray mb-1">Current Balance</h3>
+                <h3 className="text-sm font-bold text-[#8AA8B8] mb-1">Current Balance</h3>
                 <p className="text-2xl md:text-3xl font-black text-primary">৳ {formatCurrency(profile.balance)}</p>
                 <button onClick={() => setActiveTab('withdraw')} className="mt-4 text-xs font-bold text-accent hover:underline flex items-center gap-1">
                   Go to Withdraw <ArrowDownToLine className="w-3.5 h-3.5" />
@@ -672,7 +716,7 @@ export default function Dashboard() {
                 <div className="absolute right-4 top-4 text-accent bg-accent/10 p-2 rounded-xl">
                   <Users className="w-6 h-6" />
                 </div>
-                <h3 className="text-sm font-bold text-textGray mb-1">Total Referrals</h3>
+                <h3 className="text-sm font-bold text-[#8AA8B8] mb-1">Total Referrals</h3>
                 <p className="text-2xl md:text-3xl font-black text-accent">{profile.referral_count} Users</p>
                 <button onClick={() => setActiveTab('referrals')} className="mt-4 text-xs font-bold text-primary hover:underline flex items-center gap-1">
                   View Referrals <Users className="w-3.5 h-3.5" />
@@ -683,12 +727,122 @@ export default function Dashboard() {
                 <div className="absolute right-4 top-4 text-textLight bg-textLight/10 p-2 rounded-xl">
                   <Play className="w-6 h-6" />
                 </div>
-                <h3 className="text-sm font-bold text-textGray mb-1">Today's Ads completed</h3>
+                <h3 className="text-sm font-bold text-[#8AA8B8] mb-1">Today's Ads completed</h3>
                 <p className="text-2xl md:text-3xl font-black text-textLight">{profile.ads_watched_today} / 15</p>
                 <button onClick={() => setActiveTab('watch-ads')} className="mt-4 text-xs font-bold text-accent hover:underline flex items-center gap-1">
                   Watch Ads <Play className="w-3.5 h-3.5" />
                 </button>
               </div>
+            </div>
+
+            {/* ৬. Quick Action Buttons (NEW) */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-[#F0F6FF] text-sm md:text-base">Quick Actions</h3>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {/* Button 1: Watch Ads */}
+                <div 
+                  onClick={() => setActiveTab('watch-ads')}
+                  className="bg-[#1A2332] border border-[#1E3A2F]/60 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#22C55E]/50 hover:bg-[#1E3A2F]/30 transition-all cursor-pointer text-center min-h-[90px]"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#22C55E]/10 flex items-center justify-center text-[#22C55E]">
+                    <Play className="w-5 h-5 fill-[#22C55E]" />
+                  </div>
+                  <span className="font-semibold text-[#F0F6FF] text-xs sm:text-sm">Watch Ads</span>
+                  <span className="text-[10px] md:text-xs text-[#8AA8B8]">Earn per ad</span>
+                </div>
+
+                {/* Button 2: Withdraw */}
+                <div 
+                  onClick={() => setActiveTab('withdraw')}
+                  className="bg-[#1A2332] border border-[#1E3A2F]/60 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#22C55E]/50 hover:bg-[#1E3A2F]/30 transition-all cursor-pointer text-center min-h-[90px]"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#FBBF24]/10 flex items-center justify-center text-[#FBBF24]">
+                    <Download className="w-5 h-5" />
+                  </div>
+                  <span className="font-semibold text-[#F0F6FF] text-xs sm:text-sm">Withdraw</span>
+                  <span className="text-[10px] md:text-xs text-[#8AA8B8]">Cash out now</span>
+                </div>
+
+                {/* Button 3: Refer & Earn */}
+                <div 
+                  onClick={() => setActiveTab('referrals')}
+                  className="bg-[#1A2332] border border-[#1E3A2F]/60 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#22C55E]/50 hover:bg-[#1E3A2F]/30 transition-all cursor-pointer text-center min-h-[90px]"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#22C55E]/10 flex items-center justify-center text-[#22C55E]">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <span className="font-semibold text-[#F0F6FF] text-xs sm:text-sm">Refer & Earn</span>
+                  <span className="text-[10px] md:text-xs text-[#8AA8B8]">Invite friends</span>
+                </div>
+
+                {/* Button 4: Support */}
+                <div 
+                  onClick={() => setActiveTab('support-page')}
+                  className="bg-[#1A2332] border border-[#1E3A2F]/60 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#22C55E]/50 hover:bg-[#1E3A2F]/30 transition-all cursor-pointer text-center min-h-[90px]"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#8AA8B8]/10 flex items-center justify-center text-[#8AA8B8]">
+                    <Headphones className="w-5 h-5" />
+                  </div>
+                  <span className="font-semibold text-[#F0F6FF] text-xs sm:text-sm">Support</span>
+                  <span className="text-[10px] md:text-xs text-[#8AA8B8]">Get help</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 7. Available Tasks preview (NEW) */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="font-bold text-[#F0F6FF] text-sm md:text-base">Available Tasks</h3>
+                <button 
+                  onClick={() => setActiveTab('watch-ads')}
+                  className="text-[#22C55E] hover:underline text-xs md:text-sm font-semibold flex items-center gap-0.5 focus:outline-none"
+                >
+                  See All →
+                </button>
+              </div>
+
+              {loadingTasks ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse bg-[#1A2332] h-14 rounded-xl border border-[#1E3A2F]/40"></div>
+                  ))}
+                </div>
+              ) : tasks.length === 0 ? (
+                <div className="bg-[#1A2332] border border-[#1E3A2F]/40 p-6 rounded-2xl text-center">
+                  <p className="text-[#8AA8B8] text-xs md:text-sm font-semibold">No tasks right now. Check back soon!</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {tasks.map((task) => (
+                    <div 
+                      key={task.id}
+                      className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl px-4 py-3 flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${task.task_type === 'watch_ad' ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#FBBF24]/10 text-[#FBBF24]'}`}>
+                          {task.task_type === 'watch_ad' ? <Play className="w-4 h-4 fill-current" /> : <MousePointer2 className="w-4 h-4" />}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-semibold text-[#F0F6FF] text-xs sm:text-sm truncate">{task.title}</h4>
+                          <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] uppercase font-black tracking-wider mt-1 ${task.task_type === 'watch_ad' ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#FBBF24]/10 text-[#FBBF24]'}`}>
+                            {task.task_type === 'watch_ad' ? 'Video Ad' : 'PTC'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0 ml-auto sm:ml-0">
+                        <span className="text-[#FBBF24] font-black text-sm sm:text-base">৳ {formatCurrency(task.reward)}</span>
+                        <button 
+                          onClick={() => setActiveTab('watch-ads')}
+                          className="px-3 py-1.5 bg-[#22C55E]/10 text-[#22C55E] hover:bg-[#22C55E] hover:text-[#0D1117] font-black rounded-lg text-[10px] sm:text-xs transition-all flex items-center gap-0.5"
+                        >
+                          Start →
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -709,7 +863,7 @@ export default function Dashboard() {
                     <Lock className="w-8 h-8" />
                   </div>
                   <h3 className="text-lg md:text-xl font-bold">Earning Feature Locked 🔒</h3>
-                  <p className="text-textGray text-xs max-w-sm mx-auto leading-relaxed">
+                  <p className="text-[#8AA8B8] text-xs max-w-sm mx-auto leading-relaxed">
                     Account activation is required to watch daily advertisements and earn real wallet rewards.
                   </p>
                   <button
@@ -745,7 +899,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                   ) : cooldown > 0 ? (
-                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-primary/20 text-center space-y-4">
+                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-cardBg text-center space-y-4">
                       <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mx-auto">
                         <Clock className="w-6 h-6 animate-pulse" /> {adTimer} Seconds
                       </div>
@@ -830,7 +984,7 @@ export default function Dashboard() {
                             className={`py-4 px-2 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 ${
                               wdMethod === method 
                                 ? 'border-primary bg-primary/5 text-textLight shadow-[0_0_15px_rgba(34,197,94,0.15)] scale-[1.02]' 
-                                : 'bg-background border-cardBg text-textGray hover:border-textGray/30 hover:text-textLight'
+                                : 'bg-background border-cardBg text-[#8AA8B8] hover:border-textGray/30 hover:text-textLight'
                             }`}
                           >
                             <img 
@@ -1260,7 +1414,7 @@ export default function Dashboard() {
             </p>
 
             <div className="bg-background/50 rounded-2xl p-4 border border-cardBg text-left space-y-3 mb-6">
-              <h4 className="font-bold text-accent text-xs flex items-center gap-1.5">
+              <h4 className="font-bold text-accent text-sm flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-accent" /> Security Information:
               </h4>
               <ul className="text-[10px] text-textGray space-y-1.5 list-disc list-inside">
