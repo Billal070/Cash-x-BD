@@ -7,8 +7,7 @@ import { CONFIG as ImportedConfig } from '../config';
 import { 
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
-  Menu, X, User, Phone, Mail, Award, ArrowUpRight,
-  HelpCircle, Send, MessageSquare 
+  Menu, X, User, Phone, Mail, Award, ArrowUpRight
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
@@ -30,11 +29,11 @@ const formatCurrency = (value) => {
   return isNaN(num) ? "0.00" : num.toFixed(2);
 };
 
-// আপনার নিজের হোস্টিং সার্ভার থেকে সরাসরি ইমেজ লোড করা হচ্ছে (১০০% স্থায়ী ও নিরাপদ)
+// উইকিমিডিয়া কমন্সের লাইভ এবং অফিশিয়াল স্বচ্ছ CDN লোগো লিঙ্কসমূহ
 const METHOD_LOGOS = {
-  bkash: "/bkash.png",
-  nagad: "/nagad.png",
-  rocket: "/rocket.png"
+  bkash: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/BKash_Logo.svg/320px-BKash_Logo.svg.png",
+  nagad: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Nagad-png.png",
+  rocket: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Rocket_mobile_banking_logo.svg/320px-Rocket_mobile_banking_logo.svg.png"
 };
 
 export default function Dashboard() {
@@ -47,8 +46,9 @@ export default function Dashboard() {
     return localStorage.getItem('cashxbd_active_tab') || 'overview';
   });
 
-  // মোবাইল মেনু কন্ট্রোল করার স্টেট
+  // মোবাইল মেনু এবং অ্যাক্টিভেশন পপআপ কন্ট্রোল স্টেট
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showActivationModal, setShowActivationModal] = useState(false);
 
   // লাইভ সেটিংস ডাটাবেজ থেকে লোড করার স্টেট
   const [dbSettings, setDbSettings] = useState(null);
@@ -78,27 +78,6 @@ export default function Dashboard() {
   const [editUsername, setEditUsername] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [updatingProfile, setUpdatingProfile] = useState(false);
-
-  // লাইভ সুপাবেস সেটিংস টেবিল থেকে ডাটা লোড করা
-  useEffect(() => {
-    fetchLiveSettings();
-  }, []);
-
-  const fetchLiveSettings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('*')
-        .eq('id', 'config')
-        .single();
-      if (error) throw error;
-      if (data) {
-        setDbSettings(data);
-      }
-    } catch (err) {
-      console.error('Database settings failed to load, using config.js backup:', err.message);
-    }
-  };
 
   // যদি লগইন না থাকে, তবে লগইন পেজে রিডাইরেক্ট করবে
   useEffect(() => {
@@ -175,6 +154,7 @@ export default function Dashboard() {
     }
   };
 
+  // ৫. জিনী পে (ZiniPay) পেমেন্ট তৈরি করার ফাংশন
   const handlePayment = async () => {
     setPaying(true);
     try {
@@ -203,6 +183,7 @@ export default function Dashboard() {
     }
   };
 
+  // ৬. জিনী পে পেমেন্ট ভেরিফাই করার ফাংশন
   const verifyUserPayment = async (invoiceId) => {
     setVerifyingPayment(true);
     const toastId = toast.loading(`Verifying your ${activeActivationFee}৳ payment...`);
@@ -218,6 +199,7 @@ export default function Dashboard() {
 
       if (data.success) {
         toast.success('Your profile is now Active! 🟢', { id: toastId });
+        setShowActivationModal(false); // পপআপ বন্ধ করা হবে
         await refreshProfile();
       }
     } catch (err) {
@@ -228,7 +210,12 @@ export default function Dashboard() {
     }
   };
 
+  // ৭. বিজ্ঞাপন দেখা শুরু করার ফাংশন
   const startWatchingAd = () => {
+    if (!profile.is_active) {
+      setShowActivationModal(true); // ইনঅ্যাক্টিভ হলে পপআপ দেখাবে
+      return;
+    }
     if (profile.ads_watched_today >= 15) {
       return toast.error('You have reached the daily limit of 15 Ads!');
     }
@@ -243,6 +230,7 @@ export default function Dashboard() {
     toast.success('Ad loaded! Please do not close this dashboard tab.');
   };
 
+  // ৮. বিজ্ঞপ্তির রিওয়ার্ড যোগ করার ফাংশন
   const claimAdReward = async () => {
     const toastId = toast.loading(`Adding ${activePerAdReward}৳ reward to your balance...`);
     try {
@@ -273,8 +261,14 @@ export default function Dashboard() {
     }
   };
 
+  // ৯. উইথড্রল সাবমিট করার ফাংশন
   const handleWithdraw = async (e) => {
     e.preventDefault();
+    if (!profile.is_active) {
+      setShowActivationModal(true); // ইনঅ্যাক্টিভ হলে পপআপ দেখাবে
+      return;
+    }
+
     const amount = Number(wdAmount);
 
     if (!wdNumber || !wdAmount) {
@@ -343,6 +337,7 @@ export default function Dashboard() {
     }
   };
 
+  // প্রোফাইল এডিট/আপডেট সাবমিট করার ফাংশন
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     if (!editUsername) return toast.error('Username cannot be empty');
@@ -374,17 +369,19 @@ export default function Dashboard() {
     toast.success('Referral link copied to clipboard!');
   };
 
+  // লগআউট করার সময় মেমোরি রিমুভ করার ফাংশন
   const handleLogout = () => {
     localStorage.removeItem('cashxbd_active_tab');
     signOut();
   };
 
+  // মোবাইল মেনু বন্ধ করে ট্যাব পরিবর্তন করার জন্য হেল্পার ফাংশน
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
     setIsMobileMenuOpen(false); 
   };
 
-  // লাইভ অথবা ব্যাকআপ সেটিংস নির্ধারণ (Fallbacks with absolute safety checks)
+  // সুপাবেস বা লোকাল কনফিগারেশন থেকে সেটিংস নির্ধারণ
   const activeActivationFee = dbSettings ? Number(dbSettings.activation_fee) : (CONFIG?.activationFee || 150);
   const activePerAdReward = dbSettings ? Number(dbSettings.per_ad_reward) : (CONFIG?.perAdReward || 5);
   const activeReferralBonus = dbSettings ? Number(dbSettings.referral_bonus) : (CONFIG?.referralBonus || 30);
@@ -395,7 +392,7 @@ export default function Dashboard() {
   const activeMinWithdrawFirst = CONFIG?.minWithdrawFirst || 75;
   const activeMinWithdrawSubsequent = CONFIG?.minWithdrawSubsequent || 200;
 
-  // গাণিতিক পরিসংখ্যান ক্যালকুলেট করার ফাংশন (ডিফেন্সিভ মেথড)
+  // গাণিতিক পরিসংখ্যান ক্যালকুলেট করার ফাংশন
   const totalLifetimeIncome = profile ? (Number(profile.balance) + Number(profile.total_withdrawn)) : 0;
   const referralEarnings = profile ? Number(profile.referral_count) * activeReferralBonus : 0;
   const adsEarnings = totalLifetimeIncome - referralEarnings > 0 ? totalLifetimeIncome - referralEarnings : 0;
@@ -410,64 +407,31 @@ export default function Dashboard() {
     );
   }
 
-  // ১০. অ্যাকাউন্ট অ্যাক্টিভেশন পেজ
-  if (!profile.is_active) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-cardBg border border-cardBg/50 p-8 rounded-3xl text-center shadow-2xl relative overflow-hidden">
-          <div className="absolute -top-10 -left-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
-
-          {CONFIG?.logoUrl ? (
-            <img src={CONFIG.logoUrl} alt={CONFIG?.siteName || "Earnova"} className="h-16 w-auto mx-auto mb-4 object-contain" />
-          ) : (
-            <span className="text-4xl font-extrabold text-primary mb-2 block">{CONFIG?.siteName || "Earnova"}</span>
-          )}
-          
-          <div className="w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto mb-6">
-            <Lock className="w-10 h-10 animate-pulse" />
-          </div>
-
-          <h2 className="text-2xl font-black mb-2 text-textLight">Your Account is <span className="text-red-500">Inactive</span></h2>
-          <p className="text-textGray text-sm mb-6 leading-relaxed">
-            Please pay a one-time activation fee of <span className="text-primary font-bold text-base">{activeActivationFee} ৳</span> to unlock the system and start watching ads & completing tasks.
-          </p>
-
-          <div className="bg-background/50 rounded-2xl p-5 border border-cardBg text-left space-y-4 mb-6">
-            <h4 className="font-bold text-accent text-sm flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-accent" /> Security Information:
-            </h4>
-            <ul className="text-xs text-textGray space-y-2 list-disc list-inside">
-              <li>Instant automated payment verification</li>
-              <li>Activation takes less than 2 minutes</li>
-              <li>Secure transactions via bKash, Nagad, and Rocket</li>
-            </ul>
-          </div>
-
-          <button
-            onClick={handlePayment}
-            disabled={paying || verifyingPayment}
-            className="w-full py-4 bg-primary text-background text-lg font-black rounded-2xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-          >
-            {paying ? 'Connecting ZiniPay...' : verifyingPayment ? 'Verifying...' : `Pay ${activeActivationFee} ৳ via ZiniPay`}
-          </button>
-
-          <button
-            onClick={handleLogout}
-            className="mt-6 flex items-center gap-2 mx-auto text-sm font-semibold text-textGray hover:text-red-500 transition-colors"
-          >
-            <LogOut className="w-4 h-4" /> Sign Out
-          </button>
-        </div>
+  // ১২. রিইউজেবল মিনিমাল সাইডবার প্রোফাইল কার্ড (Sidebar Profile Card Component)
+  const renderSidebarProfileCard = () => (
+    <div className="bg-background/40 border border-cardBg/60 rounded-2xl p-4 mb-6 flex items-center gap-3">
+      {/* Avatar */}
+      <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+        {profile?.username ? profile.username.substring(0, 1).toUpperCase() : 'U'}
       </div>
-    );
-  }
+      {/* User Info */}
+      <div className="min-w-0 flex-1">
+        <h4 className="text-xs font-bold text-textLight mb-0.5 truncate capitalize">@{profile?.username}</h4>
+        <div className="flex items-center gap-1.5 mb-1">
+          <span className={`w-1.5 h-1.5 rounded-full ${profile?.is_active ? 'bg-primary' : 'bg-red-500 animate-pulse'}`}></span>
+          <span className={`text-[10px] font-bold ${profile?.is_active ? 'text-primary' : 'text-red-500'}`}>
+            {profile?.is_active ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+        <p className="text-xs font-black text-primary">৳ {formatCurrency(profile?.balance)}</p>
+      </div>
+    </div>
+  );
 
-  // ১১. মূল অ্যাক্টিভ ড্যাশবোর্ড ইন্টারফেস
   return (
     <div className="min-h-screen bg-background text-textLight flex flex-col md:flex-row">
       
-      {/* মোবাইল হেডার */}
+      {/* মোবাইল স্ক্রিনের জন্য টপ-বার (Header) */}
       <div className="md:hidden bg-cardBg border-b border-cardBg/50 px-5 py-4 flex items-center justify-between sticky top-0 z-40 relative">
         <button 
           onClick={() => setIsMobileMenuOpen(true)} 
@@ -487,13 +451,13 @@ export default function Dashboard() {
         <div className="w-10"></div> 
       </div>
 
-      {/* মোবাইল ওভারলে */}
+      {/* মোবাইল মেনুর জন্য ব্লার ব্যাকড্রপ ওভারলে */}
       <div 
-        className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-50 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
       />
 
-      {/* মোবাইল ড্রয়ার */}
+      {/* মোবাইল ড্রয়ার / সাইডবার */}
       <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-cardBg border-r border-cardBg/50 p-6 z-50 transform transition-transform duration-300 ease-in-out md:hidden flex flex-col justify-between ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div>
           <div className="flex items-center justify-between mb-8">
@@ -509,6 +473,9 @@ export default function Dashboard() {
               <X className="w-6 h-6" />
             </button>
           </div>
+
+          {/* মোবাইল প্রোফাইল কার্ড */}
+          {renderSidebarProfileCard()}
 
           <nav className="space-y-2">
             <button
@@ -561,16 +528,16 @@ export default function Dashboard() {
       {/* ডেস্কটপ সাইডবার */}
       <aside className="hidden md:flex w-64 bg-cardBg border-r border-cardBg/50 flex-col justify-between p-6 shrink-0">
         <div>
-          <div className="mb-10 text-left">
+          <div className="mb-8 text-left">
             {CONFIG?.logoUrl ? (
               <img src={CONFIG.logoUrl} alt={CONFIG?.siteName || "Earnova"} className="h-11 w-auto mb-2 object-contain" />
             ) : (
               <span className="text-2xl font-black text-primary">🟢 {CONFIG?.siteName || "Earnova"}</span>
             )}
-            <div className="mt-2 text-xs text-textGray font-semibold bg-primary/10 border border-primary/25 rounded-full px-3 py-1 max-w-max">
-              🟢 Active Profile
-            </div>
           </div>
+
+          {/* ডেস্কটপ প্রোফাইল কার্ড */}
+          {renderSidebarProfileCard()}
 
           <nav className="space-y-2">
             <button
@@ -631,6 +598,25 @@ export default function Dashboard() {
               <p className="text-textGray text-xs md:text-sm">Monitor your earnings and complete tasks to cash out.</p>
             </div>
 
+            {/* Inactive Alert Box (ইউজারদের আইডি একটিভ করার উদ্বুদ্ধ করবে) */}
+            {!profile.is_active && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex gap-3">
+                  <Lock className="w-5 h-5 text-red-500 shrink-0 mt-0.5 animate-pulse" />
+                  <div>
+                    <h4 className="font-bold text-textLight text-sm">Account Activation Required</h4>
+                    <p className="text-xs text-textGray leading-relaxed mt-1">To start watching daily ads and unlock payment withdrawal, please sctivate your profile.</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowActivationModal(true)}
+                  className="px-5 py-2.5 bg-red-500 text-textLight hover:bg-opacity-90 font-bold text-xs rounded-xl shadow-md transition-all shrink-0 w-full sm:w-auto"
+                >
+                  Activate Now 🔓
+                </button>
+              </div>
+            )}
+
             {/* Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
               <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 rounded-2xl relative overflow-hidden">
@@ -666,34 +652,10 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
-
-            {/* Requirements Card */}
-            <div className="bg-cardBg/30 border border-cardBg/50 rounded-2xl p-5 md:p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-accent/10 text-accent shrink-0">
-                  <AlertTriangle className="w-6 h-6" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-textLight mb-1 text-sm md:text-base">Withdrawal Requirements Check:</h4>
-                  <ul className="text-xs text-textGray space-y-1 list-disc list-inside">
-                    <li>1st withdrawal requirement: Minimum {activeMinWithdrawFirst} ৳</li>
-                    <li>Subsequent withdrawal requirement: Minimum {activeMinWithdrawSubsequent} ৳ & 3 Active referrals</li>
-                    <li>You must watch all 15 daily ads on the day you request a withdrawal</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="w-full lg:w-auto flex items-center justify-center bg-background border border-cardBg rounded-xl px-4 py-2 text-xs font-semibold">
-                {profile.ads_watched_today === 15 ? (
-                  <span className="text-primary flex items-center gap-1">🟢 Ads Completed for Today</span>
-                ) : (
-                  <span className="text-red-500 flex items-center gap-1">🔴 Remaining Ads: {15 - profile.ads_watched_today}</span>
-                )}
-              </div>
-            </div>
           </div>
         )}
 
-        {/* TAB 2: WATCH ADS */}
+        {/* TAB 2: WATCH ADS (ইনঅ্যাক্টিভ ইউজারদের পপআপ দেখাবে) */}
         {activeTab === 'watch-ads' && (
           <div className="space-y-6 md:space-y-8 max-w-2xl">
             <div>
@@ -702,64 +664,86 @@ export default function Dashboard() {
             </div>
 
             <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-xs md:text-sm font-bold text-textGray">Today's Ads limit:</span>
-                <span className="text-sm md:text-base font-black text-primary">{profile.ads_watched_today} / 15 Completed</span>
-              </div>
-              <div className="w-full bg-background rounded-full h-3 overflow-hidden border border-cardBg mb-6">
-                <div 
-                  className="bg-primary h-full transition-all duration-500" 
-                  style={{ width: `${(profile.ads_watched_today / 15) * 100}%` }}
-                ></div>
-              </div>
-
-              {isWatching ? (
-                <div className="bg-background rounded-2xl p-6 md:p-10 border border-primary/20 text-center space-y-4">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent animate-spin mx-auto"></div>
-                  <h3 className="text-lg md:text-xl font-bold">Watching Advertisement...</h3>
+              {!profile.is_active ? (
+                // ইনঅ্যাক্টিভ ইউজারদের লকড স্ক্রিন
+                <div className="bg-background rounded-2xl p-8 border border-cardBg text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto">
+                    <Lock className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-lg md:text-xl font-bold">Earning Feature Locked 🔒</h3>
                   <p className="text-textGray text-xs max-w-sm mx-auto leading-relaxed">
-                    Please do not navigate away or close this dashboard. Your reward will claim automatically in:
+                    Account activation is required to watch daily advertisements and earn real wallet rewards.
                   </p>
-                  <div className="text-2xl md:text-3xl font-black text-accent flex items-center justify-center gap-1">
-                    <Clock className="w-5 h-5 animate-pulse" /> {adTimer} Seconds
-                  </div>
-                </div>
-              ) : cooldown > 0 ? (
-                <div className="bg-background rounded-2xl p-6 md:p-10 border border-cardBg text-center space-y-4">
-                  <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mx-auto">
-                    <Clock className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-lg md:text-xl font-bold">Cooldown Active</h3>
-                  <p className="text-textGray text-xs max-w-sm mx-auto leading-relaxed">
-                    To keep organic values for our sponsors, please wait 60 seconds before watching another ad.
-                  </p>
-                  <div className="text-xl md:text-2xl font-black text-accent">
-                    Cooldown: {cooldown} Seconds
-                  </div>
-                </div>
-              ) : profile.ads_watched_today >= 15 ? (
-                <div className="bg-background rounded-2xl p-6 md:p-10 border border-primary/20 text-center space-y-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto">
-                    <CheckCircle className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-lg md:text-xl font-bold">Limit Reached!</h3>
-                  <p className="text-textGray text-xs max-w-sm mx-auto">
-                    Amazing job! You have watched all 15 ads for today. Please come back tomorrow to watch more.
-                  </p>
+                  <button
+                    onClick={() => setShowActivationModal(true)}
+                    className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/20 transition-all"
+                  >
+                    Activate Account Now
+                  </button>
                 </div>
               ) : (
-                <button
-                  onClick={startWatchingAd}
-                  className="w-full py-4 md:py-6 bg-primary text-background text-base md:text-lg font-black rounded-2xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-3"
-                >
-                  <Play className="w-5 h-5 fill-background" /> Click to Watch Ad & Earn {activePerAdReward} ৳
-                </button>
+                // অ্যাক্টিভ ইউজারদের বিজ্ঞাপন দেখার মূল কোড
+                <>
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-xs md:text-sm font-bold text-textGray">Today's Ads limit:</span>
+                    <span className="text-sm md:text-base font-black text-primary">{profile.ads_watched_today} / 15 Completed</span>
+                  </div>
+                  <div className="w-full bg-background rounded-full h-3 overflow-hidden border border-cardBg mb-6">
+                    <div 
+                      className="bg-primary h-full transition-all duration-500" 
+                      style={{ width: `${(profile.ads_watched_today / 15) * 100}%` }}
+                    ></div>
+                  </div>
+
+                  {isWatching ? (
+                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-primary/20 text-center space-y-4">
+                      <div className="w-12 h-12 border-4 border-primary border-t-transparent animate-spin mx-auto"></div>
+                      <h3 className="text-lg md:text-xl font-bold">Watching Advertisement...</h3>
+                      <p className="text-textGray text-xs max-w-sm mx-auto leading-relaxed">
+                        Please do not navigate away or close this dashboard. Your reward will claim automatically in:
+                      </p>
+                      <div className="text-2xl md:text-3xl font-black text-accent flex items-center justify-center gap-1">
+                        <Clock className="w-5 h-5 animate-pulse" /> {adTimer} Seconds
+                      </div>
+                    </div>
+                  ) : cooldown > 0 ? (
+                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-cardBg text-center space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mx-auto">
+                        <Clock className="w-6 h-6" />
+                      </div>
+                      <h3 className="text-lg md:text-xl font-bold">Cooldown Active</h3>
+                      <p className="text-textGray text-xs max-w-sm mx-auto leading-relaxed">
+                        To keep organic values for our sponsors, please wait 60 seconds before watching another ad.
+                      </p>
+                      <div className="text-xl md:text-2xl font-black text-accent">
+                        Cooldown: {cooldown} Seconds
+                      </div>
+                    </div>
+                  ) : profile.ads_watched_today >= 15 ? (
+                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-primary/20 text-center space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto">
+                        <CheckCircle className="w-6 h-6" />
+                      </div>
+                      <h3 className="text-lg md:text-xl font-bold">Limit Reached!</h3>
+                      <p className="text-textGray text-xs max-w-sm mx-auto">
+                        Amazing job! You have watched all 15 ads for today. Please come back tomorrow to watch more.
+                      </p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={startWatchingAd}
+                      className="w-full py-4 md:py-6 bg-primary text-background text-base md:text-lg font-black rounded-2xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-3"
+                    >
+                      <Play className="w-5 h-5 fill-background" /> Click to Watch Ad & Earn {activePerAdReward} ৳
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
         )}
 
-        {/* TAB 3: WITHDRAW */}
+        {/* TAB 3: WITHDRAW (ইনঅ্যাক্টিভ ইউজারদের পপআপ দেখাবে) */}
         {activeTab === 'withdraw' && (
           <div className="space-y-6 md:space-y-8">
             <div>
@@ -767,149 +751,169 @@ export default function Dashboard() {
               <p className="text-textGray text-xs md:text-sm">Send your withdrawal request directly to bKash, Nagad, or Rocket.</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-              <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 lg:col-span-2">
-                <form onSubmit={handleWithdraw} className="space-y-6">
-                  
-                  {/* glowing withdrawal buttons with transparent PNG cdn logos */}
-                  <div>
-                    <label className="block text-sm font-bold text-textGray mb-3">Withdraw Method</label>
-                    <div className="grid grid-cols-3 gap-3">
-                      {['bkash', 'nagad', 'rocket'].map((method) => (
-                        <button
-                          key={method}
-                          type="button"
-                          onClick={() => setWdMethod(method)}
-                          className={`py-4 px-2 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 ${
-                            wdMethod === method 
-                              ? 'border-primary bg-primary/5 text-textLight shadow-[0_0_15px_rgba(34,197,94,0.15)] scale-[1.02]' 
-                              : 'bg-background border-cardBg text-textGray hover:border-textGray/30 hover:text-textLight'
-                          }`}
-                        >
-                          <img 
-                            src={METHOD_LOGOS[method]} 
-                            alt={method} 
-                            className="h-9 md:h-11 w-auto object-contain filter brightness-100 group-hover:scale-110 transition-transform duration-300" 
-                          />
-                          <span className="text-[10px] md:text-xs font-bold capitalize">{method}</span>
-                        </button>
-                      ))}
+            {!profile.is_active ? (
+              // ইনঅ্যাক্টিভ উইথড্রল লকড স্ক্রিন
+              <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-8 text-center space-y-4 max-w-2xl">
+                <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto">
+                  <Lock className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg md:text-xl font-bold">Withdrawals Locked 🔒</h3>
+                <p className="text-textGray text-xs max-w-sm mx-auto leading-relaxed">
+                  Account activation is required to submit payout requests to payment gateways.
+                </p>
+                <button
+                  onClick={() => setShowActivationModal(true)}
+                  className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/20 transition-all"
+                >
+                  Activate Account Now
+                </button>
+              </div>
+            ) : (
+              // অ্যাক্টিভ ইউজারদের উইথড্রল ফর্ম
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 lg:col-span-2">
+                  <form onSubmit={handleWithdraw} className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-bold text-textGray mb-3">Withdraw Method</label>
+                      <div className="grid grid-cols-3 gap-3">
+                        {['bkash', 'nagad', 'rocket'].map((method) => (
+                          <button
+                            key={method}
+                            type="button"
+                            onClick={() => setWdMethod(method)}
+                            className={`py-4 px-2 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 ${
+                              wdMethod === method 
+                                ? 'border-primary bg-primary/5 text-textLight shadow-[0_0_15px_rgba(34,197,94,0.15)] scale-[1.02]' 
+                                : 'bg-background border-cardBg text-textGray hover:border-textGray/30 hover:text-textLight'
+                            }`}
+                          >
+                            <img 
+                              src={METHOD_LOGOS[method]} 
+                              alt={method} 
+                              className="h-9 md:h-11 w-auto object-contain filter brightness-100 group-hover:scale-110 transition-transform duration-300" 
+                            />
+                            <span className="text-[10px] md:text-xs font-bold capitalize">{method}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs md:text-sm font-bold text-textGray mb-2">Receiver Account Number</label>
+                      <input
+                        type="tel"
+                        required
+                        placeholder="01XXXXXXXXX"
+                        value={wdNumber}
+                        onChange={(e) => setWdNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                        className="w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs md:text-sm font-bold text-textGray mb-2">Withdrawal Amount (৳)</label>
+                      <input
+                        type="number"
+                        required
+                        placeholder="e.g. 150"
+                        value={wdAmount}
+                        onChange={(e) => setWdAmount(e.target.value)}
+                        className="w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
+                      />
+                      <div className="mt-2 text-[10px] md:text-xs text-textGray flex justify-between">
+                        <span>Gateway Fee: 6.7%</span>
+                        {wdAmount && (
+                          <span className="text-accent font-semibold">
+                            Estimated Receive: ৳ {(Number(wdAmount) - Number(wdAmount) * 0.067).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={submittingWd}
+                      className="w-full py-4 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                    >
+                      {submittingWd ? 'Submitting...' : 'Request Withdrawal'}
+                    </button>
+                  </form>
+                </div>
+
+                <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 space-y-6">
+                  <h3 className="font-bold text-textLight text-sm md:text-base">Your Statistics:</h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3">
+                      <span className="text-textGray">Balance:</span>
+                      <span className="font-bold text-primary">৳ {formatCurrency(profile.balance)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3">
+                      <span className="text-textGray">Today's Ads:</span>
+                      <span className={`font-bold ${profile.ads_watched_today === 15 ? 'text-primary' : 'text-red-500'}`}>
+                        {profile.ads_watched_today} / 15
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3">
+                      <span className="text-textGray">Withdrawals Count:</span>
+                      <span className="font-bold text-textLight">{profile.withdrawals_count} times</span>
+                    </div>
+                    <div className="flex justify-between text-xs md:text-sm pb-1">
+                      <span className="text-textGray">Active Referrals:</span>
+                      <span className="font-bold text-accent">{profile.referral_count} Users</span>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs md:text-sm font-bold text-textGray mb-2">Receiver Account Number</label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="01XXXXXXXXX"
-                      value={wdNumber}
-                      onChange={(e) => setWdNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                      className="w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs md:text-sm font-bold text-textGray mb-2">Withdrawal Amount (৳)</label>
-                    <input
-                      type="number"
-                      required
-                      placeholder="e.g. 150"
-                      value={wdAmount}
-                      onChange={(e) => setWdAmount(e.target.value)}
-                      className="w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
-                    />
-                    <div className="mt-2 text-[10px] md:text-xs text-textGray flex justify-between">
-                      <span>Gateway Fee: 6.7%</span>
-                      {wdAmount && (
-                        <span className="text-accent font-semibold">
-                          Estimated Receive: ৳ {(Number(wdAmount) - Number(wdAmount) * 0.067).toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={submittingWd}
-                    className="w-full py-4 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                  >
-                    {submittingWd ? 'Submitting...' : 'Request Withdrawal'}
-                  </button>
-                </form>
-              </div>
-
-              <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 space-y-6">
-                <h3 className="font-bold text-textLight text-sm md:text-base">Your Statistics:</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3">
-                    <span className="text-textGray">Balance:</span>
-                    <span className="font-bold text-primary">৳ {formatCurrency(profile.balance)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3">
-                    <span className="text-textGray">Today's Ads:</span>
-                    <span className={`font-bold ${profile.ads_watched_today === 15 ? 'text-primary' : 'text-red-500'}`}>
-                      {profile.ads_watched_today} / 15
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3">
-                    <span className="text-textGray">Withdrawals Count:</span>
-                    <span className="font-bold text-textLight">{profile.withdrawals_count} times</span>
-                  </div>
-                  <div className="flex justify-between text-xs md:text-sm pb-1">
-                    <span className="text-textGray">Active Referrals:</span>
-                    <span className="font-bold text-accent">{profile.referral_count} Users</span>
+                  <div className="p-4 bg-background border border-cardBg rounded-xl text-[10px] md:text-xs text-textGray leading-relaxed">
+                    ⚠️ <strong>Note:</strong> Withdraw requests are processed manually within 24 hours. Double-check your payment numbers before requesting.
                   </div>
                 </div>
-
-                <div className="p-4 bg-background border border-cardBg rounded-xl text-[10px] md:text-xs text-textGray leading-relaxed">
-                  ⚠️ <strong>Note:</strong> Withdraw requests are processed manually within 24 hours. Double-check your payment numbers before requesting.
-                </div>
               </div>
-            </div>
+            )}
 
             {/* Withdrawal History */}
-            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
-              <h3 className="font-bold mb-6 text-sm md:text-base">Withdrawal History</h3>
-              {wdHistory.length === 0 ? (
-                <p className="text-textGray text-xs md:text-sm text-center py-6">No withdrawal history found.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse min-w-[600px]">
-                    <thead>
-                      <tr className="border-b border-cardBg text-textGray text-xs font-semibold">
-                        <th className="pb-3">Date</th>
-                        <th className="pb-3">Amount</th>
-                        <th className="pb-3">Fee (6.7%)</th>
-                        <th className="pb-3">Receive</th>
-                        <th className="pb-3">Method</th>
-                        <th className="pb-3">Number</th>
-                        <th className="pb-3">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-xs md:text-sm">
-                      {wdHistory.map((row) => (
-                        <tr key={row.id} className="border-b border-cardBg/30">
-                          <td className="py-3 text-[10px] md:text-xs text-textGray">
-                            {new Date(row.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="py-3 font-semibold">৳ {row.amount}</td>
-                          <td className="py-3 text-red-500">৳ {row.fee}</td>
-                          <td className="py-3 text-primary font-bold">৳ {row.receive_amount}</td>
-                          <td className="py-3 capitalize font-semibold">{row.payment_method}</td>
-                          <td className="py-3 font-medium text-textGray">{row.payment_number}</td>
-                          <td className="py-3">
-                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${row.status === 'approved' ? 'bg-primary/10 text-primary border border-primary/20' : row.status === 'rejected' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-accent/10 text-accent border border-accent/20'}`}>
-                              {row.status}
-                            </span>
-                          </td>
+            {profile.is_active && (
+              <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
+                <h3 className="font-bold mb-6 text-sm md:text-base">Withdrawal History</h3>
+                {wdHistory.length === 0 ? (
+                  <p className="text-textGray text-xs md:text-sm text-center py-6">No withdrawal history found.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[600px]">
+                      <thead>
+                        <tr className="border-b border-cardBg text-textGray text-xs font-semibold">
+                          <th className="pb-3">Date</th>
+                          <th className="pb-3">Amount</th>
+                          <th className="pb-3">Fee (6.7%)</th>
+                          <th className="pb-3">Receive</th>
+                          <th className="pb-3">Method</th>
+                          <th className="pb-3">Number</th>
+                          <th className="pb-3">Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+                      </thead>
+                      <tbody className="text-xs md:text-sm">
+                        {wdHistory.map((row) => (
+                          <tr key={row.id} className="border-b border-cardBg/30">
+                            <td className="py-3 text-[10px] md:text-xs text-textGray">
+                              {new Date(row.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="py-3 font-semibold">৳ {row.amount}</td>
+                            <td className="py-3 text-red-500">৳ {row.fee}</td>
+                            <td className="py-3 text-primary font-bold">৳ {row.receive_amount}</td>
+                            <td className="py-3 capitalize font-semibold">{row.payment_method}</td>
+                            <td className="py-3 font-medium text-textGray">{row.payment_number}</td>
+                            <td className="py-3">
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${row.status === 'approved' ? 'bg-primary/10 text-primary border border-primary/20' : row.status === 'rejected' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-accent/10 text-accent border border-accent/20'}`}>
+                                {row.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -1160,6 +1164,54 @@ export default function Dashboard() {
           </div>
         )}
       </main>
+
+      {/* ১২. কাস্টম অ্যাক্টিভেশন পপআপ উইন্ডো (Activation Modal - 100% Dynamic) */}
+      {showActivationModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="max-w-md w-full bg-cardBg border border-cardBg/50 p-6 md:p-8 rounded-3xl text-center shadow-2xl relative overflow-hidden">
+            <button 
+              onClick={() => setShowActivationModal(false)}
+              className="absolute right-4 top-4 text-textGray hover:text-red-500 transition-colors focus:outline-none"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            {CONFIG?.logoUrl ? (
+              <img src={CONFIG.logoUrl} alt={CONFIG?.siteName || "Earnova"} className="h-12 w-auto mx-auto mb-4 object-contain" />
+            ) : (
+              <span className="text-3xl font-extrabold text-primary mb-2 block">{CONFIG?.siteName || "Earnova"}</span>
+            )}
+            
+            <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-8 h-8 animate-pulse" />
+            </div>
+
+            <h2 className="text-xl font-black mb-2 text-textLight">Activate Your Account</h2>
+            <p className="text-textGray text-xs mb-6 leading-relaxed">
+              Pay a one-time activation fee of <span className="text-primary font-bold">৳ {activeActivationFee}</span> to unlock unlimited ads watching, daily tasks, and fast withdrawals.
+            </p>
+
+            <div className="bg-background/50 rounded-2xl p-4 border border-cardBg text-left space-y-3 mb-6">
+              <h4 className="font-bold text-accent text-xs flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-accent" /> Security Information:
+              </h4>
+              <ul className="text-[10px] text-textGray space-y-1.5 list-disc list-inside">
+                <li>Instant automated payment verification</li>
+                <li>Secure transactions via bKash, Nagad, and Rocket</li>
+                <li>Automatic referral bonus payout of ৳ {activeReferralBonus}</li>
+              </ul>
+            </div>
+
+            <button
+              onClick={handlePayment}
+              disabled={paying || verifyingPayment}
+              className="w-full py-3.5 bg-primary text-background text-sm font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            >
+              {paying ? 'Connecting ZiniPay...' : verifyingPayment ? 'Verifying...' : `Pay ৳ ${activeActivationFee} via ZiniPay`}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
