@@ -7,7 +7,8 @@ import { CONFIG as ImportedConfig } from '../config';
 import { 
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
-  Menu, X, User, Phone, Mail, Award, ArrowUpRight
+  Menu, X, User, Phone, Mail, Award, ArrowUpRight,
+  HelpCircle, Send, MessageSquare // <-- এখানে আইকন তিনটি সফলভাবে ইম্পোর্ট করা হলো
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
@@ -21,6 +22,12 @@ const CONFIG = ImportedConfig || {
   referralBonus: 30,
   minWithdrawFirst: 75,
   minWithdrawSubsequent: 200,
+};
+
+// ডাটাবেজের null/undefined ক্র্যাশ প্রতিরোধক সেফ কারেন্সি ফরম্যাটার
+const formatCurrency = (value) => {
+  const num = Number(value);
+  return isNaN(num) ? "0.00" : num.toFixed(2);
 };
 
 export default function Dashboard() {
@@ -366,9 +373,9 @@ export default function Dashboard() {
   const activeMinWithdrawFirst = CONFIG?.minWithdrawFirst || 75;
   const activeMinWithdrawSubsequent = CONFIG?.minWithdrawSubsequent || 200;
 
-  // গাণিতিক পরিসংখ্যান ক্যালকুলেট করার ফাংশন
-  const totalLifetimeIncome = profile ? profile.balance + profile.total_withdrawn : 0;
-  const referralEarnings = profile ? profile.referral_count * activeReferralBonus : 0;
+  // গাণিতিক পরিসংখ্যান ক্যালকুলেট করার ফাংশন (ডিফেন্সিভ মেথড)
+  const totalLifetimeIncome = profile ? (Number(profile.balance) + Number(profile.total_withdrawn)) : 0;
+  const referralEarnings = profile ? Number(profile.referral_count) * activeReferralBonus : 0;
   const adsEarnings = totalLifetimeIncome - referralEarnings > 0 ? totalLifetimeIncome - referralEarnings : 0;
 
   // লোডিং স্ক্রিন
@@ -434,7 +441,7 @@ export default function Dashboard() {
     );
   }
 
-  // ১১. মূল অ্যাক্টিভ ড্যাশবোর্ড ইন্টারফেস
+  // মূল অ্যাক্টিভ ড্যাশবোর্ড ইন্টারফেস
   return (
     <div className="min-h-screen bg-background text-textLight flex flex-col md:flex-row">
       
@@ -609,7 +616,7 @@ export default function Dashboard() {
                   <Landmark className="w-6 h-6" />
                 </div>
                 <h3 className="text-sm font-bold text-textGray mb-1">Current Balance</h3>
-                <p className="text-2xl md:text-3xl font-black text-primary">৳ {profile.balance.toFixed(2)}</p>
+                <p className="text-2xl md:text-3xl font-black text-primary">৳ {formatCurrency(profile.balance)}</p>
                 <button onClick={() => setActiveTab('withdraw')} className="mt-4 text-xs font-bold text-accent hover:underline flex items-center gap-1">
                   Go to Withdraw <ArrowDownToLine className="w-3.5 h-3.5" />
                 </button>
@@ -723,7 +730,7 @@ export default function Dashboard() {
                   onClick={startWatchingAd}
                   className="w-full py-4 md:py-6 bg-primary text-background text-base md:text-lg font-black rounded-2xl hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-3"
                 >
-                  <Play className="w-5 h-5 md:w-6 md:h-6 fill-background" /> Click to Watch Ad & Earn {activePerAdReward} ৳
+                  <Play className="w-5 h-5 fill-background" /> Click to Watch Ad & Earn {activePerAdReward} ৳
                 </button>
               )}
             </div>
@@ -739,7 +746,7 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-              <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 lg:col-span-2">
+              <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 lg:col-span-2">
                 <form onSubmit={handleWithdraw} className="space-y-6">
                   <div>
                     <label className="block text-sm font-bold text-textGray mb-3">Withdraw Method</label>
@@ -804,7 +811,7 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3">
                     <span className="text-textGray">Balance:</span>
-                    <span className="font-bold text-primary">৳ {profile.balance.toFixed(2)}</span>
+                    <span className="font-bold text-primary">৳ {formatCurrency(profile.balance)}</span>
                   </div>
                   <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3">
                     <span className="text-textGray">Today's Ads:</span>
@@ -962,7 +969,7 @@ export default function Dashboard() {
                   <div className="bg-cardBg border border-cardBg/50 p-5 rounded-xl flex items-center justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-textGray">Total Ads Watched Earnings</h4>
-                      <p className="text-xl font-black text-primary mt-1">৳ {adsEarnings.toFixed(2)}</p>
+                      <p className="text-xl font-black text-primary mt-1">৳ {formatCurrency(adsEarnings)}</p>
                     </div>
                     <div className="p-3 bg-primary/10 text-primary rounded-xl">
                       <Play className="w-5 h-5" />
@@ -972,7 +979,7 @@ export default function Dashboard() {
                   <div className="bg-cardBg border border-cardBg/50 p-5 rounded-xl flex items-center justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-textGray">Total Referral Earnings</h4>
-                      <p className="text-xl font-black text-accent mt-1">৳ {referralEarnings.toFixed(2)}</p>
+                      <p className="text-xl font-black text-accent mt-1">৳ {formatCurrency(referralEarnings)}</p>
                     </div>
                     <div className="p-3 bg-accent/10 text-accent rounded-xl">
                       <Users className="w-5 h-5" />
@@ -982,7 +989,7 @@ export default function Dashboard() {
                   <div className="bg-cardBg border border-cardBg/50 p-5 rounded-xl flex items-center justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-textGray">Total Received Withdrawals</h4>
-                      <p className="text-xl font-black text-red-500 mt-1">৳ {profile.total_withdrawn.toFixed(2)}</p>
+                      <p className="text-xl font-black text-red-500 mt-1">৳ {formatCurrency(profile.total_withdrawn)}</p>
                     </div>
                     <div className="p-3 bg-red-500/10 text-red-500 rounded-xl">
                       <ArrowDownToLine className="w-5 h-5" />
@@ -992,7 +999,7 @@ export default function Dashboard() {
                   <div className="bg-cardBg border border-cardBg/50 p-5 rounded-xl flex items-center justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-textGray">Total Lifetime Income</h4>
-                      <p className="text-xl font-black text-textLight mt-1">৳ {totalLifetimeIncome.toFixed(2)}</p>
+                      <p className="text-xl font-black text-textLight mt-1">৳ {formatCurrency(totalLifetimeIncome)}</p>
                     </div>
                     <div className="p-3 bg-textLight/10 text-textLight rounded-xl">
                       <ArrowUpRight className="w-5 h-5" />
@@ -1074,7 +1081,7 @@ export default function Dashboard() {
                   href={activeTelegramChannel}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <Send className="w-4 h-4 fill-background" /> Join Telegram Channel
                 </a>
@@ -1100,7 +1107,7 @@ export default function Dashboard() {
                   href={activeTelegramAdmin}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <MessageSquare className="w-4 h-4" /> Contact Support Admin
                 </a>
