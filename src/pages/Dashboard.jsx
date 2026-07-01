@@ -9,7 +9,7 @@ import {
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
   HelpCircle, Send, MessageSquare,
-  Megaphone, Download, Headphones, MousePointer2 // নতুন আইকনসমূহ ইম্পোর্ট করা হলো
+  Megaphone, Download, Headphones, MousePointer2 // সকল নতুন আইকন সঠিকভাবে ইম্পোর্ট করা হলো
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
@@ -55,7 +55,7 @@ export default function Dashboard() {
     return localStorage.getItem('cashxbd_active_tab') || 'overview';
   });
 
-  // মোবাইল মেনু, অ্যাক্টিভেশন পপআপ এবং নতুন অ্যানাউন্সমেন্ট কন্ট্রোল স্টেট
+  // মোবাইল মেনু এবং অ্যাক্টিভেশন পপআপ কন্ট্রোল স্টেট
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showActivationModal, setShowActivationModal] = useState(false);
   const [showAnnouncement, setShowAnnouncement] = useState(true);
@@ -64,6 +64,11 @@ export default function Dashboard() {
   const [dbSettings, setDbSettings] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
+
+  // বিজ্ঞাপন স্টেটসমূহ (সফলভাবে পুনরায় যুক্ত করা হলো)
+  const [adTimer, setAdTimer] = useState(0); 
+  const [cooldown, setCooldown] = useState(0); 
+  const [isWatching, setIsWatching] = useState(false);
 
   // উইথড্রল স্টেটসমূহ
   const [wdMethod, setWdMethod] = useState('bkash');
@@ -118,11 +123,11 @@ export default function Dashboard() {
       if (data && data.length > 0) {
         setTasks(data);
       } else {
-        setTasks(mockTasks); // ফ্যালব্যাক
+        setTasks(mockTasks); 
       }
     } catch (err) {
       console.error('Tasks table empty or missing, using fallbacks:', err.message);
-      setTasks(mockTasks); // সুরক্ষিত ব্যাকআপ লোড
+      setTasks(mockTasks); 
     } finally {
       setLoadingTasks(false);
     }
@@ -515,7 +520,7 @@ export default function Dashboard() {
 
       {/* মোবাইল ওভারলে */}
       <div 
-        className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-45 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
       />
 
@@ -585,7 +590,7 @@ export default function Dashboard() {
         >
           <LogOut className="w-5 h-5" /> Sign Out
         </button>
-      </aside>
+      </</aside>
 
       {/* ডেস্কটপ সাইডবার */}
       <aside className="hidden md:flex w-64 bg-cardBg border-r border-cardBg/50 flex-col justify-between p-6 shrink-0">
@@ -699,7 +704,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* ৩, ৪, ৫. Cards Grid */}
+            {/* Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
               <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 rounded-2xl relative overflow-hidden">
                 <div className="absolute right-4 top-4 text-primary bg-primary/10 p-2 rounded-xl">
@@ -901,12 +906,6 @@ export default function Dashboard() {
                   ) : cooldown > 0 ? (
                     <div className="bg-background rounded-2xl p-6 md:p-10 border border-cardBg text-center space-y-4">
                       <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mx-auto">
-                        <Clock className="w-6 h-6 animate-pulse" /> {adTimer} Seconds
-                      </div>
-                    </div>
-                  ) : cooldown > 0 ? (
-                    <div className="bg-background rounded-2xl p-6 md:p-10 border border-cardBg text-center space-y-4">
-                      <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mx-auto">
                         <Clock className="w-6 h-6" />
                       </div>
                       <h3 className="text-lg md:text-xl font-bold">Cooldown Active</h3>
@@ -967,7 +966,7 @@ export default function Dashboard() {
                 </button>
               </div>
             ) : (
-              // অ্যাক্টিভ ইউজারদের উইথড্রল ফর্ম
+              //্যাক্টিভ ইউজারদের উইথড্রল ফর্ম
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                 <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 lg:col-span-2">
                   <form onSubmit={handleWithdraw} className="space-y-6">
@@ -984,7 +983,7 @@ export default function Dashboard() {
                             className={`py-4 px-2 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 ${
                               wdMethod === method 
                                 ? 'border-primary bg-primary/5 text-textLight shadow-[0_0_15px_rgba(34,197,94,0.15)] scale-[1.02]' 
-                                : 'bg-background border-cardBg text-[#8AA8B8] hover:border-textGray/30 hover:text-textLight'
+                                : 'bg-background border-cardBg text-textGray hover:border-textGray/30 hover:text-textLight'
                             }`}
                           >
                             <img 
