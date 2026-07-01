@@ -8,8 +8,7 @@ import {
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
-  HelpCircle, Send, MessageSquare,
-  Megaphone, Download, Headphones, MousePointer2 
+  HelpCircle, Send, MessageSquare 
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
@@ -31,11 +30,11 @@ const formatCurrency = (value) => {
   return isNaN(num) ? "0.00" : num.toFixed(2);
 };
 
-// উইকিমিডিয়া কমন্সের লাইভ এবং অফিশিয়াল স্বচ্ছ CDN লোগো লিঙ্কসমূহ
+// আপনার নিজের হোস্টিং সার্ভার (public ফোল্ডার) থেকে সরাসরি ইমেজ লোড করা হচ্ছে (১০০% স্থায়ী ও নিরাপদ)
 const METHOD_LOGOS = {
-  bkash: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/BKash_Logo.svg/320px-BKash_Logo.svg.png",
-  nagad: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Nagad-png.png",
-  rocket: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Rocket_mobile_banking_logo.svg/320px-Rocket_mobile_banking_logo.svg.png"
+  bkash: "/bkash.png",
+  nagad: "/nagad.png",
+  rocket: "/rocket.png"
 };
 
 // ডাটাবেজ খালি বা টেবিল অনুপস্থিত থাকলে টেস্টিং করার জন্য ডামি ফ্যালব্যাক টাস্ক
@@ -313,6 +312,11 @@ export default function Dashboard() {
 
   const handleWithdraw = async (e) => {
     e.preventDefault();
+    if (!profile.is_active) {
+      setShowActivationModal(true); 
+      return;
+    }
+
     const amount = Number(wdAmount);
 
     if (!wdNumber || !wdAmount) {
@@ -422,7 +426,7 @@ export default function Dashboard() {
     setIsMobileMenuOpen(false); 
   };
 
-  // লাইভ অথবা ব্যাকআপ সেটিংস নির্ধারণ (Fallbacks with absolute safety checks)
+  // সুপাবেস বা লোকাল কনফিগারেশন থেকে সেটিংস নির্ধারণ
   const activeActivationFee = dbSettings ? Number(dbSettings.activation_fee) : (CONFIG?.activationFee || 150);
   const activePerAdReward = dbSettings ? Number(dbSettings.per_ad_reward) : (CONFIG?.perAdReward || 5);
   const activeReferralBonus = dbSettings ? Number(dbSettings.referral_bonus) : (CONFIG?.referralBonus || 30);
@@ -659,7 +663,7 @@ export default function Dashboard() {
         {activeTab === 'overview' && (
           <div className="space-y-6 md:space-y-8">
             
-            {/* ১. ডিসমিসিবল লাইভ অ্যানাউন্সমেন্ট বার (Megaphone Icon সহ) */}
+            {/* ১. ডিসমিসিবল অ্যানাউন্সমেন্ট বার (Megaphone Icon সহ) */}
             {showAnnouncement && (
               <div className="bg-[#FBBF24]/10 border border-[#FBBF24]/30 rounded-xl px-3 py-3 sm:px-4 flex items-center justify-between gap-3 text-left">
                 <div className="flex items-center gap-2">
@@ -877,7 +881,7 @@ export default function Dashboard() {
                   </button>
                 </div>
               ) : (
-                // অ্যাক্টিভ ইউজারদের বিজ্ঞাপন দেখার মূল কোড (সংশোধিত ও বাগমুক্ত)
+                // অ্যাক্টিভ ইউজারদের বিজ্ঞাপন দেখার মূল কোড
                 <>
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-xs md:text-sm font-bold text-textGray">Today's Ads limit:</span>
@@ -959,7 +963,7 @@ export default function Dashboard() {
                   <Lock className="w-8 h-8" />
                 </div>
                 <h3 className="text-lg md:text-xl font-bold">Withdrawals Locked 🔒</h3>
-                <p className="text-textGray text-xs max-w-sm mx-auto leading-relaxed">
+                <p className="text-[#8AA8B8] text-xs max-w-sm mx-auto leading-relaxed">
                   Account activation is required to submit payout requests to payment gateways.
                 </p>
                 <button
