@@ -2,19 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
-import { CONFIG } from '../config'; // সেন্ট্রাল কনফিগারেশন ইম্পোর্ট
-import { toast } from 'react-hot-toast';
+import { CONFIG as ImportedConfig } from '../config'; 
 import { 
   LayoutDashboard, Users, ArrowDownToLine, Settings, LogOut,
   Search, Check, X, Plus, ShieldAlert, Landmark, ShieldCheck,
   CheckCircle, Ban, RefreshCw, MessageSquare, Send
 } from 'lucide-react';
 
+const CONFIG = ImportedConfig || {
+  siteName: "Earnova",
+  logoUrl: "",
+};
+
+const formatCurrency = (value) => {
+  const num = Number(value);
+  return isNaN(num) ? "0.00" : num.toFixed(2);
+};
+
 export default function Admin() {
   const { user, profile, loading, signOut } = useAuth();
   const navigate = useNavigate();
 
-  // সেটিংস স্টেটসমূহ
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -23,19 +31,16 @@ export default function Admin() {
     totalPaid: 0
   });
 
-  // ইউজার ম্যানেজমেন্ট স্টেটসমূহ
   const [usersList, setUsersList] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [balanceModal, setBalanceModal] = useState(null); 
   const [adjustAmount, setAdjustAmount] = useState('');
 
-  // উইথড্রল ম্যানেজমেন্ট স্টেটসমূহ
   const [withdrawals, setWithdrawals] = useState([]);
   const [loadingWd, setLoadingWd] = useState(false);
   const [wdFilter, setWdFilter] = useState('pending'); 
 
-  // সিস্টেম সেটিংস স্টেটসমূহ
   const [settings, setSettings] = useState({
     telegram_channel: '',
     telegram_admin: '',
@@ -46,14 +51,12 @@ export default function Admin() {
   });
   const [savingSettings, setSavingSettings] = useState(false);
 
-  // ১. অ্যাডমিন সিকিউরিটি গেটওয়ে চেক
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
     }
   }, [user, loading, navigate]);
 
-  // ড্যাশবোর্ড ট্যাব পরিবর্তন হলে ডাটা লোড করা
   useEffect(() => {
     if (user && profile?.is_admin) {
       if (activeTab === 'overview') fetchStats();
@@ -63,7 +66,6 @@ export default function Admin() {
     }
   }, [user, profile, activeTab, wdFilter]);
 
-  // ২. ওভারভিউ স্ট্যাটস লোড করা
   const fetchStats = async () => {
     try {
       const { count: total, error: err1 } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
@@ -82,11 +84,10 @@ export default function Admin() {
         totalPaid
       });
     } catch (err) {
-      toast.error('Stats loading failed!');
+      console.error('Stats loading failed!');
     }
   };
 
-  // ৩. ইউজার তালিকা লোড করা ও সার্চ করা
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
@@ -106,7 +107,6 @@ export default function Admin() {
     }
   };
 
-  // ৪. ইউজার একটিভ/ইনঅ্যাক্টিভ টগল করার ফাংশন
   const toggleUserActive = async (userId, currentStatus) => {
     const toastId = toast.loading('Updating user status...');
     try {
@@ -124,13 +124,12 @@ export default function Admin() {
     }
   };
 
-  // ৫. ম্যানুয়ালি ব্যালেন্স অ্যাড/মাইনাস করার ফাংশন
   const handleAdjustBalance = async (isAdd) => {
     const amount = Number(adjustAmount);
     if (!amount || amount <= 0) return toast.error('Enter a valid amount');
 
     const toastId = toast.loading('Adjusting balance...');
-    const newBalance = isAdd ? balanceModal.currentBalance + amount : balanceModal.currentBalance - amount;
+    const newBalance = isAdd ? Number(balanceModal.currentBalance) + amount : Number(balanceModal.currentBalance) - amount;
 
     if (newBalance < 0) {
       toast.error('Balance cannot be negative!', { id: toastId });
@@ -154,7 +153,6 @@ export default function Admin() {
     }
   };
 
-  // ৬. উইথড্রল তালিকা লোড করা
   const fetchWithdrawals = async () => {
     setLoadingWd(true);
     setWithdrawals([]); 
@@ -174,7 +172,6 @@ export default function Admin() {
     }
   };
 
-  // ৭. উইথড্রল অ্যাপ্রুভ করার ফাংশন
   const handleApproveWithdrawal = async (id) => {
     const toastId = toast.loading('Approving withdrawal...');
     try {
@@ -192,7 +189,6 @@ export default function Admin() {
     }
   };
 
-  // ৮. উইথড্রল রিজেক্ট করার ফাংশন
   const handleRejectWithdrawal = async (wd) => {
     const toastId = toast.loading('Rejecting and refunding user...');
     try {
@@ -214,9 +210,9 @@ export default function Admin() {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          balance: userProfile.balance + wd.amount, 
-          total_withdrawn: userProfile.total_withdrawn - wd.receive_amount, 
-          withdrawals_count: userProfile.withdrawals_count - 1
+          balance: Number(userProfile.balance) + wd.amount, 
+          total_withdrawn: Number(userProfile.total_withdrawn) - wd.receive_amount, 
+          withdrawals_count: Number(userProfile.withdrawals_count) - 1
         })
         .eq('id', wd.user_id);
 
@@ -229,7 +225,6 @@ export default function Admin() {
     }
   };
 
-  // ৯. সেটিংস লোড করা
   const fetchSettings = async () => {
     try {
       const { data, error } = await supabase
@@ -244,7 +239,6 @@ export default function Admin() {
     }
   };
 
-  // ১০. সেটিংস ড্যাশবোর্ড থেকে সেভ করার ফাংশন
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     setSavingSettings(true);
@@ -271,12 +265,11 @@ export default function Admin() {
     }
   };
 
-  // লোড স্ক্রিন (Earnova দিয়ে ডাইনামিক করা হয়েছে)
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-center items-center">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-textGray font-semibold">Loading {CONFIG.siteName} Admin Panel...</p>
+        <p className="mt-4 text-textGray font-semibold">Loading Admin Dashboard...</p>
       </div>
     );
   }
@@ -301,10 +294,10 @@ export default function Admin() {
       <aside className="w-full md:w-64 bg-cardBg border-r border-cardBg/50 flex flex-col justify-between p-6 shrink-0">
         <div>
           <div className="mb-10 text-left">
-            {CONFIG.logoUrl ? (
-              <img src={CONFIG.logoUrl} alt={CONFIG.siteName} className="h-10 w-auto mb-2 object-contain" />
+            {CONFIG?.logoUrl ? (
+              <img src={CONFIG.logoUrl} alt={CONFIG?.siteName || "Earnova"} className="h-10 w-auto mb-2 object-contain" />
             ) : (
-              <span className="text-2xl font-black text-primary">🟢 {CONFIG.siteName}</span>
+              <span className="text-2xl font-black text-primary">🟢 {CONFIG?.siteName || "Earnova"}</span>
             )}
             <div className="mt-2 text-xs text-red-500 font-bold bg-red-500/10 border border-red-500/25 rounded-full px-3 py-1 max-w-max">
               🛡️ Admin Terminal
@@ -355,7 +348,7 @@ export default function Admin() {
           <div className="space-y-8">
             <div>
               <h1 className="text-3xl font-black">Admin Panel Overview</h1>
-              <p className="text-textGray text-sm">Real-time statistics of {CONFIG.siteName} network.</p>
+              <p className="text-textGray text-sm">Real-time statistics of {CONFIG?.siteName || "Earnova"} network.</p>
             </div>
 
             {/* Statistics Cards */}
@@ -455,10 +448,10 @@ export default function Admin() {
                           <td className="py-3 font-semibold capitalize">{usr.username}</td>
                           <td className="py-3 text-textGray text-xs truncate max-w-[150px]">{usr.email}</td>
                           <td className="py-3 text-textGray font-semibold">{usr.phone || 'No Phone'}</td>
-                          <td className="py-3 text-primary font-bold">৳ {usr.balance.toFixed(2)}</td>
+                          <td className="py-3 text-primary font-bold">৳ {formatCurrency(usr.balance)}</td>
                           <td className="py-3 font-medium text-accent">{usr.referral_count} Users</td>
                           <td className="py-3">
-                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${usr.is_active ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${usr.is_active ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
                               {usr.is_active ? 'Active' : 'Inactive'}
                             </span>
                           </td>
@@ -495,7 +488,7 @@ export default function Admin() {
                     <X className="w-5 h-5" />
                   </button>
                   <h3 className="text-lg font-bold mb-1">Adjust Balance</h3>
-                  <p className="text-textGray text-xs mb-6">Modifying balance for: <strong className="text-primary capitalize">{balanceModal.username}</strong> (Current: ৳ {balanceModal.currentBalance.toFixed(2)})</p>
+                  <p className="text-textGray text-xs mb-6">Modifying balance for: <strong className="text-primary capitalize">{balanceModal.username}</strong> (Current: ৳ {formatCurrency(balanceModal.currentBalance)})</p>
 
                   <div className="space-y-4">
                     <input
@@ -510,13 +503,13 @@ export default function Admin() {
                     <div className="grid grid-cols-2 gap-4">
                       <button
                         onClick={() => handleAdjustBalance(true)}
-                        className="py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 flex items-center justify-center gap-1 text-sm shadow-md shadow-primary/15"
+                        className="py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-primary/15"
                       >
                         <Plus className="w-4 h-4" /> Add Balance
                       </button>
                       <button
                         onClick={() => handleAdjustBalance(false)}
-                        className="py-3 bg-red-500 text-textLight font-black rounded-xl hover:bg-opacity-90 flex items-center justify-center gap-1 text-sm shadow-md shadow-red-500/15"
+                        className="py-3 bg-red-500 text-textLight font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-red-500/15"
                       >
                         <X className="w-4 h-4" /> Subtract Balance
                       </button>
