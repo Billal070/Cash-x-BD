@@ -30,11 +30,11 @@ const formatCurrency = (value) => {
   return isNaN(num) ? "0.00" : num.toFixed(2);
 };
 
-// মেথড লোগোর লাইভ এবং অফিশিয়াল স্বচ্ছ CDN লিঙ্কসমূহ
+// উইকিমিডিয়া কমন্সের লাইভ এবং অফিশিয়াল স্বচ্ছ CDN লোগো লিঙ্কসমূহ (১০০% স্থায়ী ও নিরাপদ)
 const METHOD_LOGOS = {
-  bkash: "https://raw.githubusercontent.com/shurjopay/shurjopay-plugin-wordpress/master/images/bkash.png",
-  nagad: "https://raw.githubusercontent.com/shurjopay/shurjopay-plugin-wordpress/master/images/nagad.png",
-  rocket: "https://raw.githubusercontent.com/shurjopay/shurjopay-plugin-wordpress/master/images/rocket.png"
+  bkash: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/BKash_Logo.svg/320px-BKash_Logo.svg.png",
+  nagad: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Nagad-png.png",
+  rocket: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Rocket_mobile_banking_logo.svg/320px-Rocket_mobile_banking_logo.svg.png"
 };
 
 export default function Dashboard() {
@@ -1140,7 +1140,7 @@ export default function Dashboard() {
                   href={activeTelegramAdmin}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-3.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 shadow-md shadow-accent/15 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <MessageSquare className="w-4 h-4" /> Contact Support Admin
                 </a>
