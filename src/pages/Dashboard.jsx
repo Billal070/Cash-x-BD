@@ -825,76 +825,117 @@ export default function Dashboard() {
         )}
 
         {/* TAB 2: WATCH ADS */}
+       {/* TAB 2: WATCH ADS (১টি গ্লোবাল লিংকের সম্পূর্ণ ডায়নামিক গ্রিড) */}
         {activeTab === 'watch-ads' && (
-          <div className="space-y-6 md:space-y-8">
-            {(() => {
-              const countMap = {};
-              taskCompletions.forEach(c => { countMap[c.task_id] = (countMap[c.task_id] || 0) + 1; });
-              const todayEarned = taskCompletions.reduce((acc, c) => acc + (Number(c.reward_earned) || 0), 0);
-              const totalCompletedToday = Object.values(countMap).reduce((a, b) => a + b, 0);
-              const totalDailySlots = tasks.reduce((acc, t) => acc + (t.daily_limit || 0), 0);
-              const remaining = totalDailySlots - totalCompletedToday;
+          <div className="space-y-6 md:space-y-8 max-w-4xl">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black">Ad Reward System</h1>
+              <p className="text-[#8AA8B8] text-xs md:text-sm">Watch organic ads and earn {activePerAdReward}৳ per view.</p>
+            </div>
 
-              return (
-                <>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-[#1A2332] border border-[#1E3A2F] rounded-xl p-3 text-center">
-                      <p className="text-[#8AA8B8] text-xs mb-1">Today Earned</p>
-                      <p className="text-[#22C55E] font-bold text-base md:text-lg">৳{todayEarned.toFixed(2)}</p>
-                    </div>
-                    <div className="bg-[#1A2332] border border-[#1E3A2F] rounded-xl p-3 text-center">
-                      <p className="text-[#8AA8B8] text-xs mb-1">Ads Watched</p>
-                      <p className="text-[#F0F6FF] font-bold text-base md:text-lg">{totalCompletedToday}/{totalDailySlots}</p>
-                    </div>
-                    <div className="bg-[#1A2332] border border-[#1E3A2F] rounded-xl p-3 text-center">
-                      <p className="text-[#8AA8B8] text-xs mb-1">Remaining</p>
-                      {remaining === 0 ? (
-                        <p className="text-[#22C55E] font-bold text-base md:text-lg">Done! 🎉</p>
-                      ) : (
-                        <p className="text-[#FBBF24] font-bold text-base md:text-lg">{remaining} left</p>
-                      )}
-                    </div>
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
+              {!profile.is_active ? (
+                // ইনঅ্যাক্টিভ ইউজারদের লকড স্ক্রিন
+                <div className="bg-background rounded-2xl p-8 border border-cardBg text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto"><Lock className="w-8 h-8" /></div>
+                  <h3 className="text-lg md:text-xl font-bold">Earning Feature Locked 🔒</h3>
+                  <p className="text-[#8AA8B8] text-xs max-w-sm mx-auto leading-relaxed">Account activation is required to watch daily advertisements and earn real wallet rewards.</p>
+                  <button onClick={() => setShowActivationModal(true)} className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all">Activate Account Now</button>
+                </div>
+              ) : (
+                // অ্যাক্টিভ ইউজারদের জন্য ডাইনামিক গ্রিড কার্ড
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs md:text-sm font-bold text-[#8AA8B8]">Today's Ads limit:</span>
+                    <span className="text-sm md:text-base font-black text-primary">{totalCompletedToday} / {activeDailyAdLimit} Completed</span>
+                  </div>
+                  <div className="w-full bg-[#0D1117] rounded-full h-3 overflow-hidden border border-cardBg mb-6">
+                    <div className="bg-primary h-full transition-all duration-500" style={{ width: `${(totalCompletedToday / activeDailyAdLimit) * 100}%` }}></div>
                   </div>
 
-                  <div>
-                    <h2 className="text-xl font-bold text-[#F0F6FF]">Available Tasks</h2>
-                    <p className="text-sm text-[#8AA8B8]">{tasks.length} tasks available today</p>
+                  {/* আপনার অ্যাডমিন প্যানেল থেকে সেট করা লিমিট অনুযায়ী অটোমেটিক কার্ড তৈরি হবে */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array.from({ length: activeDailyAdLimit }).map((_, index) => {
+                      const adIndex = index + 1;
+                      const isCompleted = adIndex <= totalCompletedToday;
+                      const isActive = adIndex === totalCompletedToday + 1;
+                      const isLocked = adIndex > totalCompletedToday + 1;
+
+                      return (
+                        <div 
+                          key={index} 
+                          className={`bg-[#0D1117] border rounded-2xl p-5 flex flex-col justify-between space-y-4 transition-all duration-300 ${isCompleted ? 'border-primary/20 opacity-60' : isActive ? 'border-primary shadow-lg shadow-primary/5 scale-[1.01]' : 'border-cardBg opacity-40'}`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${isCompleted ? 'bg-primary/10 text-primary border-primary/25' : isActive ? 'bg-accent/10 text-accent border-accent/25' : 'bg-cardBg text-[#8AA8B8] border-cardBg'}`}>
+                              {isCompleted ? 'Completed' : isActive ? 'Active Ad' : 'Locked'}
+                            </span>
+                            {isCompleted ? <CheckCircle className="w-4 h-4 text-primary" /> : isLocked ? <Lock className="w-4 h-4 text-[#8AA8B8]" /> : <Clock className="w-4 h-4 text-accent" />}
+                          </div>
+
+                          <div>
+                            <h4 className="font-extrabold text-[#F0F6FF] text-sm">Earnova Video Ad #{adIndex}</h4>
+                            <p className="text-[#8AA8B8] text-[10px] mt-1">Watch and claim your daily revenue.</p>
+                          </div>
+
+                          <div className="flex justify-between items-end border-t border-cardBg/50 pt-3">
+                            <div>
+                              <span className="text-[10px] text-[#8AA8B8] block">Reward</span>
+                              <span className="text-sm font-black text-accent">৳ {formatCurrency(activePerAdReward)}</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-[#8AA8B8] block text-right">Timer</span>
+                              <span className="text-xs font-bold text-textLight">{activeAdTimer}s</span>
+                            </div>
+                          </div>
+
+                          {/* বাটন কন্ট্রোল */}
+                          {isCompleted ? (
+                            <div className="bg-primary/10 border border-primary/20 text-primary py-2 rounded-xl text-xs font-bold text-center">
+                              ✅ Earned ৳ {formatCurrency(activePerAdReward)}
+                            </div>
+                          ) : isLocked ? (
+                            <button disabled className="w-full py-2.5 bg-cardBg text-[#8AA8B8] text-xs font-bold rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5">
+                              <Lock className="w-3.5 h-3.5" /> Locked
+                            </button>
+                          ) : isWatching ? (
+                            <div className="bg-[#1A2332] rounded-xl py-2 px-3 border border-accent/20 text-center">
+                              <span className="text-accent font-black text-xs animate-pulse flex items-center justify-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 animate-spin" /> Ad ending in {adTimer}s
+                              </span>
+                            </div>
+                          ) : cooldown > 0 ? (
+                            <div className="bg-cardBg border border-cardBg rounded-xl py-2 text-center">
+                              <span className="text-accent text-[10px] font-bold">Cooldown: {cooldown}s</span>
+                            </div>
+                          ) : (
+                            <button 
+                              onClick={startWatchingAd} 
+                              className="w-full py-2.5 bg-primary text-background text-xs font-black rounded-xl hover:bg-opacity-90 transition-all flex items-center justify-center gap-1.5"
+                            >
+                              <Play className="w-3.5 h-3.5 fill-background" /> Watch Ad
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  {loadingTasks ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[1, 2, 3, 4].map(i => <div key={i} className="bg-[#1A2332] border border-[#1E3A2F] rounded-xl h-48 animate-pulse"></div>)}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {tasks.map(task => (
-                        <TaskCard
-                          key={task.id}
-                          task={task}
-                          completedCount={countMap[task.id] || 0}
-                          onClaimed={fetchLiveTasks}
-                          user={user}
-                          profile={profile}
-                          refreshProfile={refreshProfile}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {remaining === 0 && tasks.length > 0 && (
+                  {/* অল টাস্ক ডান কার্ড */}
+                  {totalCompletedToday >= activeDailyAdLimit && (
                     <div className="bg-[#0A1F10] border border-[#22C55E]/30 rounded-xl p-8 text-center space-y-3 mt-6">
                       <div className="text-4xl">🎉</div>
                       <h3 className="text-xl font-bold text-[#F0F6FF]">All Tasks Done for Today!</h3>
-                      <p className="text-[#22C55E] font-semibold">You earned ৳{todayEarned.toFixed(2)} today</p>
+                      <p className="text-[#22C55E] font-semibold">You earned ৳{formatCurrency(totalCompletedToday * activePerAdReward)} today</p>
                       <p className="text-sm text-[#8AA8B8]">New tasks available tomorrow.<br/>Come back to earn more!</p>
                       <button onClick={() => setActiveTab('overview')} className="mt-4 px-6 py-2.5 border border-[#22C55E]/50 text-[#22C55E] rounded-xl font-bold text-sm hover:bg-[#22C55E]/10 transition-all">
                         Go to Dashboard <ArrowRight className="inline w-4 h-4 ml-1" />
                       </button>
                     </div>
                   )}
-                </>
-              );
-            })()}
+                </div>
+              )}
+            </div>
           </div>
         )}
         {/* TAB 3: WITHDRAW */}
