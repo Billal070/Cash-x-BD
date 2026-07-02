@@ -174,6 +174,7 @@ export default function Dashboard() {
   const [adTimer, setAdTimer] = useState(0); 
   const [cooldown, setCooldown] = useState(0); 
   const [isWatching, setIsWatching] = useState(false);
+  const [watchingAdIndex, setWatchingAdIndex] = useState(null);
   
   // প্রয়োজনীয় জিনী পে কনফিগারেশন
   const [paying, setPaying] = useState(false);
@@ -274,7 +275,13 @@ export default function Dashboard() {
     let interval;
     if (cooldown > 0) {
       interval = setInterval(() => {
-        setCooldown((prev) => prev - 1);
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            setWatchingAdIndex(null);
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
     }
     return () => clearInterval(interval);
@@ -383,6 +390,7 @@ export default function Dashboard() {
 
     window.open(activeAdsterraLink, '_blank'); 
     setIsWatching(true);
+    setWatchingAdIndex(totalCompletedToday + 1);
     setAdTimer(activeAdTimer); 
     toast.success('Ad loaded! Please do not close this dashboard tab.');
   };
@@ -564,6 +572,15 @@ export default function Dashboard() {
   const activeDailyAdLimit = dbSettings ? Number(dbSettings.daily_ad_limit) : (CONFIG?.dailyAdLimit || 15);
   const activeAdTimer = dbSettings ? Number(dbSettings.ad_timer) : (CONFIG?.adTimer || 15);
 
+  if (loading || !profile) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col justify-center items-center">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-textGray font-semibold">Loading {CONFIG?.siteName || "Earnova"} Dashboard...</p>
+      </div>
+    );
+  }
+
   const totalLifetimeIncome = profile ? (Number(profile.balance) + Number(profile.total_withdrawn)) : 0;
   const referralEarnings = profile ? Number(profile.referral_count) * activeReferralBonus : 0;
   const adsEarnings = totalLifetimeIncome - referralEarnings > 0 ? totalLifetimeIncome - referralEarnings : 0;
@@ -582,15 +599,6 @@ export default function Dashboard() {
     : (profile.ads_watched_today || 0);
   
   const remainingAds = activeDailyAdLimit - totalCompletedToday > 0 ? activeDailyAdLimit - totalCompletedToday : 0;
-
-  if (loading || !profile) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col justify-center items-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-textGray font-semibold">Loading {CONFIG?.siteName || "Earnova"} Dashboard...</p>
-      </div>
-    );
-  }
 
   const renderSidebarProfileCard = () => (
     <div className="bg-background/30 border border-cardBg/50 rounded-2xl p-4 mb-6 flex flex-col items-center text-center">
@@ -1069,9 +1077,10 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Array.from({ length: activeDailyAdLimit }).map((_, index) => {
                       const adIndex = index + 1;
-                      const isCompleted = adIndex <= totalCompletedToday;
-                      const isActive = adIndex === totalCompletedToday + 1;
-                      const isLocked = adIndex > totalCompletedToday + 1;
+                      const isCurrentWatching = watchingAdIndex !== null && adIndex === watchingAdIndex;
+                      const isCompleted = !isCurrentWatching && adIndex <= totalCompletedToday;
+                      const isActive = isCurrentWatching || adIndex === totalCompletedToday + 1;
+                      const isLocked = !isCurrentWatching && adIndex > totalCompletedToday + 1;
 
                       return (
                         <div 
@@ -1080,7 +1089,7 @@ export default function Dashboard() {
                         >
                           <div className="flex justify-between items-center">
                             <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${isCompleted ? 'bg-cardBg text-[#8AA8B8] border-cardBg' : isActive ? 'bg-accent/10 text-accent border-accent/25' : 'bg-cardBg text-[#8AA8B8] border-cardBg'}`}>
-                              {isCompleted ? 'Watched' : isActive ? 'Active Ad' : 'Locked'}
+                              {isCompleted ? 'Watched' : isCurrentWatching ? (isWatching ? 'Watching' : 'Cooldown') : isActive ? 'Active Ad' : 'Locked'}
                             </span>
                             {isCompleted ? <Lock className="w-4 h-4 text-[#8AA8B8]" /> : isLocked ? <Lock className="w-4 h-4 text-[#8AA8B8]" /> : <Clock className="w-4 h-4 text-accent" />}
                           </div>
@@ -1110,15 +1119,17 @@ export default function Dashboard() {
                             <button disabled className="w-full py-2.5 bg-cardBg text-[#8AA8B8] text-xs font-bold rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5">
                               <Lock className="w-3.5 h-3.5" /> Locked
                             </button>
-                          ) : isWatching ? (
+                          ) : isCurrentWatching && isWatching ? (
                             <div className="bg-[#1A2332] rounded-xl py-2 px-3 border border-accent/20 text-center">
                               <span className="text-accent font-black text-xs animate-pulse flex items-center justify-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5 animate-spin" /> Ad ending in {adTimer}s
                               </span>
                             </div>
-                          ) : cooldown > 0 ? (
-                            <div className="bg-cardBg border border-cardBg rounded-xl py-2 text-center">
-                              <span className="text-accent text-[10px] font-bold">Cooldown: {cooldown}s</span>
+                          ) : isCurrentWatching && cooldown > 0 ? (
+                            <div className="bg-cardBg border border-accent/20 rounded-xl py-2 text-center">
+                              <span className="text-accent text-[10px] font-bold flex items-center justify-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 animate-spin" /> Cooldown: {cooldown}s
+                              </span>
                             </div>
                           ) : (
                             <button 
