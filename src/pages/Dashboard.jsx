@@ -397,7 +397,7 @@ export default function Dashboard() {
         adsCount = 0; 
       }
 
-      const { error } = await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           balance: profile.balance + activePerAdReward, 
@@ -407,11 +407,20 @@ export default function Dashboard() {
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      const { error: completionError } = await supabase.from('task_completions').insert({
+        user_id: user.id,
+        task_id: tasks.length > 0 ? tasks[0].id : 1,
+        reward_earned: activePerAdReward
+      });
+
+      if (completionError) throw completionError;
 
       toast.success(`Successfully earned ${activePerAdReward}৳! 🎉`, { id: toastId });
       setCooldown(60); 
       await refreshProfile();
+      await fetchLiveTasks();
     } catch (err) {
       toast.error('Failed to claim reward.', { id: toastId });
     }
