@@ -397,10 +397,17 @@ export default function Dashboard() {
         adsCount = 0; 
       }
 
+      let todayEarnedVal = profile.today_earned || 0;
+      if (profile.last_ad_date !== todayStr) {
+        todayEarnedVal = 0;
+      }
+
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           balance: profile.balance + activePerAdReward, 
+          total_earned: (profile.total_earned || 0) + activePerAdReward,
+          today_earned: todayEarnedVal + activePerAdReward,
           ads_watched_today: adsCount + 1,
           last_ad_watched_at: new Date().toISOString(),
           last_ad_date: todayStr
@@ -412,10 +419,11 @@ export default function Dashboard() {
       const { error: completionError } = await supabase.from('task_completions').insert({
         user_id: user.id,
         task_id: tasks.length > 0 ? tasks[0].id : 1,
-        reward_earned: activePerAdReward
+        reward_earned: activePerAdReward,
+        completed_at: new Date().toISOString()
       });
 
-      if (completionError) throw completionError;
+      if (completionError) console.error('task_completions insert failed:', completionError.message);
 
       toast.success(`Successfully earned ${activePerAdReward}৳! 🎉`, { id: toastId });
       setCooldown(60); 
@@ -560,11 +568,19 @@ export default function Dashboard() {
   const referralEarnings = profile ? Number(profile.referral_count) * activeReferralBonus : 0;
   const adsEarnings = totalLifetimeIncome - referralEarnings > 0 ? totalLifetimeIncome - referralEarnings : 0;
 
-  // আজকের ৩টি স্ট্যাটস ভ্যালু গ্লোবাল হিসাব (সফলভাবে যুক্ত)
+  // আজকের ৩টি স্ট্যাটস ভ্যালু গ্লোবাল হিসাব
   const countMap = {};
   taskCompletions.forEach(c => { countMap[c.task_id] = (countMap[c.task_id] || 0) + 1; });
-  const todayEarned = taskCompletions.reduce((acc, c) => acc + (Number(c.reward_earned) || 0), 0);
-  const totalCompletedToday = Object.values(countMap).reduce((a, b) => a + b, 0);
+  const totalCompletedFromTasks = Object.values(countMap).reduce((a, b) => a + b, 0);
+  
+  const todayEarned = totalCompletedFromTasks > 0 
+    ? taskCompletions.reduce((acc, c) => acc + (Number(c.reward_earned) || 0), 0)
+    : (profile.today_earned || 0);
+  
+  const totalCompletedToday = totalCompletedFromTasks > 0 
+    ? totalCompletedFromTasks 
+    : (profile.ads_watched_today || 0);
+  
   const remainingAds = activeDailyAdLimit - totalCompletedToday > 0 ? activeDailyAdLimit - totalCompletedToday : 0;
 
   if (loading || !profile) {
