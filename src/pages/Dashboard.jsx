@@ -9,9 +9,10 @@ import {
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
   HelpCircle, Send, MessageSquare,
-  Megaphone, Download, Headphones, MousePointer2, Eye, ArrowRight 
+  Megaphone, Download, Headphones, MousePointer2, Eye, ArrowRight
 } from 'lucide-react';
 
+// গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
 const CONFIG = ImportedConfig || {
   siteName: "Earnova",
   logoUrl: "", 
@@ -24,17 +25,20 @@ const CONFIG = ImportedConfig || {
   minWithdrawSubsequent: 200,
 };
 
+// ডাটাবেজের null/undefined ক্র্যাশ প্রতিরোধক সেফ কারেন্সি ফরম্যাটার
 const formatCurrency = (value) => {
   const num = Number(value);
   return isNaN(num) ? "0.00" : num.toFixed(2);
 };
 
+// আপনার নিজের হোস্টিং সার্ভার (public ফোল্ডার) থেকে লোকাল ইমেজ পাথ
 const METHOD_LOGOS = {
   bkash: "/bkash.png",
   nagad: "/nagad.png",
   rocket: "/rocket.png"
 };
 
+// ডাটাবেজ খালি বা টেবিল অনুপস্থিত থাকলে টেস্টিং করার জন্য ডামি ফ্যালব্যাক টাস্ক
 const mockTasks = [
   { id: 1, title: "Watch Earnova Video Ad 1", task_type: "watch_ad", reward: 5.00, daily_limit: 5, timer_seconds: 15, ad_url: "https://www.example.com" },
   { id: 2, title: "Subscribe Official YouTube Channel", task_type: "ptc", reward: 10.00, daily_limit: 1, timer_seconds: 30, ad_url: "https://www.example.com" },
@@ -171,7 +175,7 @@ export default function Dashboard() {
   const [cooldown, setCooldown] = useState(0); 
   const [isWatching, setIsWatching] = useState(false);
   
-  // age missing howa states gulo ekhane add kora holo
+  // প্রয়োজনীয় জিনী পে কনফিগারেশন
   const [paying, setPaying] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
 
@@ -189,22 +193,6 @@ export default function Dashboard() {
   useEffect(() => {
     fetchLiveSettings();
   }, []);
-
-  const fetchLiveSettings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('*')
-        .eq('id', 'config')
-        .single();
-      if (error) throw error;
-      if (data) {
-        setDbSettings(data);
-      }
-    } catch (err) {
-      console.error('Database settings failed to load, using config.js backup:', err.message);
-    }
-  };
 
   // ডাটাবেজ থেকে লাইভ টাস্ক লোড করা
   const fetchLiveTasks = async () => {
@@ -235,6 +223,23 @@ export default function Dashboard() {
       fetchLiveTasks();
     }
   }, [user]);
+
+  const fetchLiveSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('id', 'config')
+        .single();
+      if (error) throw error;
+      if (data) {
+        setDbSettings(data);
+      }
+    } catch (err) {
+      console.error('Database settings failed to load, using config.js backup:', err.message);
+    }
+  };
+
   // যদি লগইন না থাকে, তবে লগইন পেজে রিডাইরেক্ট করবে
   useEffect(() => {
     if (!loading && !user) {
@@ -369,8 +374,8 @@ export default function Dashboard() {
       setShowActivationModal(true); 
       return;
     }
-    if (profile.ads_watched_today >= 15) {
-      return toast.error('You have reached the daily limit of 15 Ads!');
+    if (profile.ads_watched_today >= activeDailyAdLimit) {
+      return toast.error(`You have reached the daily limit of ${activeDailyAdLimit} Ads!`);
     }
     if (cooldown > 0) {
       return toast.error(`Please wait ${cooldown} seconds before watching next ad!`);
@@ -378,7 +383,7 @@ export default function Dashboard() {
 
     window.open(activeAdsterraLink, '_blank'); 
     setIsWatching(true);
-    setAdTimer(15); 
+    setAdTimer(activeAdTimer); 
     toast.success('Ad loaded! Please do not close this dashboard tab.');
   };
 
@@ -425,8 +430,8 @@ export default function Dashboard() {
       return toast.error('Please fill in all withdrawal fields');
     }
 
-    if (profile.ads_watched_today < 15) {
-      return toast.error('⚠️ You must complete all 15 daily ads before withdrawing!');
+    if (profile.ads_watched_today < activeDailyAdLimit) {
+      return toast.error(`⚠️ You must complete all ${activeDailyAdLimit} daily ads before withdrawing!`);
     }
 
     if (profile.withdrawals_count === 0) {
@@ -536,25 +541,22 @@ export default function Dashboard() {
   const activeTelegramAdmin = dbSettings ? dbSettings.telegram_admin : "https://t.me/your_admin";
   const activeAnnouncementText = dbSettings?.announcement_text || "🎉 New tasks available! Complete all tasks today and earn bonus rewards.";
 
- const activeMinWithdrawFirst = CONFIG?.minWithdrawFirst || 75;
+  const activeMinWithdrawFirst = CONFIG?.minWithdrawFirst || 75;
   const activeMinWithdrawSubsequent = CONFIG?.minWithdrawSubsequent || 200;
 
-  // বিজ্ঞপ্তির গ্লোবাল লিমিট ও টাইমার ভ্যালু রিড করা (নতুন যুক্ত)
-  const activeDailyAdLimit = dbSettings ? Number(dbSettings.daily_ad_limit) : (CONFIG?.dailyAdLimit || 15);
-  const activeAdTimer = dbSettings ? Number(dbSettings.ad_timer) : (CONFIG?.adTimer || 15);
-// বিজ্ঞপ্তির গ্লোবাল লিমিট ও টাইমার ভ্যালু রিড করা (নতুন যুক্ত)
   const activeDailyAdLimit = dbSettings ? Number(dbSettings.daily_ad_limit) : (CONFIG?.dailyAdLimit || 15);
   const activeAdTimer = dbSettings ? Number(dbSettings.ad_timer) : (CONFIG?.adTimer || 15);
 
-  // আজকের ৩টি স্ট্যাটস বক্সের গাণিতিক হিসাব (নতুন যুক্ত)
+  const totalLifetimeIncome = profile ? (Number(profile.balance) + Number(profile.total_withdrawn)) : 0;
+  const referralEarnings = profile ? Number(profile.referral_count) * activeReferralBonus : 0;
+  const adsEarnings = totalLifetimeIncome - referralEarnings > 0 ? totalLifetimeIncome - referralEarnings : 0;
+
+  // আজকের ৩টি স্ট্যাটস ভ্যালু গ্লোবাল হিসাব (সফলভাবে যুক্ত)
   const countMap = {};
   taskCompletions.forEach(c => { countMap[c.task_id] = (countMap[c.task_id] || 0) + 1; });
   const todayEarned = taskCompletions.reduce((acc, c) => acc + (Number(c.reward_earned) || 0), 0);
   const totalCompletedToday = Object.values(countMap).reduce((a, b) => a + b, 0);
   const remainingAds = activeDailyAdLimit - totalCompletedToday > 0 ? activeDailyAdLimit - totalCompletedToday : 0;
-  const totalLifetimeIncome = profile ? (Number(profile.balance) + Number(profile.total_withdrawn)) : 0;
-  const referralEarnings = profile ? Number(profile.referral_count) * activeReferralBonus : 0;
-  const adsEarnings = totalLifetimeIncome - referralEarnings > 0 ? totalLifetimeIncome - referralEarnings : 0;
 
   if (loading || !profile) {
     return (
@@ -591,7 +593,8 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
-  );  return (
+  );
+  return (
     <div className="min-h-screen bg-background text-textLight flex flex-col md:flex-row">
       
       {/* মোবাইল হেডার */}
@@ -614,7 +617,7 @@ export default function Dashboard() {
         <div className="w-10"></div> 
       </div>
 
-      {/* mobile overlay */}
+      {/* মোবাইল ওভারলে */}
       <div 
         className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity duration-300 md:hidden ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
@@ -637,19 +640,55 @@ export default function Dashboard() {
             </button>
           </div>
 
+          {/* মোবাইল প্রোফাইল কার্ড */}
           {renderSidebarProfileCard()}
 
           <nav className="space-y-2">
-            <button onClick={() => handleTabChange('overview')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'overview' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}><LayoutDashboard className="w-5 h-5" /> Dashboard</button>
-            <button onClick={() => handleTabChange('watch-ads')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}><Play className="w-5 h-5" /> Watch Ads</button>
-            <button onClick={() => handleTabChange('withdraw')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}><ArrowDownToLine className="w-5 h-5" /> Withdraw</button>
-            <button onClick={() => handleTabChange('referrals')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}><Users className="w-5 h-5" /> Referrals</button>
-            <button onClick={() => handleTabChange('profile-details')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'profile-details' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}><User className="w-5 h-5" /> Profile</button>
-            <button onClick={() => handleTabChange('support-page')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'support-page' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}><HelpCircle className="w-5 h-5" /> Support</button>
+            <button
+              onClick={() => handleTabChange('overview')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'overview' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <LayoutDashboard className="w-5 h-5" /> Dashboard
+            </button>
+            <button
+              onClick={() => handleTabChange('watch-ads')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <Play className="w-5 h-5" /> Watch Ads
+            </button>
+            <button
+              onClick={() => handleTabChange('withdraw')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <ArrowDownToLine className="w-5 h-5" /> Withdraw
+            </button>
+            <button
+              onClick={() => handleTabChange('referrals')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <Users className="w-5 h-5" /> Referrals
+            </button>
+            <button
+              onClick={() => handleTabChange('profile-details')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'profile-details' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <User className="w-5 h-5" /> Profile
+            </button>
+            <button
+              onClick={() => handleTabChange('support-page')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'support-page' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <HelpCircle className="w-5 h-5" /> Support
+            </button>
           </nav>
         </div>
 
-        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-textGray hover:text-red-500 font-bold transition-colors w-full animate-none"><LogOut className="w-5 h-5" /> Sign Out</button>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-3 text-textGray hover:text-red-500 font-bold transition-colors w-full animate-none"
+        >
+          <LogOut className="w-5 h-5" /> Sign Out
+        </button>
       </aside>
 
       {/* ডেস্কটপ সাইডবার */}
@@ -663,44 +702,114 @@ export default function Dashboard() {
             )}
           </div>
 
+          {/* ডেস্কটপ প্রোফাইল কার্ড */}
           {renderSidebarProfileCard()}
 
           <nav className="space-y-2">
-            <button onClick={() => setActiveTab('overview')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'overview' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}><LayoutDashboard className="w-5 h-5" /> Dashboard</button>
-            <button onClick={() => setActiveTab('watch-ads')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}><Play className="w-5 h-5" /> Watch Ads</button>
-            <button onClick={() => setActiveTab('withdraw')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}><ArrowDownToLine className="w-5 h-5" /> Withdraw</button>
-            <button onClick={() => setActiveTab('referrals')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}><Users className="w-5 h-5" /> Referrals</button>
-            <button onClick={() => setActiveTab('profile-details')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'profile-details' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}><User className="w-5 h-5" /> Profile</button>
-            <button onClick={() => setActiveTab('support-page')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'support-page' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}><HelpCircle className="w-5 h-5" /> Support</button>
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'overview' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <LayoutDashboard className="w-5 h-5" /> Dashboard
+            </button>
+            <button
+              onClick={() => setActiveTab('watch-ads')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <Play className="w-5 h-5" /> Watch Ads
+            </button>
+            <button
+              onClick={() => setActiveTab('withdraw')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <ArrowDownToLine className="w-5 h-5" /> Withdraw
+            </button>
+            <button
+              onClick={() => setActiveTab('referrals')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <Users className="w-5 h-5" /> Referrals
+            </button>
+            <button
+              onClick={() => setActiveTab('profile-details')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'profile-details' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <User className="w-5 h-5" /> Profile
+            </button>
+            <button
+              onClick={() => setActiveTab('support-page')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'support-page' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <HelpCircle className="w-5 h-5" /> Support
+            </button>
           </nav>
         </div>
 
-        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-textGray hover:text-red-500 font-bold transition-colors w-full"><LogOut className="w-5 h-5" /> Sign Out</button>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-3 text-textGray hover:text-red-500 font-bold transition-colors w-full"
+        >
+          <LogOut className="w-5 h-5" /> Sign Out
+        </button>
       </aside>
 
       {/* Main Content Dashboard */}
       <main className="flex-1 p-5 md:p-10 max-w-7xl mx-auto w-full overflow-y-auto">
-                {/* TAB 1: OVERVIEW */}
+        
+        {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="space-y-6 md:space-y-8">
             
+            {/* ১. ডিসমিসিবল অ্যানাউন্সমেন্ট বার (Megaphone Icon সহ) */}
             {showAnnouncement && (
               <div className="bg-[#FBBF24]/10 border border-[#FBBF24]/30 rounded-xl px-3 py-3 sm:px-4 flex items-center justify-between gap-3 text-left">
                 <div className="flex items-center gap-2">
                   <Megaphone className="text-[#FBBF24] shrink-0" size={18} />
-                  <p className="text-[#FBBF24] text-xs sm:text-sm font-medium">{activeAnnouncementText}</p>
+                  <p className="text-[#FBBF24] text-xs sm:text-sm font-medium">
+                    {activeAnnouncementText}
+                  </p>
                 </div>
-                <button onClick={() => setShowAnnouncement(false)} className="text-[#FBBF24]/60 hover:text-[#FBBF24] transition-colors focus:outline-none"><X size={18} /></button>
+                <button 
+                  onClick={() => setShowAnnouncement(false)} 
+                  className="text-[#FBBF24]/60 hover:text-[#FBBF24] transition-colors focus:outline-none"
+                >
+                  <X size={18} />
+                </button>
               </div>
             )}
 
-           {/* ৩টি Top Stats Box (Today Earned, Ads Watched, Remaining) */}
+            {/* ২. স্বাগত হেডার */}
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black">Welcome Back, {profile.username}!</h1>
+              <p className="text-[#8AA8B8] text-xs md:text-sm">Monitor your earnings and complete tasks to cash out.</p>
+            </div>
+
+            {/* Inactive Alert Box */}
+            {!profile.is_active && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex gap-3">
+                  <Lock className="w-5 h-5 text-red-500 shrink-0 mt-0.5 animate-pulse" />
+                  <div>
+                    <h4 className="font-bold text-textLight text-sm">Account Activation Required</h4>
+                    <p className="text-xs text-textGray leading-relaxed mt-1">To start watching daily ads and unlock payment withdrawal, please activate your profile.</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowActivationModal(true)}
+                  className="px-5 py-2.5 bg-red-500 text-textLight hover:bg-opacity-90 font-bold text-xs rounded-xl shadow-md transition-all shrink-0 w-full sm:w-auto"
+                >
+                  Activate Now 🔓
+                </button>
+              </div>
+            )}
+
+            {/* ৩টি Top Stats Box (Today Earned, Ads Watched, Remaining) */}
             <div className="grid grid-cols-3 gap-3">
               {/* Box 1: আজকে কত টাকা আয় হলো */}
               <div className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl p-3 text-center">
                 <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Today Earned</span>
                 <span className="block text-[#22C55E] font-black text-sm sm:text-lg mt-1">
-                  ৳{formatCurrency(todayEarned)}
+                  ৳ {formatCurrency(todayEarned)}
                 </span>
               </div>
 
@@ -725,96 +834,145 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {!profile.is_active && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex gap-3">
-                  <Lock className="w-5 h-5 text-red-500 shrink-0 mt-0.5 animate-pulse" />
-                  <div>
-                    <h4 className="font-bold text-textLight text-sm">Account Activation Required</h4>
-                    <p className="text-xs text-textGray leading-relaxed mt-1">To start watching daily ads and unlock payment withdrawal, please activate your profile.</p>
-                  </div>
-                </div>
-                <button onClick={() => setShowActivationModal(true)} className="px-5 py-2.5 bg-red-500 text-textLight hover:bg-opacity-90 font-bold text-xs rounded-xl shadow-md transition-all shrink-0 w-full sm:w-auto">Activate Now 🔓</button>
-              </div>
-            )}
-
+            {/* Cards Grid (Balance, Referrals, and Total Watched) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
               <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 rounded-2xl relative overflow-hidden">
-                <div className="absolute right-4 top-4 text-primary bg-primary/10 p-2 rounded-xl"><Landmark className="w-6 h-6" /></div>
+                <div className="absolute right-4 top-4 text-primary bg-primary/10 p-2 rounded-xl">
+                  <Landmark className="w-6 h-6" />
+                </div>
                 <h3 className="text-sm font-bold text-[#8AA8B8] mb-1">Current Balance</h3>
                 <p className="text-2xl md:text-3xl font-black text-primary">৳ {formatCurrency(profile.balance)}</p>
-                <button onClick={() => setActiveTab('withdraw')} className="mt-4 text-xs font-bold text-accent hover:underline flex items-center gap-1">Go to Withdraw <ArrowDownToLine className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setActiveTab('withdraw')} className="mt-4 text-xs font-bold text-accent hover:underline flex items-center gap-1">
+                  Go to Withdraw <ArrowDownToLine className="w-3.5 h-3.5" />
+                </button>
               </div>
 
               <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 rounded-2xl relative overflow-hidden">
-                <div className="absolute right-4 top-4 text-accent bg-accent/10 p-2 rounded-xl"><Users className="w-6 h-6" /></div>
+                <div className="absolute right-4 top-4 text-accent bg-accent/10 p-2 rounded-xl">
+                  <Users className="w-6 h-6" />
+                </div>
                 <h3 className="text-sm font-bold text-[#8AA8B8] mb-1">Total Referrals</h3>
                 <p className="text-2xl md:text-3xl font-black text-accent">{profile.referral_count} Users</p>
-                <button onClick={() => setActiveTab('referrals')} className="mt-4 text-xs font-bold text-primary hover:underline flex items-center gap-1">View Referrals <Users className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setActiveTab('referrals')} className="mt-4 text-xs font-bold text-primary hover:underline flex items-center gap-1">
+                  View Referrals <Users className="w-3.5 h-3.5" />
+                </button>
               </div>
 
               <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 rounded-2xl relative overflow-hidden">
-                <div className="absolute right-4 top-4 text-textLight bg-textLight/10 p-2 rounded-xl"><Play className="w-6 h-6" /></div>
+                <div className="absolute right-4 top-4 text-textLight bg-textLight/10 p-2 rounded-xl">
+                  <Play className="w-6 h-6" />
+                </div>
                 <h3 className="text-sm font-bold text-[#8AA8B8] mb-1">Today's Ads completed</h3>
-                <p className="text-2xl md:text-3xl font-black text-textLight">{totalCompletedToday} / {activeDailyAdLimit}/p>
-                <button onClick={() => setActiveTab('watch-ads')} className="mt-4 text-xs font-bold text-accent hover:underline flex items-center gap-1">Watch Ads <Play className="w-3.5 h-3.5" /></button>
+                <p className="text-2xl md:text-3xl font-black text-textLight">{totalCompletedToday} / {activeDailyAdLimit}</p>
+                <button onClick={() => setActiveTab('watch-ads')} className="mt-4 text-xs font-bold text-accent hover:underline flex items-center gap-1">
+                  Watch Ads <Play className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
 
+            {/* ৬. Quick Action Buttons */}
             <div className="space-y-4">
               <h3 className="font-bold text-[#F0F6FF] text-sm md:text-base">Quick Actions</h3>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div onClick={() => setActiveTab('watch-ads')} className="bg-[#1A2332] border border-[#1E3A2F]/60 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#22C55E]/50 hover:bg-[#1E3A2F]/30 transition-all cursor-pointer text-center min-h-[90px]">
-                  <div className="w-10 h-10 rounded-full bg-[#22C55E]/10 flex items-center justify-center text-[#22C55E]"><Play className="w-5 h-5 fill-[#22C55E]" /></div>
+                {/* Button 1: Watch Ads */}
+                <div 
+                  onClick={() => setActiveTab('watch-ads')}
+                  className="bg-[#1A2332] border border-[#1E3A2F]/60 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#22C55E]/50 hover:bg-[#1E3A2F]/30 transition-all cursor-pointer text-center min-h-[90px]"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#22C55E]/10 flex items-center justify-center text-[#22C55E]">
+                    <Play className="w-5 h-5 fill-[#22C55E]" />
+                  </div>
                   <span className="font-semibold text-[#F0F6FF] text-xs sm:text-sm">Watch Ads</span>
                   <span className="text-[10px] md:text-xs text-[#8AA8B8]">Earn per ad</span>
                 </div>
 
-                <div onClick={() => setActiveTab('withdraw')} className="bg-[#1A2332] border border-[#1E3A2F]/60 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#22C55E]/50 hover:bg-[#1E3A2F]/30 transition-all cursor-pointer text-center min-h-[90px]">
-                  <div className="w-10 h-10 rounded-full bg-[#FBBF24]/10 flex items-center justify-center text-[#FBBF24]"><Download className="w-5 h-5" /></div>
+                {/* Button 2: Withdraw */}
+                <div 
+                  onClick={() => setActiveTab('withdraw')}
+                  className="bg-[#1A2332] border border-[#1E3A2F]/60 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#22C55E]/50 hover:bg-[#1E3A2F]/30 transition-all cursor-pointer text-center min-h-[90px]"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#FBBF24]/10 flex items-center justify-center text-[#FBBF24]">
+                    <Download className="w-5 h-5" />
+                  </div>
                   <span className="font-semibold text-[#F0F6FF] text-xs sm:text-sm">Withdraw</span>
                   <span className="text-[10px] md:text-xs text-[#8AA8B8]">Cash out now</span>
                 </div>
 
-                <div onClick={() => setActiveTab('referrals')} className="bg-[#1A2332] border border-[#1E3A2F]/60 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#22C55E]/50 hover:bg-[#1E3A2F]/30 transition-all cursor-pointer text-center min-h-[90px]">
-                  <div className="w-10 h-10 rounded-full bg-[#22C55E]/10 flex items-center justify-center text-[#22C55E]"><Users className="w-5 h-5" /></div>
+                {/* Button 3: Refer & Earn */}
+                <div 
+                  onClick={() => setActiveTab('referrals')}
+                  className="bg-[#1A2332] border border-[#1E3A2F]/60 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#22C55E]/50 hover:bg-[#1E3A2F]/30 transition-all cursor-pointer text-center min-h-[90px]"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#22C55E]/10 flex items-center justify-center text-[#22C55E]">
+                    <Users className="w-5 h-5" />
+                  </div>
                   <span className="font-semibold text-[#F0F6FF] text-xs sm:text-sm">Refer & Earn</span>
                   <span className="text-[10px] md:text-xs text-[#8AA8B8]">Invite friends</span>
                 </div>
 
-                <div onClick={() => setActiveTab('support-page')} className="bg-[#1A2332] border border-[#1E3A2F]/60 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#22C55E]/50 hover:bg-[#1E3A2F]/30 transition-all cursor-pointer text-center min-h-[90px]">
-                  <div className="w-10 h-10 rounded-full bg-[#8AA8B8]/10 flex items-center justify-center text-[#8AA8B8]"><Headphones className="w-5 h-5" /></div>
+                {/* Button 4: Support */}
+                <div 
+                  onClick={() => setActiveTab('support-page')}
+                  className="bg-[#1A2332] border border-[#1E3A2F]/60 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#22C55E]/50 hover:bg-[#1E3A2F]/30 transition-all cursor-pointer text-center min-h-[90px]"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#8AA8B8]/10 flex items-center justify-center text-[#8AA8B8]">
+                    <Headphones className="w-5 h-5" />
+                  </div>
                   <span className="font-semibold text-[#F0F6FF] text-xs sm:text-sm">Support</span>
                   <span className="text-[10px] md:text-xs text-[#8AA8B8]">Get help</span>
                 </div>
               </div>
             </div>
 
+            {/* 7. Available Tasks preview */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="font-bold text-[#F0F6FF] text-sm md:text-base">Available Tasks</h3>
-                <button onClick={() => setActiveTab('watch-ads')} className="text-[#22C55E] hover:underline text-xs md:text-sm font-semibold flex items-center gap-0.5 focus:outline-none">See All →</button>
+                <button 
+                  onClick={() => setActiveTab('watch-ads')}
+                  className="text-[#22C55E] hover:underline text-xs md:text-sm font-semibold flex items-center gap-0.5 focus:outline-none"
+                >
+                  See All →
+                </button>
               </div>
+
               {loadingTasks ? (
-                <div className="space-y-3">{[1, 2, 3].map((i) => (<div key={i} className="animate-pulse bg-[#1A2332] h-14 rounded-xl border border-[#1E3A2F]/40"></div>))}</div>
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse bg-[#1A2332] h-14 rounded-xl border border-[#1E3A2F]/40"></div>
+                  ))}
+                </div>
               ) : tasks.length === 0 ? (
-                <div className="bg-[#1A2332] border border-[#1E3A2F]/40 p-6 rounded-2xl text-center"><p className="text-[#8AA8B8] text-xs md:text-sm font-semibold">No tasks right now. Check back soon!</p></div>
+                <div className="bg-[#1A2332] border border-[#1E3A2F]/40 p-6 rounded-2xl text-center">
+                  <p className="text-[#8AA8B8] text-xs md:text-sm font-semibold">No tasks right now. Check back soon!</p>
+                </div>
               ) : (
                 <div className="space-y-3">
-                  {tasks.slice(0, 3).map((task) => (
-                    <div key={task.id} className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl px-4 py-3 flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
+                  {tasks.map((task) => (
+                    <div 
+                      key={task.id}
+                      className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl px-4 py-3 flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap"
+                    >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${task.task_type === 'watch_ad' ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#FBBF24]/10 text-[#FBBF24]'}`}>
                           {task.task_type === 'watch_ad' ? <Play className="w-4 h-4 fill-current" /> : <MousePointer2 className="w-4 h-4" />}
                         </div>
                         <div className="min-w-0">
                           <h4 className="font-semibold text-[#F0F6FF] text-xs sm:text-sm truncate">{task.title}</h4>
-                          <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] uppercase font-black tracking-wider mt-1 ${task.task_type === 'watch_ad' ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#FBBF24]/10 text-[#FBBF24]'}`}>{task.task_type === 'watch_ad' ? 'Video Ad' : 'PTC'}</span>
+                          <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] uppercase font-black tracking-wider mt-1 ${task.task_type === 'watch_ad' ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#FBBF24]/10 text-[#FBBF24]'}`}>
+                            {task.task_type === 'watch_ad' ? 'Video Ad' : 'PTC'}
+                          </span>
                         </div>
                       </div>
+
                       <div className="flex items-center gap-3 shrink-0 ml-auto sm:ml-0">
                         <span className="text-[#FBBF24] font-black text-sm sm:text-base">৳ {formatCurrency(task.reward)}</span>
-                        <button onClick={() => setActiveTab('watch-ads')} className="px-3 py-1.5 bg-[#22C55E]/10 text-[#22C55E] hover:bg-[#22C55E] hover:text-[#0D1117] font-black rounded-lg text-[10px] sm:text-xs transition-all flex items-center gap-0.5">Start →</button>
+                        <button 
+                          onClick={() => setActiveTab('watch-ads')}
+                          className="px-3 py-1.5 bg-[#22C55E]/10 text-[#22C55E] hover:bg-[#22C55E] hover:text-[#0D1117] font-black rounded-lg text-[10px] sm:text-xs transition-all flex items-center gap-0.5"
+                        >
+                          Start →
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -824,8 +982,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* TAB 2: WATCH ADS */}
-       {/* TAB 2: WATCH ADS (১টি গ্লোবাল লিংকের সম্পূর্ণ ডায়নামিক গ্রিড) */}
+        {/* TAB 2: WATCH ADS (১টি গ্লোবাল লিংকের সম্পূর্ণ ডায়নামিক গ্রিড) */}
         {activeTab === 'watch-ads' && (
           <div className="space-y-6 md:space-y-8 max-w-4xl">
             <div>
@@ -850,7 +1007,7 @@ export default function Dashboard() {
                     <span className="text-sm md:text-base font-black text-primary">{totalCompletedToday} / {activeDailyAdLimit} Completed</span>
                   </div>
                   <div className="w-full bg-[#0D1117] rounded-full h-3 overflow-hidden border border-cardBg mb-6">
-                    <div className="bg-primary h-full transition-all duration-500" style={{ width: `${(totalCompletedToday / activeDailyAdLimit) * 100}%` }}></div>
+                    <div className="bg-primary h-full transition-all duration-500" style={{ width: `${(totalCompletedToday / activeDailyAdLimit) * 100}%` }} ></div>
                   </div>
 
                   {/* আপনার অ্যাডমিন প্যানেল থেকে সেট করা লিমিট অনুযায়ী অটোমেটিক কার্ড তৈরি হবে */}
@@ -938,15 +1095,17 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+
         {/* TAB 3: WITHDRAW */}
         {activeTab === 'withdraw' && (
           <div className="space-y-6 md:space-y-8">
             <div>
               <h1 className="text-2xl md:text-3xl font-black">Withdraw Earnings</h1>
-              <p className="text-textGray text-xs md:text-sm">Send your withdrawal request directly to bKash, Nagad, or Rocket.</p>
+              <p className="text-[#8AA8B8] text-xs md:text-sm">Send your withdrawal request directly to bKash, Nagad, or Rocket.</p>
             </div>
 
             {!profile.is_active ? (
+              // ইনঅ্যাক্টিভ উইথড্রল লকড স্ক্রিন
               <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-8 text-center space-y-4 max-w-2xl">
                 <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto"><Lock className="w-8 h-8" /></div>
                 <h3 className="text-lg md:text-xl font-bold">Withdrawals Locked 🔒</h3>
@@ -954,6 +1113,7 @@ export default function Dashboard() {
                 <button onClick={() => setShowActivationModal(true)} className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all">Activate Account Now</button>
               </div>
             ) : (
+              // অ্যাক্টিভ ইউজারদের উইথড্রল ফর্ম
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                 <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 lg:col-span-2">
                   <form onSubmit={handleWithdraw} className="space-y-6">
@@ -973,7 +1133,7 @@ export default function Dashboard() {
                       <input type="tel" required placeholder="01XXXXXXXXX" value={wdNumber} onChange={(e) => setWdNumber(e.target.value.replace(/[^0-9]/g, ''))} className="w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors" />
                     </div>
                     <div>
-                      <label className="block text-xs md:text-sm font-bold text-textGray mb-2">Withdrawal Amount (৳)</label>
+                      <label className="block text-xs md:text-sm font-bold text-[#8AA8B8] mb-2">Withdrawal Amount (৳)</label>
                       <input type="number" required placeholder="e.g. 150" value={wdAmount} onChange={(e) => setWdAmount(e.target.value)} className="w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors" />
                       <div className="mt-2 text-[10px] md:text-xs text-textGray flex justify-between">
                         <span>Gateway Fee: 6.7%</span>
@@ -989,14 +1149,14 @@ export default function Dashboard() {
                   <h3 className="font-bold text-textLight text-sm md:text-base">Your Statistics:</h3>
                   <div className="space-y-4">
                     <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3"><span className="text-textGray">Balance:</span><span className="font-bold text-primary">৳ {formatCurrency(profile.balance)}</span></div>
-                    <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3"><span className="text-textGray">Total Withdrawn:</span><span className="font-bold text-accent">৳ {formatCurrency(profile.total_withdrawn)}</span></div>
-                    <div className="flex justify-between text-xs md:text-sm"><span className="text-textGray">Total Requests:</span><span className="font-bold text-textLight">{profile.withdrawals_count || 0}</span></div>
+                    <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3"><span className="text-[#8AA8B8]">Total Withdrawn:</span><span className="font-bold text-accent">৳ {formatCurrency(profile.total_withdrawn)}</span></div>
+                    <div className="flex justify-between text-xs md:text-sm"><span className="text-[#8AA8B8]">Total Requests:</span><span className="font-bold text-textLight">{profile.withdrawals_count || 0}</span></div>
                   </div>
                   <div className="bg-background rounded-xl p-4 border border-cardBg text-xs text-textGray space-y-2">
                     <p className="font-bold text-textLight">⚠️ Withdrawal Rules:</p>
                     <p>• 1st time minimum: {activeMinWithdrawFirst}৳</p>
                     <p>• Next times minimum: {activeMinWithdrawSubsequent}৳</p>
-                    <p>• Must complete 15 daily ads.</p>
+                    <p>• Must complete {activeDailyAdLimit} daily ads.</p>
                     <p>• Need 3 referrals for 2nd withdrawal.</p>
                   </div>
                 </div>
