@@ -15,6 +15,8 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [regLoading, setRegLoading] = useState(false);
+  const [refCode, setRefCode] = useState('');
+  const [refLocked, setRefLocked] = useState(false);
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -25,6 +27,13 @@ export default function Register() {
       navigate('/dashboard');
     }
   }, [user, loading, navigate]);
+
+  useEffect(() => {
+    if (referralCode) {
+      setRefCode(referralCode);
+      setRefLocked(true);
+    }
+  }, [referralCode]);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -42,12 +51,26 @@ export default function Register() {
     setRegLoading(true);
 
     try {
+      if (refCode.trim()) {
+        const { data: referrer, error: refError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('referral_code', refCode.trim())
+          .single();
+
+        if (refError || !referrer) {
+          toast.error('Invalid referral code');
+          setRegLoading(false);
+          return;
+        }
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
         options: {
           data: {
-            referred_by: referralCode || null,
+            referred_by: refCode.trim() || null,
             phone: phone.trim(),
             username: username.trim().toLowerCase(),
           }
@@ -57,6 +80,21 @@ export default function Register() {
       if (error) throw error;
 
       if (data.user) {
+        if (refCode.trim()) {
+          const { data: referrer } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('referral_code', refCode.trim())
+            .single();
+
+          if (referrer) {
+            await supabase
+              .from('profiles')
+              .update({ referred_by: referrer.id })
+              .eq('id', data.user.id);
+          }
+        }
+
         toast.success('Registration successful!');
         navigate('/dashboard');
       }
@@ -97,7 +135,7 @@ export default function Register() {
         <h3 className="text-2xl font-bold tracking-tight text-textLight">
           Create a new account
         </h3>
-        {referralCode && (
+        {refCode && (
           <p className="text-center text-xs text-accent mt-2 font-medium bg-accent/10 border border-accent/20 px-3 py-1 rounded-full max-w-max mx-auto animate-bounce">
             🎁 You are being referred by a friend
           </p>
@@ -192,6 +230,26 @@ export default function Register() {
                   className="pl-10 w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
                 />
               </div>
+            </div>
+
+            {/* Referral Code */}
+            <div>
+              <label className="block text-sm font-medium text-textGray mb-2">Referral Code (Optional)</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-textGray" />
+                <input
+                  type="text"
+                  placeholder="Enter referral code e.g. EARN4X2B"
+                  value={refCode}
+                  onChange={(e) => { if (!refLocked) setRefCode(e.target.value.toUpperCase()); }}
+                  readOnly={refLocked}
+                  disabled={refLocked}
+                  className="pl-10 w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                />
+              </div>
+              {refLocked && refCode && (
+                <p className="text-[#22C55E] text-xs mt-1.5 font-medium">✓ Referral code applied</p>
+              )}
             </div>
 
             {/* Submit Button */}
