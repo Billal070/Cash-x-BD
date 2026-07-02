@@ -990,6 +990,36 @@ export default function Dashboard() {
               <p className="text-[#8AA8B8] text-xs md:text-sm">Watch organic ads and earn {activePerAdReward}৳ per view.</p>
             </div>
 
+            {/* Stats Section */}
+            {profile.is_active && (
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl p-3 text-center">
+                  <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Today Earned</span>
+                  <span className="block text-[#22C55E] font-black text-sm sm:text-lg mt-1">
+                    ৳ {formatCurrency(todayEarned)}
+                  </span>
+                </div>
+
+                <div className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl p-3 text-center">
+                  <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Ads Watched</span>
+                  <span className="block text-[#F0F6FF] font-black text-sm sm:text-lg mt-1">
+                    {totalCompletedToday}/{activeDailyAdLimit}
+                  </span>
+                </div>
+
+                <div className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl p-3 text-center">
+                  <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Remaining</span>
+                  <span className="block text-[#FBBF24] font-black text-sm sm:text-lg mt-1">
+                    {remainingAds === 0 ? (
+                      <span className="text-[#22C55E]">Done! 🎉</span>
+                    ) : (
+                      `${remainingAds} left`
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
               {!profile.is_active ? (
                 // ইনঅ্যাক্টিভ ইউজারদের লকড স্ক্রিন
