@@ -536,9 +536,22 @@ export default function Dashboard() {
   const activeTelegramAdmin = dbSettings ? dbSettings.telegram_admin : "https://t.me/your_admin";
   const activeAnnouncementText = dbSettings?.announcement_text || "🎉 New tasks available! Complete all tasks today and earn bonus rewards.";
 
-  const activeMinWithdrawFirst = CONFIG?.minWithdrawFirst || 75;
+ const activeMinWithdrawFirst = CONFIG?.minWithdrawFirst || 75;
   const activeMinWithdrawSubsequent = CONFIG?.minWithdrawSubsequent || 200;
 
+  // বিজ্ঞপ্তির গ্লোবাল লিমিট ও টাইমার ভ্যালু রিড করা (নতুন যুক্ত)
+  const activeDailyAdLimit = dbSettings ? Number(dbSettings.daily_ad_limit) : (CONFIG?.dailyAdLimit || 15);
+  const activeAdTimer = dbSettings ? Number(dbSettings.ad_timer) : (CONFIG?.adTimer || 15);
+// বিজ্ঞপ্তির গ্লোবাল লিমিট ও টাইমার ভ্যালু রিড করা (নতুন যুক্ত)
+  const activeDailyAdLimit = dbSettings ? Number(dbSettings.daily_ad_limit) : (CONFIG?.dailyAdLimit || 15);
+  const activeAdTimer = dbSettings ? Number(dbSettings.ad_timer) : (CONFIG?.adTimer || 15);
+
+  // আজকের ৩টি স্ট্যাটস বক্সের গাণিতিক হিসাব (নতুন যুক্ত)
+  const countMap = {};
+  taskCompletions.forEach(c => { countMap[c.task_id] = (countMap[c.task_id] || 0) + 1; });
+  const todayEarned = taskCompletions.reduce((acc, c) => acc + (Number(c.reward_earned) || 0), 0);
+  const totalCompletedToday = Object.values(countMap).reduce((a, b) => a + b, 0);
+  const remainingAds = activeDailyAdLimit - totalCompletedToday > 0 ? activeDailyAdLimit - totalCompletedToday : 0;
   const totalLifetimeIncome = profile ? (Number(profile.balance) + Number(profile.total_withdrawn)) : 0;
   const referralEarnings = profile ? Number(profile.referral_count) * activeReferralBonus : 0;
   const adsEarnings = totalLifetimeIncome - referralEarnings > 0 ? totalLifetimeIncome - referralEarnings : 0;
@@ -681,9 +694,35 @@ export default function Dashboard() {
               </div>
             )}
 
-            <div>
-              <h1 className="text-2xl md:text-3xl font-black">Welcome Back, {profile.username}!</h1>
-              <p className="text-[#8AA8B8] text-xs md:text-sm">Monitor your earnings and complete tasks to cash out.</p>
+           {/* ৩টি Top Stats Box (Today Earned, Ads Watched, Remaining) */}
+            <div className="grid grid-cols-3 gap-3">
+              {/* Box 1: আজকে কত টাকা আয় হলো */}
+              <div className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl p-3 text-center">
+                <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Today Earned</span>
+                <span className="block text-[#22C55E] font-black text-sm sm:text-lg mt-1">
+                  ৳{formatCurrency(todayEarned)}
+                </span>
+              </div>
+
+              {/* Box 2: কতটা ad দেখা হলো */}
+              <div className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl p-3 text-center">
+                <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Ads Watched</span>
+                <span className="block text-[#F0F6FF] font-black text-sm sm:text-lg mt-1">
+                  {totalCompletedToday}/{activeDailyAdLimit}
+                </span>
+              </div>
+
+              {/* Box 3: আর কতটা বাকি আছে */}
+              <div className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl p-3 text-center">
+                <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Remaining</span>
+                <span className="block text-[#FBBF24] font-black text-sm sm:text-lg mt-1">
+                  {remainingAds === 0 ? (
+                    <span className="text-[#22C55E]">Done! 🎉</span>
+                  ) : (
+                    `${remainingAds} left`
+                  )}
+                </span>
+              </div>
             </div>
 
             {!profile.is_active && (
@@ -717,7 +756,7 @@ export default function Dashboard() {
               <div className="bg-cardBg border border-cardBg/50 p-5 md:p-6 rounded-2xl relative overflow-hidden">
                 <div className="absolute right-4 top-4 text-textLight bg-textLight/10 p-2 rounded-xl"><Play className="w-6 h-6" /></div>
                 <h3 className="text-sm font-bold text-[#8AA8B8] mb-1">Today's Ads completed</h3>
-                <p className="text-2xl md:text-3xl font-black text-textLight">{profile.ads_watched_today} / 15</p>
+                <p className="text-2xl md:text-3xl font-black text-textLight">{totalCompletedToday} / {activeDailyAdLimit}/p>
                 <button onClick={() => setActiveTab('watch-ads')} className="mt-4 text-xs font-bold text-accent hover:underline flex items-center gap-1">Watch Ads <Play className="w-3.5 h-3.5" /></button>
               </div>
             </div>
