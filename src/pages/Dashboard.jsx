@@ -1051,13 +1051,13 @@ export default function Dashboard() {
                       return (
                         <div 
                           key={index} 
-                          className={`bg-[#0D1117] border rounded-2xl p-5 flex flex-col justify-between space-y-4 transition-all duration-300 ${isCompleted ? 'border-primary/20 opacity-60' : isActive ? 'border-primary shadow-lg shadow-primary/5 scale-[1.01]' : 'border-cardBg opacity-40'}`}
+                          className={`bg-[#0D1117] border rounded-2xl p-5 flex flex-col justify-between space-y-4 transition-all duration-300 ${isCompleted ? 'border-cardBg opacity-40' : isActive ? 'border-primary shadow-lg shadow-primary/5 scale-[1.01]' : 'border-cardBg opacity-40'}`}
                         >
                           <div className="flex justify-between items-center">
-                            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${isCompleted ? 'bg-primary/10 text-primary border-primary/25' : isActive ? 'bg-accent/10 text-accent border-accent/25' : 'bg-cardBg text-[#8AA8B8] border-cardBg'}`}>
-                              {isCompleted ? 'Completed' : isActive ? 'Active Ad' : 'Locked'}
+                            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${isCompleted ? 'bg-cardBg text-[#8AA8B8] border-cardBg' : isActive ? 'bg-accent/10 text-accent border-accent/25' : 'bg-cardBg text-[#8AA8B8] border-cardBg'}`}>
+                              {isCompleted ? 'Watched' : isActive ? 'Active Ad' : 'Locked'}
                             </span>
-                            {isCompleted ? <CheckCircle className="w-4 h-4 text-primary" /> : isLocked ? <Lock className="w-4 h-4 text-[#8AA8B8]" /> : <Clock className="w-4 h-4 text-accent" />}
+                            {isCompleted ? <Lock className="w-4 h-4 text-[#8AA8B8]" /> : isLocked ? <Lock className="w-4 h-4 text-[#8AA8B8]" /> : <Clock className="w-4 h-4 text-accent" />}
                           </div>
 
                           <div>
@@ -1078,8 +1078,8 @@ export default function Dashboard() {
 
                           {/* বাটন কন্ট্রোল */}
                           {isCompleted ? (
-                            <div className="bg-primary/10 border border-primary/20 text-primary py-2 rounded-xl text-xs font-bold text-center">
-                              ✅ Earned ৳ {formatCurrency(activePerAdReward)}
+                            <div className="bg-cardBg border border-cardBg text-[#8AA8B8] py-2 rounded-xl text-xs font-bold text-center">
+                              Watched ✓
                             </div>
                           ) : isLocked ? (
                             <button disabled className="w-full py-2.5 bg-cardBg text-[#8AA8B8] text-xs font-bold rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5">
