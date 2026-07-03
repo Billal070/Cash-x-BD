@@ -331,7 +331,7 @@ export default function Dashboard() {
     try {
       const [historyRes, leaderboardRes] = await Promise.all([
         supabase.from('profiles').select('id, username, created_at, is_active, referral_count').eq('referred_by', user.id).order('created_at', { ascending: false }),
-        supabase.from('profiles').select('username, referral_count').not('referral_count', 'is', null).order('referral_count', { ascending: false }).limit(10)
+        supabase.from('profiles').select('username, referral_count').gt('referral_count', 0).order('referral_count', { ascending: false }).limit(10)
       ]);
       setReferralHistory(historyRes.data || []);
       setRefLeaderboard(leaderboardRes.data || []);
@@ -728,24 +728,21 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => handleTabChange('watch-ads')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${!profile.is_active ? 'opacity-40 cursor-not-allowed' : activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
-              disabled={!profile.is_active}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
-              <Play className="w-5 h-5" /> Watch Ads {!profile.is_active && <Lock className="w-3 h-3 ml-auto" />}
+              <Play className="w-5 h-5" /> Watch Ads
             </button>
             <button
               onClick={() => handleTabChange('withdraw')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${!profile.is_active ? 'opacity-40 cursor-not-allowed' : activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
-              disabled={!profile.is_active}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
-              <ArrowDownToLine className="w-5 h-5" /> Withdraw {!profile.is_active && <Lock className="w-3 h-3 ml-auto" />}
+              <ArrowDownToLine className="w-5 h-5" /> Withdraw
             </button>
             <button
               onClick={() => handleTabChange('referrals')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${!profile.is_active ? 'opacity-40 cursor-not-allowed' : activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
-              disabled={!profile.is_active}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
-              <Users className="w-5 h-5" /> Referrals {!profile.is_active && <Lock className="w-3 h-3 ml-auto" />}
+              <Users className="w-5 h-5" /> Referrals
             </button>
             <button
               onClick={() => handleTabChange('profile-details')}
@@ -771,8 +768,8 @@ export default function Dashboard() {
       </aside>
 
       {/* ডেস্কটপ সাইডবার */}
-      <aside className="hidden md:flex w-64 bg-cardBg border-r border-cardBg/50 flex-col justify-between p-6 shrink-0">
-        <div>
+      <aside className="hidden md:flex w-64 bg-cardBg border-r border-cardBg/50 flex-col h-screen shrink-0 sticky top-0">
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col">
           <div className="mb-8 text-left">
             {CONFIG?.logoUrl ? (
               <img src={CONFIG.logoUrl} alt={CONFIG?.siteName || "Earnova"} className="h-11 w-auto mb-2 object-contain" />
@@ -793,24 +790,21 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setActiveTab('watch-ads')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${!profile.is_active ? 'opacity-40 cursor-not-allowed' : activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
-              disabled={!profile.is_active}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
-              <Play className="w-5 h-5" /> Watch Ads {!profile.is_active && <Lock className="w-3 h-3 ml-auto" />}
+              <Play className="w-5 h-5" /> Watch Ads
             </button>
             <button
               onClick={() => setActiveTab('withdraw')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${!profile.is_active ? 'opacity-40 cursor-not-allowed' : activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
-              disabled={!profile.is_active}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
-              <ArrowDownToLine className="w-5 h-5" /> Withdraw {!profile.is_active && <Lock className="w-3 h-3 ml-auto" />}
+              <ArrowDownToLine className="w-5 h-5" /> Withdraw
             </button>
             <button
               onClick={() => setActiveTab('referrals')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${!profile.is_active ? 'opacity-40 cursor-not-allowed' : activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
-              disabled={!profile.is_active}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
-              <Users className="w-5 h-5" /> Referrals {!profile.is_active && <Lock className="w-3 h-3 ml-auto" />}
+              <Users className="w-5 h-5" /> Referrals
             </button>
             <button
               onClick={() => setActiveTab('profile-details')}
@@ -827,12 +821,14 @@ export default function Dashboard() {
           </nav>
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 text-textGray hover:text-red-500 font-bold transition-colors w-full"
-        >
-          <LogOut className="w-5 h-5" /> Sign Out
-        </button>
+        <div className="p-6 pt-0 border-t border-cardBg/50">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 text-textGray hover:text-red-500 font-bold transition-colors w-full mt-4"
+          >
+            <LogOut className="w-5 h-5" /> Sign Out
+          </button>
+        </div>
       </aside>
 
       {/* Main Content Dashboard */}
@@ -1452,7 +1448,7 @@ export default function Dashboard() {
               <h3 className="text-sm font-bold text-textLight mb-4 flex items-center gap-2"><Trophy className="w-4 h-4 text-accent" /> Top Referrers</h3>
               {refLeaderboard.length === 0 ? (
                 <div className="text-center py-6 text-textGray">
-                  <p className="text-xs">No leaderboard data yet</p>
+                  <p className="text-xs">No one has started referring yet. Be the first!</p>
                 </div>
               ) : (
                 <div className="space-y-2">
