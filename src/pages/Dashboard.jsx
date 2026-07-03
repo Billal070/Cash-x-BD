@@ -1487,14 +1487,20 @@ export default function Dashboard() {
                   {/* Referral Code */}
                   <div className="w-full mt-5">
                     <span className="block text-[#8AA8B8] text-[10px] font-semibold mb-1.5">Referral Code</span>
-                    <div className="flex gap-2">
-                      <div className="flex-1 px-3 py-2.5 bg-[#0F1923] border border-[#1E3A2F] rounded-xl text-[#F0F6FF] text-sm font-bold text-center tracking-widest">
-                        {profile?.referral_code || 'N/A'}
+                    {profile?.referral_code ? (
+                      <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                        <div className="flex-1 px-3 py-2.5 bg-[#0F1923] border border-[#1E3A2F] rounded-xl text-[#F0F6FF] text-sm font-bold text-center tracking-[0.2em]">
+                          {profile.referral_code}
+                        </div>
+                        <button onClick={copyReferralCode} className="px-4 py-2.5 bg-[#22C55E] text-[#0D1117] font-bold rounded-xl hover:bg-opacity-90 transition-all flex items-center justify-center gap-1.5 text-xs whitespace-nowrap">
+                          <Copy className="w-3.5 h-3.5" /> Copy
+                        </button>
                       </div>
-                      <button onClick={copyReferralCode} className="px-3 bg-[#22C55E] text-[#0D1117] font-bold rounded-xl hover:bg-opacity-90 transition-all flex items-center gap-1.5 text-xs">
-                        <Copy className="w-3.5 h-3.5" /> Copy
-                      </button>
-                    </div>
+                    ) : (
+                      <div className="px-3 py-2.5 bg-[#0F1923] border border-[#1E3A2F] border-dashed rounded-xl text-[#8AA8B8] text-xs text-center">
+                        Activate account to get referral code
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1545,7 +1551,7 @@ export default function Dashboard() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center py-2 border-b border-[#1E3A2F]/50">
                       <span className="text-xs text-[#8AA8B8]">Account ID</span>
-                      <span className="text-xs font-bold text-[#F0F6FF]">#{profile?.referral_code || 'N/A'}</span>
+                      <span className="text-xs font-bold text-[#F0F6FF] truncate ml-2">#{profile?.referral_code || (profile?.is_active ? 'N/A' : 'Inactive')}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-[#1E3A2F]/50">
                       <span className="text-xs text-[#8AA8B8]">Email</span>

@@ -22,12 +22,6 @@ export default function Register() {
   const [searchParams] = useSearchParams();
   const referralCode = searchParams.get('ref');
 
-  const generateReferralCode = (uname) => {
-    const prefix = uname.substring(0, 2).toUpperCase();
-    const random = Math.floor(10000 + Math.random() * 90000);
-    return `${prefix}${random}`;
-  };
-
   useEffect(() => {
     if (user && !loading) {
       navigate('/dashboard');
@@ -86,13 +80,10 @@ export default function Register() {
       if (error) throw error;
 
       if (data.user) {
-        const myRefCode = generateReferralCode(username.trim().toLowerCase());
-
         await supabase
           .from('profiles')
           .upsert({ 
             id: data.user.id, 
-            referral_code: myRefCode, 
             phone: phone.trim(),
             username: username.trim().toLowerCase()
           }, { onConflict: 'id' });
