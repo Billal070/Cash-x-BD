@@ -46,10 +46,21 @@ export default async function handler(req, res) {
     const isCompleted = data.status === 'COMPLETED' || data.status === 'true' || data.status === true;
 
     if (isCompleted) {
-      // ৩. সুপাবেস প্রোফাইল টেবিলে ইউজারকে অ্যাক্টিভ করা (is_active = true)
+      // ইউজারের প্রোফাইল আগে আনা
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', userId)
+        .single();
+
+      // রেফারেল কোড তৈরি করা (অ্যাকটিভেশনের সময়)
+      const prefix = (profileData?.username || 'ER').substring(0, 2).toUpperCase();
+      const random = Math.floor(10000 + Math.random() * 90000);
+      const referralCode = `${prefix}${random}`;
+
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ is_active: true })
+        .update({ is_active: true, referral_code: referralCode })
         .eq('id', userId);
 
       if (updateError) throw updateError;
