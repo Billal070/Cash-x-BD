@@ -87,13 +87,17 @@ export default function Register() {
 
       if (data.user) {
         const myRefCode = generateReferralCode(username.trim().toLowerCase());
-        supabase
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        await supabase
           .from('profiles')
-          .update({ referral_code: myRefCode, phone: phone.trim() })
-          .eq('id', data.user.id)
-          .then(({ error }) => {
-            if (error) console.error('Failed to save profile data:', error.message);
-          });
+          .upsert({ 
+            id: data.user.id, 
+            referral_code: myRefCode, 
+            phone: phone.trim(),
+            username: username.trim().toLowerCase()
+          }, { onConflict: 'id' });
 
         if (refCode.trim()) {
           const { data: referrer } = await supabase
@@ -103,13 +107,10 @@ export default function Register() {
             .single();
 
           if (referrer) {
-            supabase
+            await supabase
               .from('profiles')
               .update({ referred_by: referrer.id })
-              .eq('id', data.user.id)
-              .then(({ error }) => {
-                if (error) console.error('Failed to save referral:', error.message);
-              });
+              .eq('id', data.user.id);
           }
         }
 
