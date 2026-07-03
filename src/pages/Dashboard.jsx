@@ -728,21 +728,24 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => handleTabChange('watch-ads')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${!profile.is_active ? 'opacity-40 cursor-not-allowed' : activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+              disabled={!profile.is_active}
             >
-              <Play className="w-5 h-5" /> Watch Ads
+              <Play className="w-5 h-5" /> Watch Ads {!profile.is_active && <Lock className="w-3 h-3 ml-auto" />}
             </button>
             <button
               onClick={() => handleTabChange('withdraw')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${!profile.is_active ? 'opacity-40 cursor-not-allowed' : activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+              disabled={!profile.is_active}
             >
-              <ArrowDownToLine className="w-5 h-5" /> Withdraw
+              <ArrowDownToLine className="w-5 h-5" /> Withdraw {!profile.is_active && <Lock className="w-3 h-3 ml-auto" />}
             </button>
             <button
               onClick={() => handleTabChange('referrals')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${!profile.is_active ? 'opacity-40 cursor-not-allowed' : activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+              disabled={!profile.is_active}
             >
-              <Users className="w-5 h-5" /> Referrals
+              <Users className="w-5 h-5" /> Referrals {!profile.is_active && <Lock className="w-3 h-3 ml-auto" />}
             </button>
             <button
               onClick={() => handleTabChange('profile-details')}
@@ -790,21 +793,24 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setActiveTab('watch-ads')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${!profile.is_active ? 'opacity-40 cursor-not-allowed' : activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+              disabled={!profile.is_active}
             >
-              <Play className="w-5 h-5" /> Watch Ads
+              <Play className="w-5 h-5" /> Watch Ads {!profile.is_active && <Lock className="w-3 h-3 ml-auto" />}
             </button>
             <button
               onClick={() => setActiveTab('withdraw')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${!profile.is_active ? 'opacity-40 cursor-not-allowed' : activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+              disabled={!profile.is_active}
             >
-              <ArrowDownToLine className="w-5 h-5" /> Withdraw
+              <ArrowDownToLine className="w-5 h-5" /> Withdraw {!profile.is_active && <Lock className="w-3 h-3 ml-auto" />}
             </button>
             <button
               onClick={() => setActiveTab('referrals')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${!profile.is_active ? 'opacity-40 cursor-not-allowed' : activeTab === 'referrals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+              disabled={!profile.is_active}
             >
-              <Users className="w-5 h-5" /> Referrals
+              <Users className="w-5 h-5" /> Referrals {!profile.is_active && <Lock className="w-3 h-3 ml-auto" />}
             </button>
             <button
               onClick={() => setActiveTab('profile-details')}
@@ -1303,6 +1309,15 @@ export default function Dashboard() {
               <p className="text-textGray text-xs md:text-sm">Invite friends and get {activeReferralBonus}৳ for each active referral.</p>
             </div>
 
+            {!profile.is_active ? (
+              <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-8 text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto"><Lock className="w-8 h-8" /></div>
+                <h3 className="text-lg md:text-xl font-bold">Referral System Locked 🔒</h3>
+                <p className="text-[#8AA8B8] text-xs max-w-sm mx-auto leading-relaxed">Activate your account to start referring friends and earning {activeReferralBonus}৳ per referral.</p>
+                <button onClick={() => setShowActivationModal(true)} className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all">Activate Account Now</button>
+              </div>
+            ) : (
+
             {/* How It Works */}
             <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
               <h3 className="text-sm font-bold text-textLight mb-4 flex items-center gap-2"><Target className="w-4 h-4 text-primary" /> How It Works</h3>
@@ -1457,6 +1472,7 @@ export default function Dashboard() {
               )}
             </div>
 
+            )}
           </div>
         )}
 
