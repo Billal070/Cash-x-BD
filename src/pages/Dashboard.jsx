@@ -403,6 +403,15 @@ export default function Dashboard() {
         toast.success('Your profile is now Active! 🟢', { id: toastId });
         setShowActivationModal(false); 
         await refreshProfile();
+
+        const { data: freshProfile } = await supabase.from('profiles').select('referral_code, username').eq('id', user.id).single();
+        if (freshProfile && !freshProfile.referral_code) {
+          const prefix = (freshProfile.username || 'ER').substring(0, 2).toUpperCase();
+          const random = Math.floor(10000 + Math.random() * 90000);
+          const newCode = `${prefix}${random}`;
+          await supabase.from('profiles').update({ referral_code: newCode }).eq('id', user.id);
+          await refreshProfile();
+        }
       }
     } catch (err) {
       toast.error(err.message || 'Payment not verified yet', { id: toastId });
