@@ -1316,9 +1316,8 @@ export default function Dashboard() {
                 <p className="text-[#8AA8B8] text-xs max-w-sm mx-auto leading-relaxed">Activate your account to start referring friends and earning {activeReferralBonus}৳ per referral.</p>
                 <button onClick={() => setShowActivationModal(true)} className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all">Activate Account Now</button>
               </div>
-            ) : (
+            ) : (<>
 
-            {/* How It Works */}
             <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
               <h3 className="text-sm font-bold text-textLight mb-4 flex items-center gap-2"><Target className="w-4 h-4 text-primary" /> How It Works</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1472,7 +1471,7 @@ export default function Dashboard() {
               )}
             </div>
 
-            )}
+            </>)}
           </div>
         )}
 
