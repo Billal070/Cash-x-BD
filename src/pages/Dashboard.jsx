@@ -175,6 +175,8 @@ export default function Dashboard() {
   const [refLeaderboard, setRefLeaderboard] = useState([]);
   const [loadingReferrals, setLoadingReferrals] = useState(false);
   const [totalTasksCompleted, setTotalTasksCompleted] = useState(0);
+  const [adEarnings, setAdEarnings] = useState(0);
+  const [taskEarnings, setTaskEarnings] = useState(0);
 
   const [adTimer, setAdTimer] = useState(0); 
   const [cooldown, setCooldown] = useState(0); 
@@ -352,9 +354,18 @@ export default function Dashboard() {
   useEffect(() => {
     if (user && activeTab === 'profile-details') {
       supabase.from('task_completions')
-        .select('*', { count: 'exact', head: true })
+        .select('reward_earned, tasks(type)', { count: 'exact' })
         .eq('user_id', user.id)
-        .then(({ count }) => setTotalTasksCompleted(count || 0));
+        .then(({ data, count }) => {
+          setTotalTasksCompleted(count || 0);
+          let ad = 0, task = 0;
+          (data || []).forEach(c => {
+            if (c.tasks?.type === 'watch_ad') ad += c.reward_earned || 0;
+            else task += c.reward_earned || 0;
+          });
+          setAdEarnings(ad);
+          setTaskEarnings(task);
+        });
     }
   }, [user, activeTab]);
 
@@ -1499,15 +1510,31 @@ export default function Dashboard() {
                     Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}
                   </p>
 
-                  {/* Balance + Earned */}
-                  <div className="grid grid-cols-2 gap-3 w-full mt-5">
+                  {/* Balance */}
+                  <div className="w-full mt-5">
                     <div className="bg-[#0F1923] border border-[#1E3A2F] rounded-xl p-3 text-center">
                       <span className="block text-[#8AA8B8] text-[10px] font-semibold">Balance</span>
-                      <span className="block text-[#22C55E] font-black text-lg mt-0.5">৳ {formatCurrency(profile?.balance)}</span>
+                      <span className="block text-[#22C55E] font-black text-xl mt-0.5">৳ {formatCurrency(profile?.balance)}</span>
                     </div>
-                    <div className="bg-[#0F1923] border border-[#1E3A2F] rounded-xl p-3 text-center">
-                      <span className="block text-[#8AA8B8] text-[10px] font-semibold">Total Earned</span>
-                      <span className="block text-[#FBBF24] font-black text-lg mt-0.5">৳ {formatCurrency(profile?.total_earned)}</span>
+                  </div>
+
+                  {/* Earnings Breakdown */}
+                  <div className="w-full mt-3 space-y-2">
+                    <div className="flex justify-between items-center bg-[#0F1923] border border-[#1E3A2F] rounded-xl px-3 py-2">
+                      <span className="text-[#8AA8B8] text-[10px] font-semibold">Ad Earnings</span>
+                      <span className="text-[#FBBF24] text-xs font-bold">৳ {formatCurrency(adEarnings)}</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-[#0F1923] border border-[#1E3A2F] rounded-xl px-3 py-2">
+                      <span className="text-[#8AA8B8] text-[10px] font-semibold">Task Earnings</span>
+                      <span className="text-[#FBBF24] text-xs font-bold">৳ {formatCurrency(taskEarnings)}</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-[#0F1923] border border-[#1E3A2F] rounded-xl px-3 py-2">
+                      <span className="text-[#8AA8B8] text-[10px] font-semibold">Referral Earnings</span>
+                      <span className="text-[#FBBF24] text-xs font-bold">৳ {formatCurrency((profile?.referral_count || 0) * activeReferralBonus)}</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-[#0F1923] border border-[#22C55E]/30 rounded-xl px-3 py-2">
+                      <span className="text-[#F0F6FF] text-[10px] font-bold">Total Earned</span>
+                      <span className="text-[#22C55E] text-xs font-black">৳ {formatCurrency(profile?.total_earned)}</span>
                     </div>
                   </div>
                 </div>
