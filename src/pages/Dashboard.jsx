@@ -1325,22 +1325,23 @@ export default function Dashboard() {
 
               <div className="border-t border-cardBg pt-4">
                 <h3 className="text-sm font-bold text-textLight flex items-center gap-2"><ExternalLink className="w-4 h-4 text-primary" /> Your Referral Link</h3>
-              <div className="flex gap-2">
-                <input readOnly value={`${window.location.origin}/register?ref=${profile.referral_code || user.id}`} className="flex-1 px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight text-xs md:text-sm truncate" />
-                <button onClick={copyReferralLink} className="px-4 bg-primary text-background font-bold rounded-xl hover:bg-opacity-90 transition-all flex items-center gap-2 text-xs"><Copy className="w-4 h-4" /> Copy</button>
-              </div>
-              <div>
-                <p className="text-[10px] text-textGray mb-2 font-semibold uppercase tracking-wider">Share on Social Media</p>
-                <div className="flex flex-wrap gap-2">
-                  <a href={`https://wa.me/?text=${encodeURIComponent(`Join Earnova and earn money! Use my referral link: ${window.location.origin}/register?ref=${profile.referral_code || user.id}`)}`} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-[#25D366]/10 border border-[#25D366]/20 rounded-xl text-[#25D366] text-xs font-bold hover:bg-[#25D366]/20 transition-all flex items-center gap-1.5">
-                    <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
-                  </a>
-                  <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${window.location.origin}/register?ref=${profile.referral_code || user.id}`)}`} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-[#1877F2]/10 border border-[#1877F2]/20 rounded-xl text-[#1877F2] text-xs font-bold hover:bg-[#1877F2]/20 transition-all flex items-center gap-1.5">
-                    <ExternalLink className="w-3.5 h-3.5" /> Facebook
-                  </a>
-                  <a href={`https://t.me/share/url?url=${encodeURIComponent(`${window.location.origin}/register?ref=${profile.referral_code || user.id}`)}&text=${encodeURIComponent('Join Earnova and earn money!')}`} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-[#0088cc]/10 border border-[#0088cc]/20 rounded-xl text-[#0088cc] text-xs font-bold hover:bg-[#0088cc]/20 transition-all flex items-center gap-1.5">
-                    <Send className="w-3.5 h-3.5" /> Telegram
-                  </a>
+                <div className="flex gap-2">
+                  <input readOnly value={`${window.location.origin}/register?ref=${profile.referral_code || user.id}`} className="flex-1 px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight text-xs md:text-sm truncate" />
+                  <button onClick={copyReferralLink} className="px-4 bg-primary text-background font-bold rounded-xl hover:bg-opacity-90 transition-all flex items-center gap-2 text-xs"><Copy className="w-4 h-4" /> Copy</button>
+                </div>
+                <div>
+                  <p className="text-[10px] text-textGray mb-2 font-semibold uppercase tracking-wider">Share on Social Media</p>
+                  <div className="flex flex-wrap gap-2">
+                    <a href={`https://wa.me/?text=${encodeURIComponent(`Join Earnova and earn money! Use my referral link: ${window.location.origin}/register?ref=${profile.referral_code || user.id}`)}`} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-[#25D366]/10 border border-[#25D366]/20 rounded-xl text-[#25D366] text-xs font-bold hover:bg-[#25D366]/20 transition-all flex items-center gap-1.5">
+                      <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                    </a>
+                    <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${window.location.origin}/register?ref=${profile.referral_code || user.id}`)}`} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-[#1877F2]/10 border border-[#1877F2]/20 rounded-xl text-[#1877F2] text-xs font-bold hover:bg-[#1877F2]/20 transition-all flex items-center gap-1.5">
+                      <ExternalLink className="w-3.5 h-3.5" /> Facebook
+                    </a>
+                    <a href={`https://t.me/share/url?url=${encodeURIComponent(`${window.location.origin}/register?ref=${profile.referral_code || user.id}`)}&text=${encodeURIComponent('Join Earnova and earn money!')}`} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-[#0088cc]/10 border border-[#0088cc]/20 rounded-xl text-[#0088cc] text-xs font-bold hover:bg-[#0088cc]/20 transition-all flex items-center gap-1.5">
+                      <Send className="w-3.5 h-3.5" /> Telegram
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
