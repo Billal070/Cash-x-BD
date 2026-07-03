@@ -87,9 +87,7 @@ export default function Register() {
 
       if (data.user) {
         const myRefCode = generateReferralCode(username.trim().toLowerCase());
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
         await supabase
           .from('profiles')
           .upsert({ 
