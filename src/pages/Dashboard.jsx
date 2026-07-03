@@ -9,7 +9,8 @@ import {
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
   HelpCircle, Send, MessageSquare,
-  Megaphone, Download, Headphones, MousePointer2, Eye, ArrowRight
+  Megaphone, Download, Headphones, MousePointer2, Eye, ArrowRight,
+  Share2, Trophy, Star, Target, TrendingUp, ExternalLink, MessageCircle
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
@@ -170,6 +171,9 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [taskCompletions, setTaskCompletions] = useState([]);
+  const [referralHistory, setReferralHistory] = useState([]);
+  const [refLeaderboard, setRefLeaderboard] = useState([]);
+  const [loadingReferrals, setLoadingReferrals] = useState(false);
 
   const [adTimer, setAdTimer] = useState(0); 
   const [cooldown, setCooldown] = useState(0); 
@@ -321,6 +325,28 @@ export default function Dashboard() {
       console.error(err.message);
     }
   };
+
+  const fetchReferralData = async () => {
+    setLoadingReferrals(true);
+    try {
+      const [historyRes, leaderboardRes] = await Promise.all([
+        supabase.from('profiles').select('id, username, created_at, is_active, referral_count').eq('referred_by', user.id).order('created_at', { ascending: false }),
+        supabase.from('profiles').select('username, referral_count').not('referral_count', 'is', null).order('referral_count', { ascending: false }).limit(10)
+      ]);
+      setReferralHistory(historyRes.data || []);
+      setRefLeaderboard(leaderboardRes.data || []);
+    } catch (err) {
+      console.error('Failed to load referral data:', err.message);
+    } finally {
+      setLoadingReferrals(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && activeTab === 'referrals') {
+      fetchReferralData();
+    }
+  }, [user, activeTab]);
 
   const handlePayment = async () => {
     setPaying(true);
@@ -543,7 +569,7 @@ export default function Dashboard() {
   };
 
   const copyReferralLink = () => {
-    const link = `${window.location.origin}/register?ref=${user.id}`;
+    const link = `${window.location.origin}/register?ref=${profile.referral_code || user.id}`;
     navigator.clipboard.writeText(link);
     toast.success('Referral link copied to clipboard!');
   };
@@ -599,6 +625,23 @@ export default function Dashboard() {
     : (profile.ads_watched_today || 0);
   
   const remainingAds = activeDailyAdLimit - totalCompletedToday > 0 ? activeDailyAdLimit - totalCompletedToday : 0;
+
+  const totalReferrals = profile.referral_count || 0;
+  const activeReferralCount = referralHistory.filter(r => r.is_active).length;
+  const thisMonthReferrals = referralHistory.filter(r => {
+    const d = new Date(r.created_at);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+  const referralEarningsCalc = totalReferrals * activeReferralBonus;
+
+  const milestones = [
+    { target: 5, bonus: 150 },
+    { target: 10, bonus: 400 },
+    { target: 25, bonus: 1200 },
+  ];
+  const nextMilestone = milestones.find(m => totalReferrals < m.target) || milestones[milestones.length - 1];
+  const milestoneProgress = Math.min((totalReferrals / nextMilestone.target) * 100, 100);
 
   const renderSidebarProfileCard = () => (
     <div className="bg-background/30 border border-cardBg/50 rounded-2xl p-4 mb-6 flex flex-col items-center text-center">
@@ -1253,28 +1296,167 @@ export default function Dashboard() {
 
         {/* TAB 4: REFERRALS */}
         {activeTab === 'referrals' && (
-          <div className="space-y-6 md:space-y-8 max-w-3xl">
+          <div className="space-y-6 md:space-y-8 max-w-4xl">
+            {/* Header */}
             <div>
               <h1 className="text-2xl md:text-3xl font-black">Refer & Earn</h1>
               <p className="text-textGray text-xs md:text-sm">Invite friends and get {activeReferralBonus}৳ for each active referral.</p>
             </div>
-            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-6 space-y-4">
-              <p className="text-sm text-textGray">Share this link with your friends:</p>
-              <div className="flex gap-2">
-                <input readOnly value={`${window.location.origin}/register?ref=${user.id}`} className="flex-1 px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight text-xs md:text-sm truncate" />
-                <button onClick={copyReferralLink} className="px-4 bg-primary text-background font-bold rounded-xl hover:bg-opacity-90 transition-all flex items-center gap-2 text-xs"><Copy className="w-4 h-4" /> Copy</button>
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-cardBg">
-                <div className="bg-background rounded-xl p-4 text-center border border-cardBg">
-                  <p className="text-2xl font-black text-primary">{profile.referral_count || 0}</p>
-                  <p className="text-xs text-textGray mt-1">Total Referrals</p>
+
+            {/* How It Works */}
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
+              <h3 className="text-sm font-bold text-textLight mb-4 flex items-center gap-2"><Target className="w-4 h-4 text-primary" /> How It Works</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-background rounded-xl p-4 text-center border border-cardBg space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto"><Copy className="w-5 h-5 text-primary" /></div>
+                  <h4 className="text-xs font-bold text-textLight">1. Copy Your Link</h4>
+                  <p className="text-[10px] text-textGray">Get your unique referral link</p>
                 </div>
-                <div className="bg-background rounded-xl p-4 text-center border border-cardBg">
-                  <p className="text-2xl font-black text-accent">৳ {referralEarnings.toFixed(2)}</p>
-                  <p className="text-xs text-textGray mt-1">Referral Earnings</p>
+                <div className="bg-background rounded-xl p-4 text-center border border-cardBg space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center mx-auto"><Share2 className="w-5 h-5 text-accent" /></div>
+                  <h4 className="text-xs font-bold text-textLight">2. Share with Friends</h4>
+                  <p className="text-[10px] text-textGray">Send via WhatsApp, Facebook etc.</p>
+                </div>
+                <div className="bg-background rounded-xl p-4 text-center border border-cardBg space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto"><Award className="w-5 h-5 text-primary" /></div>
+                  <h4 className="text-xs font-bold text-textLight">3. Earn {activeReferralBonus}৳ Bonus</h4>
+                  <p className="text-[10px] text-textGray">When friend activates account</p>
                 </div>
               </div>
             </div>
+
+            {/* Referral Link + Social Share */}
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6 space-y-4">
+              <h3 className="text-sm font-bold text-textLight flex items-center gap-2"><Copy className="w-4 h-4 text-primary" /> Your Referral Link</h3>
+              <div className="flex gap-2">
+                <input readOnly value={`${window.location.origin}/register?ref=${profile.referral_code || user.id}`} className="flex-1 px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight text-xs md:text-sm truncate" />
+                <button onClick={copyReferralLink} className="px-4 bg-primary text-background font-bold rounded-xl hover:bg-opacity-90 transition-all flex items-center gap-2 text-xs"><Copy className="w-4 h-4" /> Copy</button>
+              </div>
+              <div>
+                <p className="text-[10px] text-textGray mb-2 font-semibold uppercase tracking-wider">Share on Social Media</p>
+                <div className="flex flex-wrap gap-2">
+                  <a href={`https://wa.me/?text=${encodeURIComponent(`Join Earnova and earn money! Use my referral link: ${window.location.origin}/register?ref=${profile.referral_code || user.id}`)}`} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-[#25D366]/10 border border-[#25D366]/20 rounded-xl text-[#25D366] text-xs font-bold hover:bg-[#25D366]/20 transition-all flex items-center gap-1.5">
+                    <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                  </a>
+                  <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${window.location.origin}/register?ref=${profile.referral_code || user.id}`)}`} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-[#1877F2]/10 border border-[#1877F2]/20 rounded-xl text-[#1877F2] text-xs font-bold hover:bg-[#1877F2]/20 transition-all flex items-center gap-1.5">
+                    <ExternalLink className="w-3.5 h-3.5" /> Facebook
+                  </a>
+                  <a href={`https://t.me/share/url?url=${encodeURIComponent(`${window.location.origin}/register?ref=${profile.referral_code || user.id}`)}&text=${encodeURIComponent('Join Earnova and earn money!')}`} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-[#0088cc]/10 border border-[#0088cc]/20 rounded-xl text-[#0088cc] text-xs font-bold hover:bg-[#0088cc]/20 transition-all flex items-center gap-1.5">
+                    <Send className="w-3.5 h-3.5" /> Telegram
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-cardBg border border-cardBg/50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-black text-primary">{totalReferrals}</p>
+                <p className="text-[10px] text-textGray mt-1 font-semibold">Total Referrals</p>
+              </div>
+              <div className="bg-cardBg border border-cardBg/50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-black text-[#22C55E]">{activeReferralCount}</p>
+                <p className="text-[10px] text-textGray mt-1 font-semibold">Active Referrals</p>
+              </div>
+              <div className="bg-cardBg border border-cardBg/50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-black text-accent">৳ {formatCurrency(referralEarningsCalc)}</p>
+                <p className="text-[10px] text-textGray mt-1 font-semibold">Total Earned</p>
+              </div>
+              <div className="bg-cardBg border border-cardBg/50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-black text-textLight">{thisMonthReferrals}</p>
+                <p className="text-[10px] text-textGray mt-1 font-semibold">This Month</p>
+              </div>
+            </div>
+
+            {/* Milestones */}
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
+              <h3 className="text-sm font-bold text-textLight mb-4 flex items-center gap-2"><Trophy className="w-4 h-4 text-accent" /> Referral Milestones</h3>
+              <div className="mb-4">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-textGray">{totalReferrals} referrals completed</span>
+                  <span className="text-primary font-bold">{nextMilestone.target - totalReferrals > 0 ? `${nextMilestone.target - totalReferrals} more to next milestone` : 'Max milestone reached!'}</span>
+                </div>
+                <div className="w-full bg-background rounded-full h-3 overflow-hidden border border-cardBg">
+                  <div className="bg-gradient-to-r from-primary to-accent h-full rounded-full transition-all duration-700" style={{ width: `${milestoneProgress}%` }}></div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {milestones.map((m) => {
+                  const reached = totalReferrals >= m.target;
+                  return (
+                    <div key={m.target} className={`rounded-xl p-3 text-center border transition-all ${reached ? 'bg-primary/5 border-primary/30' : 'bg-background border-cardBg opacity-60'}`}>
+                      <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${reached ? 'bg-primary/20 text-primary' : 'bg-cardBg text-textGray'}`}>
+                        {reached ? <CheckCircle className="w-4 h-4" /> : <Star className="w-4 h-4" />}
+                      </div>
+                      <p className="text-xs font-bold text-textLight">{m.target} Referrals</p>
+                      <p className={`text-sm font-black ${reached ? 'text-primary' : 'text-accent'}`}>৳ {m.bonus}</p>
+                      <p className="text-[10px] text-textGray">{reached ? 'Earned!' : 'Bonus'}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Referral History */}
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
+              <h3 className="text-sm font-bold text-textLight mb-4 flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Referral History</h3>
+              {loadingReferrals ? (
+                <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-14 bg-background rounded-xl animate-pulse" />)}</div>
+              ) : referralHistory.length === 0 ? (
+                <div className="text-center py-8 text-textGray">
+                  <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm font-semibold">No referrals yet</p>
+                  <p className="text-xs mt-1">Share your link to start earning!</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-72 overflow-y-auto">
+                  {referralHistory.map((r) => (
+                    <div key={r.id} className="flex justify-between items-center bg-background p-3 rounded-xl border border-cardBg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs uppercase">
+                          {r.username ? r.username.substring(0, 2) : '??'}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-textLight">@{r.username || 'unknown'}</p>
+                          <p className="text-[10px] text-textGray">{new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${r.is_active ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent'}`}>
+                          {r.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                        {r.is_active && <p className="text-[10px] text-primary font-bold mt-0.5">+৳{activeReferralBonus}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Leaderboard */}
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
+              <h3 className="text-sm font-bold text-textLight mb-4 flex items-center gap-2"><Trophy className="w-4 h-4 text-accent" /> Top Referrers</h3>
+              {refLeaderboard.length === 0 ? (
+                <div className="text-center py-6 text-textGray">
+                  <p className="text-xs">No leaderboard data yet</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {refLeaderboard.map((entry, idx) => (
+                    <div key={idx} className={`flex items-center justify-between p-3 rounded-xl border ${idx === 0 ? 'bg-accent/5 border-accent/30' : idx === 1 ? 'bg-textLight/5 border-textLight/10' : idx === 2 ? 'bg-[#CD7F32]/5 border-[#CD7F32]/20' : 'bg-background border-cardBg'}`}>
+                      <div className="flex items-center gap-3">
+                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black ${idx === 0 ? 'bg-accent/20 text-accent' : idx === 1 ? 'bg-textLight/10 text-textLight' : idx === 2 ? 'bg-[#CD7F32]/20 text-[#CD7F32]' : 'bg-cardBg text-textGray'}`}>
+                          {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                        </span>
+                        <span className="text-xs font-bold text-textLight">@{entry.username || 'unknown'}</span>
+                      </div>
+                      <span className="text-xs font-black text-primary">{entry.referral_count || 0} referrals</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
         )}
 
