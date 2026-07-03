@@ -700,8 +700,8 @@ export default function Dashboard() {
       />
 
       {/* মোবাইল ড্রয়ার */}
-      <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-cardBg border-r border-cardBg/50 p-6 z-50 transform transition-transform duration-300 ease-in-out md:hidden flex flex-col justify-between ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div>
+      <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-cardBg border-r border-cardBg/50 z-50 transform transition-transform duration-300 ease-in-out md:hidden flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col">
           <div className="flex items-center justify-between mb-8">
             {CONFIG?.logoUrl ? (
               <img src={CONFIG.logoUrl} alt={CONFIG?.siteName || "Earnova"} className="h-12 w-auto object-contain" />
@@ -759,12 +759,14 @@ export default function Dashboard() {
           </nav>
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 text-textGray hover:text-red-500 font-bold transition-colors w-full animate-none"
-        >
-          <LogOut className="w-5 h-5" /> Sign Out
-        </button>
+        <div className="p-6 pt-0 border-t border-cardBg/50">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 text-textGray hover:text-red-500 font-bold transition-colors w-full mt-4"
+          >
+            <LogOut className="w-5 h-5" /> Sign Out
+          </button>
+        </div>
       </aside>
 
       {/* ডেস্কটপ সাইডবার */}
@@ -1000,62 +1002,6 @@ export default function Dashboard() {
                   <span className="text-[10px] md:text-xs text-[#8AA8B8]">Get help</span>
                 </div>
               </div>
-            </div>
-
-            {/* 7. Available Tasks preview */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-bold text-[#F0F6FF] text-sm md:text-base">Available Tasks</h3>
-                <button 
-                  onClick={() => setActiveTab('watch-ads')}
-                  className="text-[#22C55E] hover:underline text-xs md:text-sm font-semibold flex items-center gap-0.5 focus:outline-none"
-                >
-                  See All →
-                </button>
-              </div>
-
-              {loadingTasks ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="animate-pulse bg-[#1A2332] h-14 rounded-xl border border-[#1E3A2F]/40"></div>
-                  ))}
-                </div>
-              ) : tasks.length === 0 ? (
-                <div className="bg-[#1A2332] border border-[#1E3A2F]/40 p-6 rounded-2xl text-center">
-                  <p className="text-[#8AA8B8] text-xs md:text-sm font-semibold">No tasks right now. Check back soon!</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {tasks.map((task) => (
-                    <div 
-                      key={task.id}
-                      className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl px-4 py-3 flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${task.task_type === 'watch_ad' ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#FBBF24]/10 text-[#FBBF24]'}`}>
-                          {task.task_type === 'watch_ad' ? <Play className="w-4 h-4 fill-current" /> : <MousePointer2 className="w-4 h-4" />}
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="font-semibold text-[#F0F6FF] text-xs sm:text-sm truncate">{task.title}</h4>
-                          <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] uppercase font-black tracking-wider mt-1 ${task.task_type === 'watch_ad' ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#FBBF24]/10 text-[#FBBF24]'}`}>
-                            {task.task_type === 'watch_ad' ? 'Video Ad' : 'PTC'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 shrink-0 ml-auto sm:ml-0">
-                        <span className="text-[#FBBF24] font-black text-sm sm:text-base">৳ {formatCurrency(task.reward)}</span>
-                        <button 
-                          onClick={() => setActiveTab('watch-ads')}
-                          className="px-3 py-1.5 bg-[#22C55E]/10 text-[#22C55E] hover:bg-[#22C55E] hover:text-[#0D1117] font-black rounded-lg text-[10px] sm:text-xs transition-all flex items-center gap-0.5"
-                        >
-                          Start →
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         )}

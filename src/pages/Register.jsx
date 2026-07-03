@@ -89,10 +89,10 @@ export default function Register() {
         const myRefCode = generateReferralCode(username.trim().toLowerCase());
         supabase
           .from('profiles')
-          .update({ referral_code: myRefCode })
+          .update({ referral_code: myRefCode, phone: phone.trim() })
           .eq('id', data.user.id)
           .then(({ error }) => {
-            if (error) console.error('Failed to save referral code:', error.message);
+            if (error) console.error('Failed to save profile data:', error.message);
           });
 
         if (refCode.trim()) {
