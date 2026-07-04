@@ -1440,35 +1440,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Milestones */}
-            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
-              <h3 className="text-sm font-bold text-textLight mb-4 flex items-center gap-2"><Trophy className="w-4 h-4 text-accent" /> Referral Milestones</h3>
-              <div className="mb-4">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-textGray">{totalReferrals} referrals completed</span>
-                  <span className="text-primary font-bold">{nextMilestone.target - totalReferrals > 0 ? `${nextMilestone.target - totalReferrals} more to next milestone` : 'Max milestone reached!'}</span>
-                </div>
-                <div className="w-full bg-background rounded-full h-3 overflow-hidden border border-cardBg">
-                  <div className="bg-gradient-to-r from-primary to-accent h-full rounded-full transition-all duration-700" style={{ width: `${milestoneProgress}%` }}></div>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {milestones.map((m) => {
-                  const reached = totalReferrals >= m.target;
-                  return (
-                    <div key={m.target} className={`rounded-xl p-3 text-center border transition-all ${reached ? 'bg-primary/5 border-primary/30' : 'bg-background border-cardBg opacity-60'}`}>
-                      <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${reached ? 'bg-primary/20 text-primary' : 'bg-cardBg text-textGray'}`}>
-                        {reached ? <CheckCircle className="w-4 h-4" /> : <Star className="w-4 h-4" />}
-                      </div>
-                      <p className="text-xs font-bold text-textLight">{m.target} Referrals</p>
-                      <p className={`text-sm font-black ${reached ? 'text-primary' : 'text-accent'}`}>৳ {m.bonus}</p>
-                      <p className="text-[10px] text-textGray">{reached ? 'Earned!' : 'Bonus'}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
             {/* Weekly Salary System */}
             <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
               <h3 className="text-sm font-bold text-textLight mb-1 flex items-center gap-2"><Landmark className="w-4 h-4 text-accent" /> Weekly Salary</h3>
