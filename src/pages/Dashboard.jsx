@@ -181,6 +181,7 @@ export default function Dashboard() {
   const [weeklyReferrals, setWeeklyReferrals] = useState(0);
   const [claimingSalary, setClaimingSalary] = useState(false);
   const [claimedTiers, setClaimedTiers] = useState([]);
+  const [todayBonusEarned, setTodayBonusEarned] = useState(0);
 
   const [adTimer, setAdTimer] = useState(0); 
   const [cooldown, setCooldown] = useState(0); 
@@ -212,9 +213,10 @@ export default function Dashboard() {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      const [tasksRes, completionsRes] = await Promise.all([
+      const [tasksRes, completionsRes, bonusRes] = await Promise.all([
         supabase.from('tasks').select('*').eq('is_active', true).order('created_at'),
-        supabase.from('task_completions').select('task_id, reward_earned').eq('user_id', user.id).gte('completed_at', today)
+        supabase.from('task_completions').select('task_id, reward_earned').eq('user_id', user.id).gte('completed_at', today),
+        supabase.from('bonus_completions').select('reward_earned').eq('user_id', user.id).gte('completed_at', today)
       ]);
 
       if (tasksRes.error) throw tasksRes.error;
@@ -222,6 +224,8 @@ export default function Dashboard() {
 
       setTasks(tasksRes.data.length > 0 ? tasksRes.data : mockTasks);
       setTaskCompletions(completionsRes.data || []);
+      const bonusTotal = (bonusRes.data || []).reduce((sum, c) => sum + (c.reward_earned || 0), 0);
+      setTodayBonusEarned(bonusTotal);
     } catch (err) {
       console.error('Failed to load tasks:', err.message);
       setTasks(mockTasks);
@@ -1009,34 +1013,19 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* ৩টি Top Stats Box (Today Earned, Ads Watched, Remaining) */}
+            {/* Stats: Today Earned, Ref Income, Bonus */}
             <div className="grid grid-cols-3 gap-3">
-              {/* Box 1: আজকে কত টাকা আয় হলো */}
               <div className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl p-3 text-center">
                 <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Today Earned</span>
-                <span className="block text-[#22C55E] font-black text-sm sm:text-lg mt-1">
-                  ৳ {formatCurrency(todayEarned)}
-                </span>
+                <span className="block text-[#22C55E] font-black text-sm sm:text-lg mt-1">৳ {formatCurrency(todayEarned)}</span>
               </div>
-
-              {/* Box 2: কতটা ad দেখা হলো */}
               <div className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl p-3 text-center">
-                <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Ads Watched</span>
-                <span className="block text-[#F0F6FF] font-black text-sm sm:text-lg mt-1">
-                  {totalCompletedToday}/{activeDailyAdLimit}
-                </span>
+                <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Ref Income</span>
+                <span className="block text-[#FBBF24] font-black text-sm sm:text-lg mt-1">৳ {formatCurrency((profile?.referral_count || 0) * activeReferralBonus)}</span>
               </div>
-
-              {/* Box 3: আর কতটা বাকি আছে */}
               <div className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl p-3 text-center">
-                <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Remaining</span>
-                <span className="block text-[#FBBF24] font-black text-sm sm:text-lg mt-1">
-                  {remainingAds === 0 ? (
-                    <span className="text-[#22C55E]">Done! 🎉</span>
-                  ) : (
-                    `${remainingAds} left`
-                  )}
-                </span>
+                <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Bonus</span>
+                <span className="block text-[#a78bfa] font-black text-sm sm:text-lg mt-1">৳ {formatCurrency(todayBonusEarned)}</span>
               </div>
             </div>
 
