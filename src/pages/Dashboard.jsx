@@ -1735,21 +1735,95 @@ export default function Dashboard() {
 
         {/* TAB 6: SUPPORT */}
         {activeTab === 'support-page' && (
-          <div className="space-y-6 md:space-y-8 max-w-2xl">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-black">Help & Support</h1>
-              <p className="text-textGray text-xs md:text-sm">Need help? Contact us through Telegram.</p>
+          <div className="space-y-6 md:space-y-8 max-w-3xl">
+
+            {/* Hero Header with brand glow */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-cardBg via-cardBg to-background border border-primary/20 rounded-3xl p-6 md:p-8">
+              <div className="absolute -top-12 -right-10 w-44 h-44 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="absolute -bottom-14 -left-10 w-44 h-44 bg-accent/10 rounded-full blur-3xl pointer-events-none"></div>
+
+              <div className="relative flex items-center gap-4">
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 shadow-[0_0_25px_rgba(34,197,94,0.15)]">
+                  <Headphones className="w-7 h-7 md:w-8 md:h-8" />
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-black text-textLight">Help & Support</h1>
+                  <p className="text-textGray text-xs md:text-sm mt-1 max-w-md leading-relaxed">We're here for you around the clock. Reach out on Telegram and our team will get back to you fast.</p>
+                </div>
+              </div>
+
+              {/* Quick info badges */}
+              <div className="relative grid grid-cols-3 gap-2.5 md:gap-3 mt-6">
+                <div className="bg-background/50 border border-cardBg rounded-xl p-3 text-center backdrop-blur-sm">
+                  <Clock className="w-4 h-4 md:w-5 md:h-5 text-primary mx-auto mb-1.5" />
+                  <p className="text-xs md:text-sm font-black text-textLight">~5 min</p>
+                  <p className="text-[9px] md:text-[10px] text-textGray font-semibold">Avg. Reply</p>
+                </div>
+                <div className="bg-background/50 border border-cardBg rounded-xl p-3 text-center backdrop-blur-sm">
+                  <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 text-accent mx-auto mb-1.5" />
+                  <p className="text-xs md:text-sm font-black text-textLight">24 / 7</p>
+                  <p className="text-[9px] md:text-[10px] text-textGray font-semibold">Available</p>
+                </div>
+                <div className="bg-background/50 border border-cardBg rounded-xl p-3 text-center backdrop-blur-sm">
+                  <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-primary mx-auto mb-1.5" />
+                  <p className="text-xs md:text-sm font-black text-textLight">Trusted</p>
+                  <p className="text-[9px] md:text-[10px] text-textGray font-semibold">Verified Team</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-6 space-y-4">
-              <a href={activeTelegramChannel} target="_blank" rel="noreferrer" className="flex items-center gap-4 p-4 bg-background rounded-xl border border-cardBg hover:border-primary/50 transition-all group">
-                <div className="w-12 h-12 bg-[#22C55E]/10 rounded-xl flex items-center justify-center text-[#22C55E] group-hover:scale-110 transition-transform"><Send className="w-6 h-6" /></div>
-                <div><p className="font-bold text-textLight text-sm">Join Official Channel</p><p className="text-xs text-textGray">Get latest updates and news.</p></div>
+
+            {/* Contact Channels */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-textLight flex items-center gap-2 px-1">
+                <MessageCircle className="w-4 h-4 text-primary" /> Contact Channels
+              </h3>
+
+              <a href={activeTelegramChannel} target="_blank" rel="noreferrer" className="flex items-center gap-4 p-4 md:p-5 bg-cardBg rounded-2xl border border-cardBg/50 hover:border-primary/50 hover:bg-primary/[0.03] transition-all duration-300 group">
+                <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shrink-0">
+                  <Send className="w-6 h-6 md:w-7 md:h-7" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-textLight text-sm md:text-base">Join Official Channel</p>
+                  <p className="text-xs text-textGray mt-0.5">Latest updates, payment proofs & announcements.</p>
+                </div>
+                <ArrowUpRight className="w-5 h-5 text-textGray group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
               </a>
-              <a href={activeTelegramAdmin} target="_blank" rel="noreferrer" className="flex items-center gap-4 p-4 bg-background rounded-xl border border-cardBg hover:border-accent/50 transition-all group">
-                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center text-accent group-hover:scale-110 transition-transform"><MessageSquare className="w-6 h-6" /></div>
-                <div><p className="font-bold text-textLight text-sm">Contact Admin Support</p><p className="text-xs text-textGray">Direct message for account issues.</p></div>
+
+              <a href={activeTelegramAdmin} target="_blank" rel="noreferrer" className="flex items-center gap-4 p-4 md:p-5 bg-cardBg rounded-2xl border border-cardBg/50 hover:border-accent/50 hover:bg-accent/[0.03] transition-all duration-300 group">
+                <div className="w-12 h-12 md:w-14 md:h-14 bg-accent/10 border border-accent/20 rounded-2xl flex items-center justify-center text-accent group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shrink-0">
+                  <MessageSquare className="w-6 h-6 md:w-7 md:h-7" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-textLight text-sm md:text-base">Contact Admin Support</p>
+                  <p className="text-xs text-textGray mt-0.5">Direct message for account or payment issues.</p>
+                </div>
+                <ArrowUpRight className="w-5 h-5 text-textGray group-hover:text-accent group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
               </a>
             </div>
+
+            {/* FAQ */}
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
+              <h3 className="text-sm font-bold text-textLight mb-4 flex items-center gap-2">
+                <HelpCircle className="w-4 h-4 text-primary" /> Frequently Asked Questions
+              </h3>
+              <div className="space-y-2.5">
+                {[
+                  { q: 'How do I activate my account?', a: `Open the Dashboard, tap "Activate Now", and pay the one-time ${activeActivationFee}৳ fee via ZiniPay. Your account unlocks instantly after payment.` },
+                  { q: 'When can I withdraw my earnings?', a: `You can withdraw once you meet the minimum (first: ${activeMinWithdrawFirst}৳). You must also complete all ${activeDailyAdLimit} daily ads before requesting a withdrawal.` },
+                  { q: 'How long do withdrawals take?', a: 'Withdrawal requests are reviewed by our admin team and are usually processed within 24 hours to your bKash, Nagad, or Rocket account.' },
+                  { q: `How much do I earn per referral?`, a: `You earn ${activeReferralBonus}৳ for every friend who registers with your link and activates their account. Refer more to unlock weekly salary bonuses!` },
+                ].map((item, i) => (
+                  <details key={i} className="group bg-background border border-cardBg rounded-xl overflow-hidden [&_svg]:open:rotate-180">
+                    <summary className="flex items-center justify-between gap-3 p-4 cursor-pointer list-none select-none">
+                      <span className="text-xs md:text-sm font-semibold text-textLight">{item.q}</span>
+                      <ArrowRight className="w-4 h-4 text-primary rotate-90 transition-transform duration-300 shrink-0" />
+                    </summary>
+                    <p className="px-4 pb-4 text-xs text-textGray leading-relaxed">{item.a}</p>
+                  </details>
+                ))}
+              </div>
+            </div>
+
           </div>
         )}
 
