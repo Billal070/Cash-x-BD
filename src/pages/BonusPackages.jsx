@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
-import { Sparkles, Info, CheckCircle, Lock, Clock, Zap, Crown, Star, Shield, Award, Gem, Trophy, Eye } from 'lucide-react';
+import { Sparkles, Info, CheckCircle, Clock, Zap, Crown, Star, Shield, Award, Gem, Trophy, Eye } from 'lucide-react';
 
 const tierConfig = {
-  starter:  { border: 'border-[#1E3A2F]', iconColor: '#22C55E', btnBg: 'bg-[#22C55E]' },
-  basic:    { border: 'border-[#1E3A2F]', iconColor: '#22C55E', btnBg: 'bg-[#22C55E]' },
-  silver:   { border: 'border-[#FBBF24]/30', iconColor: '#FBBF24', btnBg: 'bg-[#FBBF24]' },
-  gold:     { border: 'border-[#FBBF24]/30', iconColor: '#FBBF24', btnBg: 'bg-[#FBBF24]' },
-  platinum: { border: 'border-[#22C55E]/40', iconColor: '#22C55E', btnBg: 'bg-[#22C55E]' },
-  elite:    { border: 'border-[#22C55E]/40', iconColor: '#22C55E', btnBg: 'bg-[#22C55E]' },
-  master:   { border: 'border-[#a78bfa]/40', iconColor: '#a78bfa', btnBg: 'bg-[#a78bfa]' },
-  vip:      { border: 'border-[#a78bfa]/40', iconColor: '#a78bfa', btnBg: 'bg-[#a78bfa]' },
+  starter:  { iconColor: '#22C55E', btnBg: 'bg-[#22C55E]', borderHover: '#22C55E' },
+  basic:    { iconColor: '#22C55E', btnBg: 'bg-[#22C55E]', borderHover: '#22C55E', popular: true },
+  silver:   { iconColor: '#FBBF24', btnBg: 'bg-[#FBBF24]', borderHover: '#FBBF24' },
+  gold:     { iconColor: '#FBBF24', btnBg: 'bg-[#FBBF24]', borderHover: '#FBBF24' },
+  platinum: { iconColor: '#22C55E', btnBg: 'bg-[#22C55E]', borderHover: '#22C55E' },
+  elite:    { iconColor: '#22C55E', btnBg: 'bg-[#22C55E]', borderHover: '#22C55E' },
+  master:   { iconColor: '#a78bfa', btnBg: 'bg-[#a78bfa]', borderHover: '#a78bfa' },
+  vip:      { iconColor: '#a78bfa', btnBg: 'bg-[#a78bfa]', borderHover: '#a78bfa' },
 };
 
 const tierIcons = {
@@ -29,6 +29,9 @@ export default function BonusPackages({ refreshProfile }) {
   const [claiming, setClaiming] = useState(false);
   const [bonusTimer, setBonusTimer] = useState(0);
   const [bonusStarted, setBonusStarted] = useState(false);
+  const [showClaimBtn, setShowClaimBtn] = useState(false);
+  const [bonusAdUrl, setBonusAdUrl] = useState('');
+  const [hoveredTier, setHoveredTier] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -40,6 +43,7 @@ export default function BonusPackages({ refreshProfile }) {
       interval = setInterval(() => setBonusTimer((p) => p - 1), 1000);
     } else if (bonusStarted && bonusTimer === 0) {
       setBonusStarted(false);
+      setShowClaimBtn(true);
     }
     return () => clearInterval(interval);
   }, [bonusStarted, bonusTimer]);
@@ -48,30 +52,25 @@ export default function BonusPackages({ refreshProfile }) {
     if (!user) return;
     const today = new Date().toISOString().split('T')[0];
 
-    const [pkgsRes, activeRes, completionRes] = await Promise.all([
+    const [pkgsRes, activeRes, completionRes, tasksRes] = await Promise.all([
       supabase.from('packages').select('*').eq('is_active', true).order('sort_order'),
       supabase.from('user_packages').select('*, packages(*)').eq('user_id', user.id).eq('is_active', true).gte('expires_at', new Date().toISOString()).single(),
-      supabase.from('bonus_completions').select('id').eq('user_id', user.id).gte('completed_at', today).single()
+      supabase.from('bonus_completions').select('id').eq('user_id', user.id).gte('completed_at', today).single(),
+      supabase.from('tasks').select('ad_url').eq('is_active', true).order('created_at', { ascending: false }).limit(1).single()
     ]);
 
     setPackages(pkgsRes.data || []);
     setActivePackage(activeRes.data || null);
     setTodayClaimed(!!completionRes.data);
-  };
-
-  const getTierStyle = (tier) => tierConfig[tier] || tierConfig.starter;
-  const getTierIcon = (tier) => {
-    const Icon = tierIcons[tier] || Sparkles;
-    return <Icon className="w-5 h-5" />;
+    setBonusAdUrl(tasksRes.data?.ad_url || '');
   };
 
   const getDaysInfo = () => {
     if (!activePackage) return { used: 0, left: 0 };
     const purchased = new Date(activePackage.purchased_at);
-    const expires = new Date(activePackage.expires_at);
     const now = new Date();
-    const totalDays = 30;
-    const used = Math.min(Math.floor((now - purchased) / 86400000), totalDays);
+    const expires = new Date(activePackage.expires_at);
+    const used = Math.min(Math.floor((now - purchased) / 86400000), 30);
     const left = Math.max(Math.ceil((expires - now) / 86400000), 0);
     return { used, left };
   };
@@ -109,7 +108,7 @@ export default function BonusPackages({ refreshProfile }) {
       } else if (verifyData.success) {
         toast.success('Package activated!');
         await fetchData();
-        await refreshProfile();
+        if (refreshProfile) await refreshProfile();
       }
     } catch (err) {
       toast.error(err.message || 'Payment failed. Try again.');
@@ -120,9 +119,11 @@ export default function BonusPackages({ refreshProfile }) {
 
   const handleBonusWatch = () => {
     if (!activePackage) return;
-    window.open('https://www.effectivegatecpm.com/j430o3gxy?key=45bfab9e5c9c8c7e57e4b5e0e5d0b5a0', '_blank');
+    const url = bonusAdUrl || 'https://www.effectivegatecpm.com/j430o3gxy?key=45bfab9e5c9c8c7e57e4b5e0e5d0b5a0';
+    window.open(url, '_blank');
     setBonusTimer(30);
     setBonusStarted(true);
+    setShowClaimBtn(false);
     toast.success('Ad loaded! Wait 30 seconds to claim reward.');
   };
 
@@ -153,6 +154,7 @@ export default function BonusPackages({ refreshProfile }) {
 
       toast.success(`৳${reward} bonus credited!`, { id: toastId });
       setTodayClaimed(true);
+      setShowClaimBtn(false);
       if (refreshProfile) await refreshProfile();
     } catch (err) {
       toast.error('Failed to claim bonus', { id: toastId });
@@ -166,17 +168,21 @@ export default function BonusPackages({ refreshProfile }) {
   return (
     <div className="space-y-6 md:space-y-8 max-w-5xl">
       <div>
-        <h1 className="text-2xl md:text-3xl font-black flex items-center gap-2"><Sparkles className="w-7 h-7 text-[#FBBF24]" /> Bonus Packages</h1>
+        <h1 className="text-2xl md:text-3xl font-black flex items-center gap-2">
+          <Sparkles className="w-7 h-7 text-[#FBBF24]" /> Bonus Packages
+        </h1>
         <p className="text-[#8AA8B8] text-xs md:text-sm">Buy a package to unlock extra daily ads</p>
       </div>
 
       {/* Info Bar */}
       <div className="bg-[#1A2332] border border-[#1E3A2F] rounded-xl p-4 flex items-start gap-3">
         <Info className="w-5 h-5 text-[#FBBF24] shrink-0 mt-0.5" />
-        <p className="text-xs text-[#8AA8B8] leading-relaxed">Buy a package → Extra ads unlock daily → Watch ads → Earn BDT → Valid for 30 days</p>
+        <p className="text-xs text-[#8AA8B8] leading-relaxed">
+          Buy a package → Extra ads unlock daily → Watch ads → Earn BDT → Valid for 30 days
+        </p>
       </div>
 
-      {/* Active Package */}
+      {/* Active Package Card */}
       {activePackage && (
         <div className="bg-[#0A1F10] border border-[#22C55E]/30 rounded-2xl p-5 md:p-6">
           <div className="flex items-center justify-between mb-3">
@@ -184,15 +190,19 @@ export default function BonusPackages({ refreshProfile }) {
               <h3 className="text-base font-bold text-[#F0F6FF]">{activePackage.packages?.name || 'Package'}</h3>
               <span className="px-2 py-0.5 bg-[#22C55E]/20 text-[#22C55E] text-[10px] font-bold rounded-full uppercase">Active</span>
             </div>
+            <span className="text-[#FBBF24] text-sm font-bold">৳{activePackage.packages?.daily_reward || 0}/day</span>
           </div>
 
-          <p className="text-[#FBBF24] text-sm font-bold mb-4">Today's bonus reward: ৳{activePackage.packages?.daily_reward || 0}</p>
-
-          <div className="mb-3">
+          <div className="mb-4">
             <div className="w-full bg-[#0D1117] rounded-full h-2.5 overflow-hidden border border-[#1E3A2F]">
-              <div className="bg-gradient-to-r from-[#22C55E] to-[#FBBF24] h-full rounded-full transition-all" style={{ width: `${Math.min((daysUsed / 30) * 100, 100)}%` }}></div>
+              <div
+                className="bg-gradient-to-r from-[#22C55E] to-[#FBBF24] h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min((daysUsed / 30) * 100, 100)}%` }}
+              ></div>
             </div>
-            <p className="text-[10px] text-[#8AA8B8] mt-1.5 text-center">{daysUsed} of 30 days used • {daysLeft} days remaining</p>
+            <p className="text-[10px] text-[#8AA8B8] mt-1.5 text-center">
+              {daysUsed} of 30 days used • {daysLeft} days remaining
+            </p>
           </div>
 
           {!todayClaimed ? (
@@ -202,14 +212,28 @@ export default function BonusPackages({ refreshProfile }) {
                   <Clock className="w-4 h-4 animate-spin" /> Wait {bonusTimer}s to claim...
                 </div>
               </div>
+            ) : showClaimBtn ? (
+              <button
+                onClick={handleBonusClaim}
+                disabled={claiming}
+                className="w-full py-3 bg-[#FBBF24] text-[#0D1117] font-black rounded-xl hover:bg-opacity-90 disabled:opacity-50 transition-all text-sm flex items-center justify-center gap-2"
+              >
+                {claiming ? 'Claiming...' : `Claim ৳${activePackage.packages.daily_reward}`}
+              </button>
             ) : (
-              <button onClick={handleBonusWatch} className="w-full py-3 bg-[#22C55E] text-[#0D1117] font-black rounded-xl hover:bg-opacity-90 transition-all text-sm flex items-center justify-center gap-2">
+              <button
+                onClick={handleBonusWatch}
+                className="w-full py-3 bg-[#22C55E] text-[#0D1117] font-black rounded-xl hover:bg-opacity-90 transition-all text-sm flex items-center justify-center gap-2 min-h-[44px]"
+              >
                 <Eye className="w-4 h-4" /> Watch Bonus Ad
               </button>
             )
           ) : (
             <div className="space-y-2">
-              <button disabled className="w-full py-3 bg-[#1E3A2F] text-[#8AA8B8] rounded-xl text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-2">
+              <button
+                disabled
+                className="w-full py-3 bg-[#1E3A2F] text-[#8AA8B8] rounded-xl text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-2 min-h-[44px]"
+              >
                 <CheckCircle className="w-4 h-4" /> Reward claimed today ✓
               </button>
               <p className="text-[10px] text-[#8AA8B8] text-center">Come back tomorrow</p>
@@ -223,37 +247,73 @@ export default function BonusPackages({ refreshProfile }) {
         <h3 className="text-sm font-bold text-[#F0F6FF] mb-4">Available Packages</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {packages.map((pkg) => {
-            const style = getTierStyle(pkg.tier);
+            const style = tierConfig[pkg.tier] || tierConfig.starter;
             const Icon = tierIcons[pkg.tier] || Sparkles;
             const isActive = activePackage?.package_id === pkg.id;
             const hasActive = !!activePackage;
+            const isHovered = hoveredTier === pkg.tier;
 
             return (
-              <div key={pkg.id} className={`bg-[#1A2332] border ${style.border} rounded-2xl p-4 flex flex-col items-center text-center ${isActive ? 'ring-1 ring-[#22C55E]/40' : ''}`}>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: `${style.iconColor}15`, border: `1px solid ${style.iconColor}30` }}>
+              <div
+                key={pkg.id}
+                onMouseEnter={() => setHoveredTier(pkg.tier)}
+                onMouseLeave={() => setHoveredTier(null)}
+                className={`bg-[#162030] border rounded-2xl p-4 flex flex-col items-center text-center transition-all duration-200 ${
+                  isActive ? 'ring-1 ring-[#22C55E]/40' : ''
+                }`}
+                style={{ borderColor: isHovered ? `${style.borderHover}80` : `${style.borderHover}30` }}
+              >
+                {/* Popular Badge */}
+                {style.popular && (
+                  <span className="mb-2 px-2.5 py-0.5 bg-[#FBBF24]/15 border border-[#FBBF24]/30 text-[#FBBF24] text-[9px] font-black rounded-full uppercase tracking-wider">
+                    Popular
+                  </span>
+                )}
+
+                {/* Icon */}
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
+                  style={{ backgroundColor: `${style.iconColor}15`, border: `1px solid ${style.iconColor}30` }}
+                >
                   <Icon className="w-5 h-5" style={{ color: style.iconColor }} />
                 </div>
+
+                {/* Tier Name */}
                 <p className="text-[10px] font-bold text-[#8AA8B8] uppercase tracking-wider mb-1">{pkg.tier}</p>
-                <p className="text-xl font-black" style={{ color: style.iconColor }}>৳{pkg.price}</p>
 
-                <div className="w-full border-t border-[#1E3A2F] my-3"></div>
+                {/* Price */}
+                <p className="text-3xl font-black mb-3" style={{ color: style.iconColor }}>৳{pkg.price}</p>
 
+                {/* Divider */}
+                <div className="w-full border-t border-[#1E3A2F] mb-3"></div>
+
+                {/* Details */}
                 <div className="space-y-1.5 w-full mb-4">
                   <p className="text-[10px] text-[#FBBF24] font-semibold">Daily: ৳{pkg.daily_reward}/day</p>
                   <p className="text-[10px] font-semibold" style={{ color: style.iconColor }}>Total: ৳{pkg.daily_reward * 30}</p>
                   <p className="text-[10px] text-[#8AA8B8]">Validity: 30 days</p>
                 </div>
 
+                {/* Button */}
                 {isActive ? (
-                  <div className="w-full py-2.5 bg-[#22C55E]/10 border border-[#22C55E]/30 rounded-xl text-[#22C55E] text-xs font-bold text-center">
+                  <div className="w-full py-2.5 bg-[#22C55E]/10 border border-[#22C55E]/30 rounded-xl text-[#22C55E] text-xs font-bold text-center min-h-[44px] flex items-center justify-center">
                     Active
                   </div>
                 ) : hasActive ? (
-                  <button onClick={() => handleBuyPackage(pkg)} disabled={loading === pkg.id} className="w-full py-2.5 border border-[#FBBF24]/30 text-[#FBBF24] rounded-xl text-xs font-bold hover:bg-[#FBBF24]/10 transition-all disabled:opacity-50">
+                  <button
+                    onClick={() => handleBuyPackage(pkg)}
+                    disabled={loading === pkg.id}
+                    className="w-full py-2.5 border border-[#FBBF24]/30 text-[#FBBF24] rounded-xl text-xs font-bold hover:bg-[#FBBF24]/10 transition-all disabled:opacity-50 min-h-[44px]"
+                  >
                     {loading === pkg.id ? 'Processing...' : 'Upgrade'}
                   </button>
                 ) : (
-                  <button onClick={() => handleBuyPackage(pkg)} disabled={loading === pkg.id} className="w-full py-2.5 text-[#0D1117] rounded-xl text-xs font-bold hover:bg-opacity-90 transition-all disabled:opacity-50" style={{ backgroundColor: style.iconColor }}>
+                  <button
+                    onClick={() => handleBuyPackage(pkg)}
+                    disabled={loading === pkg.id}
+                    className="w-full py-2.5 text-[#0D1117] rounded-xl text-xs font-black hover:bg-opacity-90 transition-all disabled:opacity-50 min-h-[44px]"
+                    style={{ backgroundColor: style.iconColor }}
+                  >
                     {loading === pkg.id ? 'Processing...' : 'Buy'}
                   </button>
                 )}
