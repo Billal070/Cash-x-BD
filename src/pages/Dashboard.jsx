@@ -177,6 +177,8 @@ export default function Dashboard() {
   const [totalTasksCompleted, setTotalTasksCompleted] = useState(0);
   const [adEarnings, setAdEarnings] = useState(0);
   const [taskEarnings, setTaskEarnings] = useState(0);
+  const [weeklyReferrals, setWeeklyReferrals] = useState(0);
+  const [claimingSalary, setClaimingSalary] = useState(false);
 
   const [adTimer, setAdTimer] = useState(0); 
   const [cooldown, setCooldown] = useState(0); 
@@ -332,16 +334,77 @@ export default function Dashboard() {
   const fetchReferralData = async () => {
     setLoadingReferrals(true);
     try {
-      const [historyRes, leaderboardRes] = await Promise.all([
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+      startOfWeek.setHours(0, 0, 0, 0);
+      const startOfWeekStr = startOfWeek.toISOString();
+
+      const [historyRes, leaderboardRes, weeklyRes] = await Promise.all([
         supabase.from('profiles').select('id, username, created_at, is_active, referral_count').eq('referred_by', user.id).order('created_at', { ascending: false }),
-        supabase.from('profiles').select('username, referral_count').gt('referral_count', 0).order('referral_count', { ascending: false }).limit(10)
+        supabase.from('profiles').select('username, referral_count').gt('referral_count', 0).order('referral_count', { ascending: false }).limit(10),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('referred_by', user.id).gte('created_at', startOfWeekStr)
       ]);
       setReferralHistory(historyRes.data || []);
       setRefLeaderboard(leaderboardRes.data || []);
+      setWeeklyReferrals(weeklyRes.count || 0);
     } catch (err) {
       console.error('Failed to load referral data:', err.message);
     } finally {
       setLoadingReferrals(false);
+    }
+  };
+
+  const salaryTiers = [
+    { refers: 7, salary: 400 },
+    { refers: 15, salary: 600 },
+    { refers: 30, salary: 1200 },
+    { refers: 100, salary: 2500 }
+  ];
+
+  const getCurrentWeekId = () => {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const weekNumber = Math.ceil(((now - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+    return `${now.getFullYear()}-W${weekNumber}`;
+  };
+
+  const getActiveSalaryTier = () => {
+    for (let i = salaryTiers.length - 1; i >= 0; i--) {
+      if (weeklyReferrals >= salaryTiers[i].refers) return salaryTiers[i];
+    }
+    return null;
+  };
+
+  const handleClaimSalary = async () => {
+    const tier = getActiveSalaryTier();
+    if (!tier) return;
+    const weekId = getCurrentWeekId();
+
+    if (profile.last_salary_claim_week === weekId) {
+      return toast.error('You already claimed this week\'s salary!');
+    }
+
+    setClaimingSalary(true);
+    const toastId = toast.loading('Claiming weekly salary...');
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          balance: (profile.balance || 0) + tier.salary,
+          total_earned: (profile.total_earned || 0) + tier.salary,
+          last_salary_claim_week: weekId
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      toast.success(`৳${tier.salary} weekly salary claimed! 🎉`, { id: toastId });
+      await refreshProfile();
+      await fetchReferralData();
+    } catch (err) {
+      toast.error('Failed to claim salary', { id: toastId });
+    } finally {
+      setClaimingSalary(false);
     }
   };
 
@@ -1404,6 +1467,55 @@ export default function Dashboard() {
                   );
                 })}
               </div>
+            </div>
+
+            {/* Weekly Salary System */}
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
+              <h3 className="text-sm font-bold text-textLight mb-1 flex items-center gap-2"><Landmark className="w-4 h-4 text-accent" /> Weekly Salary</h3>
+              <p className="text-[10px] text-textGray mb-4">Refer friends this week and earn a weekly salary bonus.</p>
+
+              <div className="mb-4">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-textGray">This Week: <span className="text-primary font-bold">{weeklyReferrals} referrals</span></span>
+                  {getActiveSalaryTier() ? (
+                    <span className="text-[#22C55E] font-bold">৳{getActiveSalaryTier().salary} earned!</span>
+                  ) : (
+                    <span className="text-accent font-bold">{salaryTiers[0].refers - weeklyReferrals} more to first salary</span>
+                  )}
+                </div>
+                <div className="w-full bg-background rounded-full h-3 overflow-hidden border border-cardBg">
+                  <div className="bg-gradient-to-r from-accent to-primary h-full rounded-full transition-all duration-700" style={{ width: `${Math.min((weeklyReferrals / salaryTiers[salaryTiers.length - 1].refers) * 100, 100)}%` }}></div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                {salaryTiers.map((tier) => {
+                  const reached = weeklyReferrals >= tier.refers;
+                  const isActive = getActiveSalaryTier()?.refers === tier.refers;
+                  return (
+                    <div key={tier.refers} className={`rounded-xl p-3 text-center border transition-all ${isActive ? 'bg-accent/10 border-accent/40 ring-1 ring-accent/20' : reached ? 'bg-primary/5 border-primary/30' : 'bg-background border-cardBg opacity-60'}`}>
+                      <p className="text-xs font-bold text-textLight">{tier.refers} Refers</p>
+                      <p className={`text-sm font-black mt-1 ${isActive ? 'text-accent' : reached ? 'text-primary' : 'text-textGray'}`}>৳{tier.salary}</p>
+                      <p className="text-[10px] text-textGray">{reached ? (isActive ? 'Current' : 'Reached') : 'Weekly'}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {getActiveSalaryTier() && profile.last_salary_claim_week !== getCurrentWeekId() ? (
+                <button onClick={handleClaimSalary} disabled={claimingSalary} className="w-full py-3 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 disabled:opacity-50 transition-all text-sm flex items-center justify-center gap-2">
+                  <Landmark className="w-4 h-4" />
+                  {claimingSalary ? 'Claiming...' : `Claim ৳${getActiveSalaryTier().salary} Weekly Salary`}
+                </button>
+              ) : profile.last_salary_claim_week === getCurrentWeekId() ? (
+                <div className="w-full py-3 bg-background border border-cardBg rounded-xl text-textGray text-xs text-center font-semibold">
+                  ✓ Already claimed this week's salary
+                </div>
+              ) : (
+                <div className="w-full py-3 bg-background border border-cardBg rounded-xl text-textGray text-xs text-center font-semibold">
+                  Refer {salaryTiers[0].refers - weeklyReferrals} more friends to unlock salary
+                </div>
+              )}
             </div>
 
             {/* Referral History */}
