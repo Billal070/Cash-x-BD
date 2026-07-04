@@ -4,13 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { CONFIG as ImportedConfig } from '../config'; 
+import BonusPackages from './BonusPackages';
 import { 
   LayoutDashboard, Play, ArrowDownToLine, Users, LogOut, 
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
   HelpCircle, Send, MessageSquare,
   Megaphone, Download, Headphones, MousePointer2, Eye, ArrowRight,
-  Share2, Trophy, Star, Target, TrendingUp, ExternalLink, MessageCircle
+  Share2, Trophy, Star, Target, TrendingUp, ExternalLink, MessageCircle, Sparkles
 } from 'lucide-react';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
@@ -846,6 +847,12 @@ export default function Dashboard() {
               <Play className="w-5 h-5" /> Watch Ads
             </button>
             <button
+              onClick={() => handleTabChange('bonus-packages')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'bonus-packages' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <Sparkles className="w-5 h-5" /> Bonus Packages
+            </button>
+            <button
               onClick={() => handleTabChange('withdraw')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdraw' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
@@ -908,6 +915,12 @@ export default function Dashboard() {
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'watch-ads' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
             >
               <Play className="w-5 h-5" /> Watch Ads
+            </button>
+            <button
+              onClick={() => setActiveTab('bonus-packages')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'bonus-packages' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-[#8AA8B8] hover:bg-background hover:text-textLight'}`}
+            >
+              <Sparkles className="w-5 h-5" /> Bonus Packages
             </button>
             <button
               onClick={() => setActiveTab('withdraw')}
@@ -1264,6 +1277,11 @@ export default function Dashboard() {
               )}
             </div>
           </div>
+        )}
+
+        {/* TAB: BONUS PACKAGES */}
+        {activeTab === 'bonus-packages' && (
+          <BonusPackages refreshProfile={refreshProfile} />
         )}
 
         {/* TAB 3: WITHDRAW */}
