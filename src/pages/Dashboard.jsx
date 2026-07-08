@@ -782,7 +782,8 @@ export default function Dashboard() {
       if (logError) console.error('earnings_log insert failed:', logError.message);
 
       toast.success(`Successfully earned ${activePerAdReward}৳! 🎉`, { id: toastId });
-      setCooldown(60); 
+      setCooldown(60);
+      setWatchingAdIndex(null);
       await refreshProfile();
       await fetchLiveTasks();
       await fetchTodayEarned();
@@ -1452,13 +1453,13 @@ export default function Dashboard() {
                                 <Clock className="w-3.5 h-3.5 animate-spin" /> Ad ending in {adTimer}s
                               </span>
                             </div>
-                          ) : isCurrentWatching && cooldown > 0 ? (
+                          ) : cooldown > 0 ? (
                             <div className="bg-cardBg border border-accent/20 rounded-xl py-2 text-center">
                               <span className="text-accent text-[10px] font-bold flex items-center justify-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5 animate-spin" /> Cooldown: {cooldown}s
                               </span>
                             </div>
-                          ) : (
+                          ) : adIndex !== totalCompletedToday + 1 ? null : (
                             <button 
                               onClick={startWatchingAd} 
                               className="w-full py-2.5 bg-primary text-background text-xs font-black rounded-xl hover:bg-opacity-90 transition-all flex items-center justify-center gap-1.5"
