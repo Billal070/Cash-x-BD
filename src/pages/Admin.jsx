@@ -326,6 +326,7 @@ export default function Admin() {
       setNewRuleText('');
       fetchWithdrawalRules();
     } catch (err) {
+      console.error('Add rule error:', err.message);
       toast.error('Failed to add rule', { id: toastId });
     }
   };
@@ -342,6 +343,7 @@ export default function Admin() {
       toast.success(`Rule ${rule.is_active ? 'deactivated' : 'activated'}!`, { id: toastId });
       fetchWithdrawalRules();
     } catch (err) {
+      console.error('Toggle rule error:', err.message);
       toast.error('Failed to update rule', { id: toastId });
     }
   };
@@ -361,6 +363,7 @@ export default function Admin() {
       setEditRuleText('');
       fetchWithdrawalRules();
     } catch (err) {
+      console.error('Edit rule error:', err.message);
       toast.error('Failed to update rule', { id: toastId });
     }
   };
@@ -378,6 +381,7 @@ export default function Admin() {
       toast.success('Rule deleted!', { id: toastId });
       fetchWithdrawalRules();
     } catch (err) {
+      console.error('Delete rule error:', err.message);
       toast.error('Failed to delete rule', { id: toastId });
     }
   };
@@ -407,6 +411,7 @@ export default function Admin() {
       toast.success('Reordered!', { id: toastId });
       fetchWithdrawalRules();
     } catch (err) {
+      console.error('Reorder rule error:', err.message);
       toast.error('Failed to reorder', { id: toastId });
     }
   };

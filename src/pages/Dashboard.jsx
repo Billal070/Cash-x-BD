@@ -207,6 +207,7 @@ export default function Dashboard() {
 
   const [withdrawalRules, setWithdrawalRules] = useState([]);
   const [rulesOpen, setRulesOpen] = useState(window.innerWidth >= 1024);
+  const [refHowItWorksOpen, setRefHowItWorksOpen] = useState(window.innerWidth >= 1024);
 
   const [editUsername, setEditUsername] = useState('');
   const [editPhone, setEditPhone] = useState('');
@@ -1454,23 +1455,40 @@ export default function Dashboard() {
               </div>
             ) : (<>
 
-            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
-              <h3 className="text-sm font-bold text-textLight mb-4 flex items-center gap-2"><Target className="w-4 h-4 text-primary" /> How It Works</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-background rounded-xl p-4 text-center border border-cardBg space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto"><Copy className="w-5 h-5 text-primary" /></div>
-                  <h4 className="text-xs font-bold text-textLight">1. Copy Your Link</h4>
-                  <p className="text-[10px] text-textGray">Get your unique referral link</p>
-                </div>
-                <div className="bg-background rounded-xl p-4 text-center border border-cardBg space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center mx-auto"><Share2 className="w-5 h-5 text-accent" /></div>
-                  <h4 className="text-xs font-bold text-textLight">2. Share with Friends</h4>
-                  <p className="text-[10px] text-textGray">Send via WhatsApp, Facebook etc.</p>
-                </div>
-                <div className="bg-background rounded-xl p-4 text-center border border-cardBg space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto"><Award className="w-5 h-5 text-primary" /></div>
-                  <h4 className="text-xs font-bold text-textLight">3. Earn {activeReferralBonus}৳ Bonus</h4>
-                  <p className="text-[10px] text-textGray">When friend activates account</p>
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl">
+              <button
+                onClick={() => setRefHowItWorksOpen(!refHowItWorksOpen)}
+                className="w-full flex items-center justify-between p-5 md:p-6 font-bold text-textLight"
+              >
+                <span className="flex items-center gap-2"><Target className="w-4 h-4 text-primary" /> How It Works</span>
+                <svg
+                  className={`w-4 h-4 transition-transform duration-300 ${refHowItWorksOpen ? 'rotate-180' : ''}`}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${refHowItWorksOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+              >
+                <div className="px-5 md:px-6 pb-5 md:pb-6 border-t border-cardBg pt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-background rounded-xl p-4 text-center border border-cardBg space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto"><Copy className="w-5 h-5 text-primary" /></div>
+                      <h4 className="text-xs font-bold text-textLight">1. Copy Your Link</h4>
+                      <p className="text-[10px] text-textGray">Get your unique referral link</p>
+                    </div>
+                    <div className="bg-background rounded-xl p-4 text-center border border-cardBg space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center mx-auto"><Share2 className="w-5 h-5 text-accent" /></div>
+                      <h4 className="text-xs font-bold text-textLight">2. Share with Friends</h4>
+                      <p className="text-[10px] text-textGray">Send via WhatsApp, Facebook etc.</p>
+                    </div>
+                    <div className="bg-background rounded-xl p-4 text-center border border-cardBg space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto"><Award className="w-5 h-5 text-primary" /></div>
+                      <h4 className="text-xs font-bold text-textLight">3. Earn {activeReferralBonus}৳ Bonus</h4>
+                      <p className="text-[10px] text-textGray">When friend activates account</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
