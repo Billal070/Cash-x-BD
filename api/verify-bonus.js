@@ -33,7 +33,9 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({ error: data.message || 'Verification failed' });
+      const errorText = data.message || JSON.stringify(data) || 'Verification failed';
+      console.error('ZiniPay verify invoice error:', response.status, errorText);
+      return res.status(response.status).json({ error: errorText });
     }
 
     const isCompleted = data.status === 'COMPLETED' || data.status === 'true' || data.status === true;
@@ -54,6 +56,11 @@ export default async function handler(req, res) {
       });
 
       if (insertError) throw insertError;
+
+      await supabase.from('pending_payments')
+        .update({ status: 'completed', updated_at: new Date().toISOString() })
+        .eq('invoice_id', invoiceId)
+        .eq('status', 'pending');
 
       return res.status(200).json({ success: true, message: 'Package activated!' });
     } else {
