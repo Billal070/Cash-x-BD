@@ -71,9 +71,9 @@ export default function BonusPackages({ refreshProfile }) {
 
     const [pkgsRes, activeRes, completionRes, tasksRes, todayRes, totalRes] = await Promise.all([
       supabase.from('packages').select('*').eq('is_active', true).order('sort_order'),
-      supabase.from('user_packages').select('*, packages(*)').eq('user_id', user.id).eq('is_active', true).gte('expires_at', new Date().toISOString()).single(),
-      supabase.from('bonus_completions').select('id').eq('user_id', user.id).gte('completed_at', today).single(),
-      supabase.from('tasks').select('ad_url').eq('is_active', true).order('created_at', { ascending: false }).limit(1).single(),
+      supabase.from('user_packages').select('*, packages(*)').eq('user_id', user.id).eq('is_active', true).gte('expires_at', new Date().toISOString()).maybeSingle(),
+      supabase.from('bonus_completions').select('id').eq('user_id', user.id).gte('completed_at', today).maybeSingle(),
+      supabase.from('tasks').select('ad_url').eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('bonus_completions').select('reward_earned').eq('user_id', user.id).gte('completed_at', today),
       supabase.from('bonus_completions').select('reward_earned').eq('user_id', user.id)
     ]);
@@ -105,15 +105,14 @@ export default function BonusPackages({ refreshProfile }) {
       const invoiceResponse = await fetch('/api/create-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, email: user.email, username: user.user_metadata?.username || 'User', amount: pkg.price, redirectUrl: `${window.location.origin}/dashboard` })
+        body: JSON.stringify({ userId: user.id, email: user.email, username: user.user_metadata?.username || 'User', amount: pkg.price, redirectUrl: `${window.location.origin}/dashboard`, type: 'bonus_package', packageId: pkg.id })
       });
       const invoiceData = await invoiceResponse.json();
       if (!invoiceResponse.ok) throw new Error(invoiceData.error || 'Payment failed');
 
-      const invoiceUrl = invoiceData.invoice_url || invoiceData.url;
+      const invoiceUrl = invoiceData.payment_url;
       if (invoiceUrl) {
         sessionStorage.setItem('pendingBonusPackage', JSON.stringify({
-          invoiceId: invoiceData.invoice_id || invoiceData.id,
           packageId: pkg.id
         }));
         window.location.href = invoiceUrl;
