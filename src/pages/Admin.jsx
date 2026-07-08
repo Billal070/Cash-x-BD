@@ -59,6 +59,14 @@ export default function Admin() {
   });
   const [savingSettings, setSavingSettings] = useState(false);
 
+  // উইথড্রল সেটিংস স্টেট
+  const [wdSettings, setWdSettings] = useState({
+    first_wd_min: 75,
+    subsequent_wd_min: 200,
+    required_active_refs: 3
+  });
+  const [savingWdSettings, setSavingWdSettings] = useState(false);
+
   // উইথড্রল রুলস ম্যানেজমেন্ট স্টেটসমূহ
   const [withdrawalRules, setWithdrawalRules] = useState([]);
   const [loadingRules, setLoadingRules] = useState(false);
@@ -81,6 +89,7 @@ export default function Admin() {
       if (activeTab === 'withdrawals') fetchWithdrawals();
       if (activeTab === 'settings') fetchSettings();
       if (activeTab === 'withdrawal-rules') fetchWithdrawalRules();
+      if (activeTab === 'withdrawal-settings') fetchWdSettings();
     }
   }, [user, profile, activeTab, wdFilter]);
 
@@ -295,6 +304,45 @@ export default function Admin() {
     }
   };
 
+  // ১০বি. উইথড্রল সেটিংস লোড করা
+  const fetchWdSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('withdrawal_settings')
+        .select('*')
+        .eq('id', 1)
+        .single();
+      if (error && error.code !== 'PGRST116') throw error;
+      if (data) setWdSettings(data);
+    } catch (err) {
+      console.error('Failed to load withdrawal settings:', err.message);
+    }
+  };
+
+  // ১০সি. উইথড্রল সেটিংস সেভ করা
+  const handleSaveWdSettings = async (e) => {
+    e.preventDefault();
+    setSavingWdSettings(true);
+    const toastId = toast.loading('Saving withdrawal settings...');
+    try {
+      const { error } = await supabase
+        .from('withdrawal_settings')
+        .upsert({
+          id: 1,
+          first_wd_min: Number(wdSettings.first_wd_min),
+          subsequent_wd_min: Number(wdSettings.subsequent_wd_min),
+          required_active_refs: Number(wdSettings.required_active_refs),
+          updated_at: new Date().toISOString()
+        });
+      if (error) throw error;
+      toast.success('Withdrawal settings updated! 🟢', { id: toastId });
+    } catch (err) {
+      toast.error('Failed to update withdrawal settings', { id: toastId });
+    } finally {
+      setSavingWdSettings(false);
+    }
+  };
+
   // ১১. উইথড্রল রুলস লোড করা
   const fetchWithdrawalRules = async () => {
     setLoadingRules(true);
@@ -473,6 +521,12 @@ export default function Admin() {
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdrawals' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
             >
               <ArrowDownToLine className="w-5 h-5" /> Withdraw Requests
+            </button>
+            <button
+              onClick={() => setActiveTab('withdrawal-settings')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdrawal-settings' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+            >
+              <Settings className="w-5 h-5" /> Withdrawal Settings
             </button>
             <button
               onClick={() => setActiveTab('settings')}
@@ -887,6 +941,62 @@ export default function Admin() {
                   className="py-3 px-8 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   {savingSettings ? 'Saving Settings...' : 'Save Global Settings'}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4B: WITHDRAWAL SETTINGS */}
+        {activeTab === 'withdrawal-settings' && (
+          <div className="space-y-6 max-w-3xl">
+            <div>
+              <h1 className="text-3xl font-black">Withdrawal Settings</h1>
+              <p className="text-textGray text-sm">Configure minimum withdrawal amounts and required active referrals.</p>
+            </div>
+
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-6">
+              <form onSubmit={handleSaveWdSettings} className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[10px] sm:text-xs font-bold text-textGray mb-2">First WD Minimum (৳)</label>
+                    <input
+                      type="number"
+                      required
+                      value={wdSettings.first_wd_min}
+                      onChange={(e) => setWdSettings({ ...wdSettings, first_wd_min: e.target.value })}
+                      className="w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] sm:text-xs font-bold text-textGray mb-2">Subsequent WD Minimum (৳)</label>
+                    <input
+                      type="number"
+                      required
+                      value={wdSettings.subsequent_wd_min}
+                      onChange={(e) => setWdSettings({ ...wdSettings, subsequent_wd_min: e.target.value })}
+                      className="w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] sm:text-xs font-bold text-textGray mb-2">Required Active Referrals</label>
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      value={wdSettings.required_active_refs}
+                      onChange={(e) => setWdSettings({ ...wdSettings, required_active_refs: e.target.value })}
+                      className="w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={savingWdSettings}
+                  className="py-3 px-8 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm"
+                >
+                  {savingWdSettings ? 'Saving...' : 'Save Withdrawal Settings'}
                 </button>
               </form>
             </div>

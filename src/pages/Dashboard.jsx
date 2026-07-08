@@ -173,6 +173,8 @@ export default function Dashboard() {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showActivationModal, setShowActivationModal] = useState(false);
+  const [showWdModal, setShowWdModal] = useState(false);
+  const [wdModalMessages, setWdModalMessages] = useState([]);
   const [showAnnouncement, setShowAnnouncement] = useState(true);
 
   const [dbSettings, setDbSettings] = useState(null);
@@ -295,14 +297,13 @@ export default function Dashboard() {
 
   const fetchLiveSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('*')
-        .eq('id', 'config')
-        .single();
-      if (error) throw error;
-      if (data) {
-        setDbSettings(data);
+      const [settingsRes, wdSettingsRes] = await Promise.all([
+        supabase.from('settings').select('*').eq('id', 'config').single(),
+        supabase.from('withdrawal_settings').select('*').eq('id', 1).single()
+      ]);
+      if (settingsRes.error) throw settingsRes.error;
+      if (settingsRes.data) {
+        setDbSettings({ ...settingsRes.data, ...(wdSettingsRes.data || {}) });
       }
     } catch (err) {
       console.error('Database settings failed to load, using config.js backup:', err.message);
@@ -736,14 +737,22 @@ export default function Dashboard() {
 
     if (profile.withdrawals_count === 0) {
       if (amount < activeMinWithdrawFirst) {
-        return toast.error(`Minimum amount for first withdrawal is ${activeMinWithdrawFirst} ৳`);
+        setWdModalMessages([`Minimum withdrawal amount is ৳${activeMinWithdrawFirst}. Please earn more to reach this amount.`]);
+        setShowWdModal(true);
+        return;
       }
     } else {
+      const errors = [];
       if (amount < activeMinWithdrawSubsequent) {
-        return toast.error(`Minimum amount for subsequent withdrawals is ${activeMinWithdrawSubsequent} ৳`);
+        errors.push(`Minimum withdrawal amount is ৳${activeMinWithdrawSubsequent} for this withdrawal.`);
       }
-      if (profile.referral_count < 3) {
-        return toast.error('⚠️ You need at least 3 active referrals for subsequent withdrawals!');
+      if (activeReferralCount < activeRequiredRefsForWD) {
+        errors.push(`You need at least ${activeRequiredRefsForWD} active referrals to withdraw again. You currently have ${activeReferralCount}/${activeRequiredRefsForWD}.`);
+      }
+      if (errors.length > 0) {
+        setWdModalMessages(errors);
+        setShowWdModal(true);
+        return;
       }
     }
 
@@ -846,8 +855,9 @@ export default function Dashboard() {
   const activeTelegramAdmin = dbSettings ? dbSettings.telegram_admin : "https://t.me/your_admin";
   const activeAnnouncementText = dbSettings?.announcement_text || "🎉 New tasks available! Complete all tasks today and earn bonus rewards.";
 
-  const activeMinWithdrawFirst = CONFIG?.minWithdrawFirst || 75;
-  const activeMinWithdrawSubsequent = CONFIG?.minWithdrawSubsequent || 200;
+  const activeMinWithdrawFirst = dbSettings ? Number(dbSettings.first_wd_min) : (CONFIG?.minWithdrawFirst || 75);
+  const activeMinWithdrawSubsequent = dbSettings ? Number(dbSettings.subsequent_wd_min) : (CONFIG?.minWithdrawSubsequent || 200);
+  const activeRequiredRefsForWD = dbSettings ? Number(dbSettings.required_active_refs) : 3;
 
   const activeDailyAdLimit = dbSettings ? Number(dbSettings.daily_ad_limit) : (CONFIG?.dailyAdLimit || 15);
   const activeAdTimer = dbSettings ? Number(dbSettings.ad_timer) : (CONFIG?.adTimer || 15);
@@ -1494,7 +1504,7 @@ export default function Dashboard() {
                             <p>• 1st time minimum: {activeMinWithdrawFirst}৳</p>
                             <p>• Next times minimum: {activeMinWithdrawSubsequent}৳</p>
                             <p>• Must complete {activeDailyAdLimit} daily ads.</p>
-                            <p>• Need 3 referrals for 2nd withdrawal.</p>
+                            <p>• Need {activeRequiredRefsForWD} active referrals for 2nd withdrawal.</p>
                           </>
                         )}
                       </div>
@@ -2026,6 +2036,24 @@ export default function Dashboard() {
               {(paying || verifyingPayment) ? 'Processing...' : `Pay ${activeActivationFee}৳ via ZiniPay`}
             </button>
             <p className="text-[10px] text-textGray">Secure payment powered by ZiniPay. Auto-activated after success.</p>
+          </div>
+        </div>
+      )}
+
+      {showWdModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-6 w-full max-w-sm space-y-4 text-center relative">
+            <button onClick={() => setShowWdModal(false)} className="absolute top-4 right-4 text-textGray hover:text-red-500"><X className="w-5 h-5" /></button>
+            <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto mb-2"><Lock className="w-8 h-8" /></div>
+            <h3 className="text-xl font-bold text-textLight">Withdrawal Not Available</h3>
+            <div className="space-y-2">
+              {wdModalMessages.map((msg, i) => (
+                <p key={i} className="text-sm text-textGray">{msg}</p>
+              ))}
+            </div>
+            <button onClick={() => setShowWdModal(false)} className="w-full py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 transition-all">
+              Got it
+            </button>
           </div>
         </div>
       )}
