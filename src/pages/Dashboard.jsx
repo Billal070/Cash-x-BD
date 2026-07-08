@@ -191,6 +191,7 @@ export default function Dashboard() {
   const [activeLifetimeRefs, setActiveLifetimeRefs] = useState(0);
   const [totalReferralCount, setTotalReferralCount] = useState(0);
   const [referralIncome, setReferralIncome] = useState(0);
+  const [todayEarned, setTodayEarned] = useState(0);
   const [claimingSalary, setClaimingSalary] = useState(false);
   const [claimedTiers, setClaimedTiers] = useState([]);
   const [todayBonusEarned, setTodayBonusEarned] = useState(0);
@@ -242,6 +243,7 @@ export default function Dashboard() {
     if (user) {
       fetchTotalReferrals();
       fetchReferralIncome();
+      fetchTodayEarned();
     }
   }, [user]);
 
@@ -340,6 +342,24 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error('Failed to fetch referral income:', err.message);
+    }
+  };
+
+  const fetchTodayEarned = async () => {
+    try {
+      const todayStr = getBdDate();
+      const { data, error } = await supabase
+        .from('earnings_log')
+        .select('amount')
+        .eq('user_id', user.id)
+        .gte('created_at', `${todayStr}T00:00:00+06:00`)
+        .lte('created_at', `${todayStr}T23:59:59+06:00`);
+      if (!error && data) {
+        const total = data.reduce((sum, t) => sum + Number(t.amount), 0);
+        setTodayEarned(total);
+      }
+    } catch (err) {
+      console.error('Failed to fetch today earnings:', err.message);
     }
   };
 
@@ -560,9 +580,19 @@ export default function Dashboard() {
         .eq('id', user.id);
 
       if (error) throw error;
+
+      const { error: logError } = await supabase.from('earnings_log').insert({
+        user_id: user.id,
+        amount: tier.salary,
+        source: 'salary',
+        source_id: String(tier.refers)
+      });
+      if (logError) console.error('earnings_log insert failed:', logError.message);
+
       toast.success(`৳${tier.salary} claimed successfully! 🎉`, { id: toastId });
       setClaimedTiers(newPaidThisWeek);
       await refreshProfile();
+      await fetchTodayEarned();
     } catch (err) {
       toast.error('Failed to claim salary', { id: toastId });
     } finally {
@@ -743,10 +773,19 @@ export default function Dashboard() {
 
       if (completionError) console.error('task_completions insert failed:', completionError.message);
 
+      const { error: logError } = await supabase.from('earnings_log').insert({
+        user_id: user.id,
+        amount: activePerAdReward,
+        source: 'ad',
+        source_id: tasks.length > 0 ? String(tasks[0].id) : '1'
+      });
+      if (logError) console.error('earnings_log insert failed:', logError.message);
+
       toast.success(`Successfully earned ${activePerAdReward}৳! 🎉`, { id: toastId });
       setCooldown(60); 
       await refreshProfile();
       await fetchLiveTasks();
+      await fetchTodayEarned();
     } catch (err) {
       toast.error('Failed to claim reward.', { id: toastId });
     }
@@ -918,9 +957,7 @@ export default function Dashboard() {
   const totalCompletedFromTasks = Object.values(countMap).reduce((a, b) => a + b, 0);
   
   const bdToday = getBdDate();
-  const todayEarned = totalCompletedFromTasks > 0 
-    ? taskCompletions.reduce((acc, c) => acc + (Number(c.reward_earned) || 0), 0)
-    : (profile.last_ad_date === bdToday ? (profile.today_earned || 0) : 0);
+  // todayEarned now comes from earnings_log (fetched on mount via fetchTodayEarned)
   
   const totalCompletedToday = totalCompletedFromTasks > 0 
     ? totalCompletedFromTasks 
@@ -1704,6 +1741,8 @@ export default function Dashboard() {
                     <span className="text-accent font-bold">Up to ৳{getHighestUnclaimedTier().salary} available</span>
                   ) : claimedTiers.length === salaryTiers.length ? (
                     <span className="text-[#22C55E] font-bold">All tiers claimed!</span>
+                  ) : activeLifetimeRefs >= salaryTiers[0].refers ? (
+                    <span className="text-[#22C55E] font-bold">Salary claimed for this week ✓</span>
                   ) : (
                     <span className="text-accent font-bold">{Math.max(0, salaryTiers[0].refers - activeLifetimeRefs)} more to first salary</span>
                   )}

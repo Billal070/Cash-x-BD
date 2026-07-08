@@ -147,6 +147,8 @@ export default function BonusPackages({ refreshProfile }) {
       const { error: insertError } = await supabase.from('bonus_completions').insert({ user_id: user.id, user_package_id: activePackage.id, reward_earned: reward, completed_at: new Date().toISOString() });
       if (insertError) throw insertError;
       await supabase.rpc('increment_profile_balance', { p_user_id: user.id, p_amount: reward });
+      const { error: logError } = await supabase.from('earnings_log').insert({ user_id: user.id, amount: reward, source: 'bonus_package', source_id: String(activePackage.id) });
+      if (logError) console.error('earnings_log insert failed:', logError.message);
       toast.success(`৳${reward} bonus credited!`, { id: toastId });
       setTodayClaimed(true);
       setShowClaimBtn(false);
