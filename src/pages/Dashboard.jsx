@@ -10,7 +10,7 @@ import {
   Lock, AlertTriangle, CheckCircle, Clock, Copy, Landmark, ShieldCheck,
   Menu, X, User, Phone, Mail, Award, ArrowUpRight,
   HelpCircle, Send, MessageSquare,
-  Megaphone, Download, Headphones, MousePointer2, Eye, ArrowRight,
+  Megaphone, Download, Headphones, MousePointer2, ArrowRight,
   Share2, Trophy, Star, Target, TrendingUp, ExternalLink, MessageCircle, Sparkles
 } from 'lucide-react';
 
@@ -54,113 +54,7 @@ const mockTasks = [
   { id: 3, title: "Join Official Telegram Announcement Group", task_type: "ptc", reward: 8.00, daily_limit: 1, timer_seconds: 20, ad_url: "https://www.example.com" }
 ];
 
-// ==========================================
-// NEW WATCH ADS TASK CARD COMPONENT START
-// ==========================================
-const TaskCard = ({ task, completedCount, onClaimed, user, profile, refreshProfile }) => {
-  const [watching, setWatching] = useState(false);
-  const [timerDone, setTimerDone] = useState(false);
-  const [claiming, setClaiming] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(0);
 
-  const isLimitReached = completedCount >= task.daily_limit;
-  const progressPercent = Math.min((completedCount / task.daily_limit) * 100, 100);
-
-  useEffect(() => {
-    let interval;
-    if (watching && timeLeft > 0) {
-      interval = setInterval(() => { setTimeLeft((prev) => prev - 1); }, 1000);
-    } else if (watching && timeLeft === 0) {
-      setTimerDone(true);
-    }
-    return () => clearInterval(interval);
-  }, [watching, timeLeft]);
-
-  const handleWatch = () => {
-    window.open(task.ad_url, '_blank');
-    setWatching(true);
-    setTimeLeft(task.timer_seconds);
-  };
-
-  const handleClaim = async () => {
-    setClaiming(true);
-    try {
-      const { error: insertError } = await supabase.from('task_completions').insert({
-        user_id: user.id, task_id: task.id, reward_earned: task.reward
-      });
-      if (insertError) throw insertError;
-
-      const { error: profileError } = await supabase.from('profiles').update({
-        balance: profile.balance + task.reward,
-        total_earned: (profile.total_earned || 0) + task.reward,
-        today_earned: (profile.today_earned || 0) + task.reward,
-        updated_at: new Date().toISOString()
-      }).eq('id', user.id);
-      if (profileError) throw profileError;
-
-      toast.success(`৳${task.reward.toFixed(2)} credited to your balance!`);
-      await refreshProfile();
-      onClaimed();
-      setWatching(false);
-      setTimerDone(false);
-    } catch (err) {
-      toast.error('Failed to claim. Try again.');
-    } finally {
-      setClaiming(false);
-    }
-  };
-
-  return (
-    <div className={`bg-[#1A2332] border border-[#1E3A2F] rounded-xl p-3 md:p-4 space-y-3 transition-opacity ${isLimitReached ? 'opacity-50 pointer-events-none' : ''}`}>
-      <div className="flex justify-between items-center">
-        <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full border ${task.task_type === 'watch_ad' ? 'bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/20' : 'bg-[#FBBF24]/10 text-[#FBBF24] border-[#FBBF24]/20'}`}>
-          {task.task_type === 'watch_ad' ? 'Watch Ad' : 'PTC Task'}
-        </span>
-        <Eye className="w-4 h-4 text-[#8AA8B8]" />
-      </div>
-      <div>
-        <h3 className="font-semibold text-[#F0F6FF] text-sm md:text-base leading-snug">{task.title}</h3>
-        {task.description && <p className="text-sm text-[#8AA8B8] mt-1 line-clamp-2">{task.description}</p>}
-      </div>
-      <div className="flex items-end justify-between">
-        <span className="text-2xl font-bold text-[#FBBF24]">৳ {task.reward.toFixed(2)}</span>
-        <span className="text-xs text-[#8AA8B8] flex items-center gap-1">⏱ {task.timer_seconds}s</span>
-      </div>
-      <div className="space-y-1.5">
-        <div className="w-full h-1.5 bg-[#0D1117] rounded-full">
-          <div className="h-1.5 bg-[#22C55E] rounded-full transition-all" style={{ width: `${progressPercent}%` }}></div>
-        </div>
-        <p className="text-xs text-[#8AA8B8]">{completedCount}/{task.daily_limit} completed today</p>
-      </div>
-
-      {isLimitReached ? (
-        <div className="bg-[#8AA8B8]/10 border border-[#8AA8B8]/20 rounded-lg py-2.5 w-full text-center">
-          <span className="text-[#8AA8B8] text-sm font-medium">✅ Completed for today</span>
-        </div>
-      ) : watching ? (
-        <div className="bg-[#0D1117] border border-[#1E3A2F] rounded-xl p-4 space-y-4 text-center">
-          <p className="text-xs text-[#8AA8B8]">Keep the ad tab open...</p>
-          <div className="text-5xl md:text-6xl font-bold text-[#FBBF24]">{timeLeft}</div>
-          <p className="text-sm text-[#8AA8B8] -mt-2">seconds left</p>
-          <div className="w-full h-1.5 bg-[#0D1117] rounded-full">
-            <div className="h-1.5 bg-[#22C55E] rounded-full transition-all" style={{ width: `${((task.timer_seconds - timeLeft) / task.timer_seconds) * 100}%` }}></div>
-          </div>
-          <p className="text-xs text-[#8AA8B8]">Watching to earn ৳{task.reward.toFixed(2)}</p>
-          <button disabled={!timerDone || claiming} onClick={handleClaim} className={`w-full py-3 rounded-xl font-bold text-sm min-h-[48px] flex items-center justify-center gap-2 transition-all ${timerDone ? 'bg-[#22C55E] text-[#0D1117] hover:bg-opacity-90' : 'bg-[#1A2332] text-[#8AA8B8] cursor-not-allowed'}`}>
-            {claiming ? <div className="w-5 h-5 border-2 border-[#0D1117] border-t-transparent rounded-full animate-spin"></div> : `Claim ৳${task.reward.toFixed(2)}`}
-          </button>
-        </div>
-      ) : (
-        <button onClick={handleWatch} className="w-full py-3 bg-[#22C55E] text-[#0D1117] font-bold rounded-xl hover:bg-opacity-90 transition-all flex items-center justify-center gap-2 text-sm min-h-[48px]">
-          <Play className="w-4 h-4 fill-[#0D1117]" /> Watch & Earn
-        </button>
-      )}
-    </div>
-  );
-};
-// ==========================================
-// NEW WATCH ADS TASK CARD COMPONENT END
-// ==========================================
 
 export default function Dashboard() {
   const { user, profile, loading, refreshProfile, signOut } = useAuth();
@@ -608,21 +502,23 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user && activeTab === 'profile-details') {
-      supabase.from('task_completions')
-        .select('reward_earned, tasks(type)', { count: 'exact' })
+      supabase.from('earnings_log')
+        .select('amount, source')
         .eq('user_id', user.id)
-        .then(({ data, count }) => {
-          setTotalTasksCompleted(count || 0);
-          let ad = 0, task = 0;
-          (data || []).forEach(c => {
-            if (c.tasks?.type === 'watch_ad') ad += c.reward_earned || 0;
-            else task += c.reward_earned || 0;
+        .then(({ data }) => {
+          let ad = 0, task = 0, referral = 0;
+          (data || []).forEach(e => {
+            const amt = Number(e.amount) || 0;
+            if (e.source === 'ad') ad += amt;
+            else if (e.source === 'referral_bonus') referral += amt;
+            else if (e.source === 'task') task += amt;
           });
           setAdEarnings(ad);
           setTaskEarnings(task);
+          setTotalTasksCompleted(data?.length || 0);
         });
     }
-  }, [user, activeTab]);
+  }, [user, activeTab, profile?.total_earned]);
 
   const handlePayment = async () => {
     setPaying(true);
@@ -1983,7 +1879,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-[#1E3A2F]/50">
                       <span className="text-xs text-[#8AA8B8]">Member Since</span>
-                      <span className="text-xs font-bold text-[#F0F6FF]">{profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A'}</span>
+                      <span className="text-xs font-bold text-[#F0F6FF]">{profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-[#1E3A2F]/50">
                       <span className="text-xs text-[#8AA8B8]">Status</span>
