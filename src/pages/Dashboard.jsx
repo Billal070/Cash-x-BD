@@ -746,7 +746,7 @@ export default function Dashboard() {
       if (amount < activeMinWithdrawSubsequent) {
         errors.push(`Minimum withdrawal amount is ৳${activeMinWithdrawSubsequent} for this withdrawal.`);
       }
-      if (activeReferralCount < activeRequiredRefsForWD) {
+      if (!profile.referral_requirement_met && activeReferralCount < activeRequiredRefsForWD) {
         errors.push(`You need at least ${activeRequiredRefsForWD} active referrals to withdraw again. You currently have ${activeReferralCount}/${activeRequiredRefsForWD}.`);
       }
       if (errors.length > 0) {
@@ -778,13 +778,17 @@ export default function Dashboard() {
 
       if (insertError) throw insertError;
 
+      const profileUpdates = {
+        balance: profile.balance - amount,
+        total_withdrawn: profile.total_withdrawn + receiveAmount,
+        withdrawals_count: profile.withdrawals_count + 1
+      };
+      if (!profile.referral_requirement_met && profile.withdrawals_count >= 1 && activeReferralCount >= activeRequiredRefsForWD) {
+        profileUpdates.referral_requirement_met = true;
+      }
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
-          balance: profile.balance - amount,
-          total_withdrawn: profile.total_withdrawn + receiveAmount,
-          withdrawals_count: profile.withdrawals_count + 1
-        })
+        .update(profileUpdates)
         .eq('id', user.id);
 
       if (profileError) throw profileError;
