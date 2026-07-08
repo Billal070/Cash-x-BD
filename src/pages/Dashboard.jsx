@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -209,9 +209,27 @@ export default function Dashboard() {
   const [rulesOpen, setRulesOpen] = useState(window.innerWidth >= 1024);
   const [refHowItWorksOpen, setRefHowItWorksOpen] = useState(window.innerWidth >= 1024);
 
+  const rulesContentRef = useRef(null);
+  const [rulesHeight, setRulesHeight] = useState(window.innerWidth >= 1024 ? null : '0px');
+  const refContentRef = useRef(null);
+  const [refHeight, setRefHeight] = useState(window.innerWidth >= 1024 ? null : '0px');
+
   const [editUsername, setEditUsername] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [updatingProfile, setUpdatingProfile] = useState(false);
+
+  // অ্যাকর্ডিয়ন হাইট ডাইনামিক্যালি সেট করা — fixed max-height না দিয়ে scrollHeight ব্যবহার
+  useEffect(() => {
+    if (rulesContentRef.current) {
+      setRulesHeight(rulesOpen ? `${rulesContentRef.current.scrollHeight}px` : '0px');
+    }
+  }, [rulesOpen, withdrawalRules]);
+
+  useEffect(() => {
+    if (refContentRef.current) {
+      setRefHeight(refHowItWorksOpen ? `${refContentRef.current.scrollHeight}px` : '0px');
+    }
+  }, [refHowItWorksOpen]);
 
   // লাইভ সুপাবেস সেটিংস টেবিল থেকে ডাটা লোড করা
   useEffect(() => {
@@ -1393,7 +1411,9 @@ export default function Dashboard() {
                       </svg>
                     </button>
                     <div
-                      className={`overflow-hidden transition-all duration-300 ease-in-out ${rulesOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                      ref={rulesContentRef}
+                      className="overflow-hidden transition-all duration-300 ease-in-out"
+                      style={{ maxHeight: rulesHeight, opacity: rulesOpen ? 1 : 0 }}
                     >
                       <div className="px-4 pb-4 space-y-2 border-t border-cardBg pt-3">
                         {withdrawalRules.length > 0 ? (
@@ -1469,7 +1489,9 @@ export default function Dashboard() {
                 </svg>
               </button>
               <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${refHowItWorksOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                ref={refContentRef}
+                className="overflow-hidden transition-all duration-300 ease-in-out"
+                style={{ maxHeight: refHeight, opacity: refHowItWorksOpen ? 1 : 0 }}
               >
                 <div className="px-5 md:px-6 pb-5 md:pb-6 border-t border-cardBg pt-4">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
