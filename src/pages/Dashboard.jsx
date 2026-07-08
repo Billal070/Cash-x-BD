@@ -205,6 +205,9 @@ export default function Dashboard() {
   const [wdHistory, setWdHistory] = useState([]);
   const [submittingWd, setSubmittingWd] = useState(false);
 
+  const [withdrawalRules, setWithdrawalRules] = useState([]);
+  const [rulesOpen, setRulesOpen] = useState(window.innerWidth >= 1024);
+
   const [editUsername, setEditUsername] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [updatingProfile, setUpdatingProfile] = useState(false);
@@ -346,12 +349,27 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [isWatching, adTimer]);
 
-  // ৪. উইথড্রল হিস্ট্রি লোড করা
+  // ৪. উইথড্রল হিস্ট্রি ও রুলস লোড করা
   useEffect(() => {
     if (user && activeTab === 'withdraw') {
       fetchWithdrawalHistory();
+      fetchWithdrawalRules();
     }
   }, [user, activeTab]);
+
+  const fetchWithdrawalRules = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('withdrawal_rules')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+      if (error) throw error;
+      setWithdrawalRules(data || []);
+    } catch (err) {
+      console.error('Failed to load withdrawal rules:', err.message);
+    }
+  };
 
   const fetchWithdrawalHistory = async () => {
     try {
@@ -1360,12 +1378,37 @@ export default function Dashboard() {
                     <div className="flex justify-between text-xs md:text-sm border-b border-background pb-3"><span className="text-[#8AA8B8]">Total Withdrawn:</span><span className="font-bold text-accent">৳ {formatCurrency(profile.total_withdrawn)}</span></div>
                     <div className="flex justify-between text-xs md:text-sm"><span className="text-[#8AA8B8]">Total Requests:</span><span className="font-bold text-textLight">{profile.withdrawals_count || 0}</span></div>
                   </div>
-                  <div className="bg-background rounded-xl p-4 border border-cardBg text-xs text-textGray space-y-2">
-                    <p className="font-bold text-textLight">⚠️ Withdrawal Rules:</p>
-                    <p>• 1st time minimum: {activeMinWithdrawFirst}৳</p>
-                    <p>• Next times minimum: {activeMinWithdrawSubsequent}৳</p>
-                    <p>• Must complete {activeDailyAdLimit} daily ads.</p>
-                    <p>• Need 3 referrals for 2nd withdrawal.</p>
+                  <div className="bg-background rounded-xl border border-cardBg text-xs text-textGray">
+                    <button
+                      onClick={() => setRulesOpen(!rulesOpen)}
+                      className="w-full flex items-center justify-between p-4 font-bold text-textLight"
+                    >
+                      <span>⚠️ Withdrawal Rules</span>
+                      <svg
+                        className={`w-4 h-4 transition-transform duration-300 ${rulesOpen ? 'rotate-180' : ''}`}
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${rulesOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                    >
+                      <div className="px-4 pb-4 space-y-2 border-t border-cardBg pt-3">
+                        {withdrawalRules.length > 0 ? (
+                          withdrawalRules.map((rule) => (
+                            <p key={rule.id}>• {rule.rule_text}</p>
+                          ))
+                        ) : (
+                          <>
+                            <p>• 1st time minimum: {activeMinWithdrawFirst}৳</p>
+                            <p>• Next times minimum: {activeMinWithdrawSubsequent}৳</p>
+                            <p>• Must complete {activeDailyAdLimit} daily ads.</p>
+                            <p>• Need 3 referrals for 2nd withdrawal.</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

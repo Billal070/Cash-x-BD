@@ -6,7 +6,7 @@ import { CONFIG as ImportedConfig } from '../config';
 import { toast } from 'react-hot-toast';
 import { 
   LayoutDashboard, Users, ArrowDownToLine, Settings, LogOut,
-  Search, Check, X, Plus, ShieldAlert, Landmark, ShieldCheck,
+  Search, Check, X, Plus, List, ShieldAlert, Landmark, ShieldCheck,
   CheckCircle, Ban, RefreshCw, MessageSquare, Send
 } from 'lucide-react';
 
@@ -59,6 +59,13 @@ export default function Admin() {
   });
   const [savingSettings, setSavingSettings] = useState(false);
 
+  // উইথড্রল রুলস ম্যানেজমেন্ট স্টেটসমূহ
+  const [withdrawalRules, setWithdrawalRules] = useState([]);
+  const [loadingRules, setLoadingRules] = useState(false);
+  const [editingRuleId, setEditingRuleId] = useState(null);
+  const [editRuleText, setEditRuleText] = useState('');
+  const [newRuleText, setNewRuleText] = useState('');
+
   // ১. অ্যাডমিন সিকিউরিটি গেটওয়ে চেক
   useEffect(() => {
     if (!loading && !user) {
@@ -73,6 +80,7 @@ export default function Admin() {
       if (activeTab === 'users') fetchUsers();
       if (activeTab === 'withdrawals') fetchWithdrawals();
       if (activeTab === 'settings') fetchSettings();
+      if (activeTab === 'withdrawal-rules') fetchWithdrawalRules();
     }
   }, [user, profile, activeTab, wdFilter]);
 
@@ -287,6 +295,122 @@ export default function Admin() {
     }
   };
 
+  // ১১. উইথড্রল রুলস লোড করা
+  const fetchWithdrawalRules = async () => {
+    setLoadingRules(true);
+    try {
+      const { data, error } = await supabase
+        .from('withdrawal_rules')
+        .select('*')
+        .order('display_order', { ascending: true });
+      if (error) throw error;
+      setWithdrawalRules(data || []);
+    } catch (err) {
+      toast.error('Failed to load withdrawal rules');
+    } finally {
+      setLoadingRules(false);
+    }
+  };
+
+  // ১২. নতুন রুল যোগ করা
+  const handleAddRule = async () => {
+    if (!newRuleText.trim()) return toast.error('Rule text cannot be empty');
+    const toastId = toast.loading('Adding rule...');
+    try {
+      const nextOrder = withdrawalRules.length > 0 ? Math.max(...withdrawalRules.map(r => r.display_order)) + 1 : 1;
+      const { error } = await supabase
+        .from('withdrawal_rules')
+        .insert({ rule_text: newRuleText.trim(), display_order: nextOrder, is_active: true });
+      if (error) throw error;
+      toast.success('Rule added!', { id: toastId });
+      setNewRuleText('');
+      fetchWithdrawalRules();
+    } catch (err) {
+      toast.error('Failed to add rule', { id: toastId });
+    }
+  };
+
+  // ১৩. রুল টগল (active/inactive)
+  const handleToggleRule = async (rule) => {
+    const toastId = toast.loading('Updating...');
+    try {
+      const { error } = await supabase
+        .from('withdrawal_rules')
+        .update({ is_active: !rule.is_active, updated_at: new Date().toISOString() })
+        .eq('id', rule.id);
+      if (error) throw error;
+      toast.success(`Rule ${rule.is_active ? 'deactivated' : 'activated'}!`, { id: toastId });
+      fetchWithdrawalRules();
+    } catch (err) {
+      toast.error('Failed to update rule', { id: toastId });
+    }
+  };
+
+  // ১৪. রুল টেক্সট আপডেট করা
+  const handleSaveRuleEdit = async (ruleId) => {
+    if (!editRuleText.trim()) return toast.error('Rule text cannot be empty');
+    const toastId = toast.loading('Saving...');
+    try {
+      const { error } = await supabase
+        .from('withdrawal_rules')
+        .update({ rule_text: editRuleText.trim(), updated_at: new Date().toISOString() })
+        .eq('id', ruleId);
+      if (error) throw error;
+      toast.success('Rule updated!', { id: toastId });
+      setEditingRuleId(null);
+      setEditRuleText('');
+      fetchWithdrawalRules();
+    } catch (err) {
+      toast.error('Failed to update rule', { id: toastId });
+    }
+  };
+
+  // ১৫. রুল ডিলিট করা
+  const handleDeleteRule = async (ruleId) => {
+    if (!window.confirm('Are you sure you want to delete this rule?')) return;
+    const toastId = toast.loading('Deleting...');
+    try {
+      const { error } = await supabase
+        .from('withdrawal_rules')
+        .delete()
+        .eq('id', ruleId);
+      if (error) throw error;
+      toast.success('Rule deleted!', { id: toastId });
+      fetchWithdrawalRules();
+    } catch (err) {
+      toast.error('Failed to delete rule', { id: toastId });
+    }
+  };
+
+  // ১৬. রুল অর্ডার পরিবর্তন (up/down)
+  const handleMoveRule = async (rule, direction) => {
+    const sorted = [...withdrawalRules].sort((a, b) => a.display_order - b.display_order);
+    const idx = sorted.findIndex(r => r.id === rule.id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+
+    const current = sorted[idx];
+    const swap = sorted[swapIdx];
+    const tempOrder = current.display_order;
+
+    const toastId = toast.loading('Reordering...');
+    try {
+      const { error: err1 } = await supabase
+        .from('withdrawal_rules')
+        .update({ display_order: swap.display_order, updated_at: new Date().toISOString() })
+        .eq('id', current.id);
+      const { error: err2 } = await supabase
+        .from('withdrawal_rules')
+        .update({ display_order: tempOrder, updated_at: new Date().toISOString() })
+        .eq('id', swap.id);
+      if (err1 || err2) throw err1 || err2;
+      toast.success('Reordered!', { id: toastId });
+      fetchWithdrawalRules();
+    } catch (err) {
+      toast.error('Failed to reorder', { id: toastId });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-center items-center">
@@ -350,6 +474,12 @@ export default function Admin() {
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'settings' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
             >
               <Settings className="w-5 h-5" /> Global Settings
+            </button>
+            <button
+              onClick={() => setActiveTab('withdrawal-rules')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'withdrawal-rules' ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:bg-background hover:text-textLight'}`}
+            >
+              <List className="w-5 h-5" /> Withdrawal Rules
             </button>
           </nav>
         </div>
@@ -754,6 +884,143 @@ export default function Admin() {
                   {savingSettings ? 'Saving Settings...' : 'Save Global Settings'}
                 </button>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: WITHDRAWAL RULES */}
+        {activeTab === 'withdrawal-rules' && (
+          <div className="space-y-6 max-w-3xl">
+            <div>
+              <h1 className="text-3xl font-black">Withdrawal Rules</h1>
+              <p className="text-textGray text-sm">Manage the rules shown on the user withdrawal page. Add, edit, reorder, or toggle rules.</p>
+            </div>
+
+            {/* Add new rule */}
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-6">
+              <h3 className="text-sm font-bold text-textLight mb-4">Add New Rule</h3>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  placeholder="Enter rule text..."
+                  value={newRuleText}
+                  onChange={(e) => setNewRuleText(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddRule()}
+                  className="flex-1 px-4 py-3 bg-background border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
+                />
+                <button
+                  onClick={handleAddRule}
+                  className="px-6 py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/15 transition-all flex items-center gap-2 text-sm whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4" /> Add Rule
+                </button>
+              </div>
+            </div>
+
+            {/* Rules list */}
+            <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-6">
+              {loadingRules ? (
+                <div className="text-center py-6 text-textGray">Loading rules...</div>
+              ) : withdrawalRules.length === 0 ? (
+                <p className="text-textGray text-sm text-center py-6">No rules added yet. Create your first rule above.</p>
+              ) : (
+                <div className="space-y-3">
+                  {withdrawalRules
+                    .sort((a, b) => a.display_order - b.display_order)
+                    .map((rule, index) => (
+                      <div key={rule.id} className="bg-background border border-cardBg rounded-xl p-4 flex items-center gap-3">
+                        {/* Order number */}
+                        <span className="text-textGray font-bold text-xs w-5 text-center shrink-0">{index + 1}.</span>
+
+                        {/* Rule content */}
+                        <div className="flex-1 min-w-0">
+                          {editingRuleId === rule.id ? (
+                            <input
+                              type="text"
+                              value={editRuleText}
+                              onChange={(e) => setEditRuleText(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleSaveRuleEdit(rule.id)}
+                              className="w-full px-3 py-2 bg-cardBg border border-primary rounded-lg text-xs text-textLight focus:outline-none"
+                              autoFocus
+                            />
+                          ) : (
+                            <p className={`text-xs ${rule.is_active ? 'text-textLight' : 'text-textGray line-through'}`}>
+                              {rule.rule_text}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {/* Reorder up */}
+                          <button
+                            onClick={() => handleMoveRule(rule, 'up')}
+                            disabled={index === 0}
+                            className="p-1.5 text-textGray hover:text-textLight disabled:opacity-30 transition-all rounded-lg hover:bg-cardBg"
+                            title="Move up"
+                          >
+                            ▲
+                          </button>
+                          {/* Reorder down */}
+                          <button
+                            onClick={() => handleMoveRule(rule, 'down')}
+                            disabled={index === withdrawalRules.length - 1}
+                            className="p-1.5 text-textGray hover:text-textLight disabled:opacity-30 transition-all rounded-lg hover:bg-cardBg"
+                            title="Move down"
+                          >
+                            ▼
+                          </button>
+
+                          {/* Edit / Save */}
+                          {editingRuleId === rule.id ? (
+                            <>
+                              <button
+                                onClick={() => handleSaveRuleEdit(rule.id)}
+                                className="p-1.5 text-primary hover:bg-primary/10 transition-all rounded-lg"
+                                title="Save"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => { setEditingRuleId(null); setEditRuleText(''); }}
+                                className="p-1.5 text-red-500 hover:bg-red-500/10 transition-all rounded-lg"
+                                title="Cancel"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => { setEditingRuleId(rule.id); setEditRuleText(rule.rule_text); }}
+                              className="p-1.5 text-accent hover:bg-accent/10 transition-all rounded-lg"
+                              title="Edit"
+                            >
+                              ✏️
+                            </button>
+                          )}
+
+                          {/* Toggle active/inactive */}
+                          <button
+                            onClick={() => handleToggleRule(rule)}
+                            className={`p-1.5 transition-all rounded-lg ${rule.is_active ? 'text-primary hover:bg-primary/10' : 'text-textGray hover:bg-cardBg'}`}
+                            title={rule.is_active ? 'Deactivate' : 'Activate'}
+                          >
+                            {rule.is_active ? '🟢' : '⚪'}
+                          </button>
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => handleDeleteRule(rule.id)}
+                            className="p-1.5 text-red-500 hover:bg-red-500/10 transition-all rounded-lg"
+                            title="Delete"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
           </div>
         )}
