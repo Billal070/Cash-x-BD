@@ -189,6 +189,7 @@ export default function Dashboard() {
   const [taskEarnings, setTaskEarnings] = useState(0);
   const [weeklyReferrals, setWeeklyReferrals] = useState(0);
   const [activeLifetimeRefs, setActiveLifetimeRefs] = useState(0);
+  const [totalReferralCount, setTotalReferralCount] = useState(0);
   const [claimingSalary, setClaimingSalary] = useState(false);
   const [claimedTiers, setClaimedTiers] = useState([]);
   const [todayBonusEarned, setTodayBonusEarned] = useState(0);
@@ -237,7 +238,8 @@ export default function Dashboard() {
   // লাইভ সুপাবেস সেটিংস টেবিল থেকে ডাটা লোড করা
   useEffect(() => {
     fetchLiveSettings();
-  }, []);
+    if (user) fetchTotalReferrals();
+  }, [user]);
 
   // ডেইলি রিসেট চেক — যদি last_ad_date আজকের না হয়, তাহলে RPC কল করে কাউন্টার রিসেট
   const checkDailyReset = async () => {
@@ -307,6 +309,18 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error('Database settings failed to load, using config.js backup:', err.message);
+    }
+  };
+
+  const fetchTotalReferrals = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('referred_by', user.id);
+      if (!error && count !== null) setTotalReferralCount(count);
+    } catch (err) {
+      console.error('Failed to fetch total referrals:', err.message);
     }
   };
 
@@ -432,6 +446,7 @@ export default function Dashboard() {
       setRefLeaderboard(leaderboardRes.data || []);
       setWeeklyReferrals(weeklyRes.count || 0);
       setActiveLifetimeRefs((historyRes.data || []).filter(r => r.is_active).length);
+      if (historyRes.data) setTotalReferralCount(historyRes.data.length);
 
       const currentWeekId = `${now.getFullYear()}-W${Math.ceil(((now - new Date(now.getFullYear(), 0, 1)) / 86400000 + new Date(now.getFullYear(), 0, 1).getDay() + 1) / 7)}`;
 
@@ -895,7 +910,7 @@ export default function Dashboard() {
   
   const remainingAds = activeDailyAdLimit - totalCompletedToday > 0 ? activeDailyAdLimit - totalCompletedToday : 0;
 
-  const totalReferrals = profile.referral_count || 0;
+  const totalReferrals = totalReferralCount || profile.referral_count || 0;
   const activeReferralCount = referralHistory.filter(r => r.is_active).length;
   const thisMonthReferrals = referralHistory.filter(r => {
     const d = new Date(r.created_at);
@@ -1198,7 +1213,7 @@ export default function Dashboard() {
                   <Users className="w-6 h-6" />
                 </div>
                 <h3 className="text-sm font-bold text-[#8AA8B8] mb-1">Total Referrals</h3>
-                <p className="text-2xl md:text-3xl font-black text-accent">{profile.referral_count} Users</p>
+                <p className="text-2xl md:text-3xl font-black text-accent">{totalReferrals} Users</p>
                 <button onClick={() => setActiveTab('referrals')} className="mt-4 text-xs font-bold text-primary hover:underline flex items-center gap-1">
                   View Referrals <Users className="w-3.5 h-3.5" />
                 </button>
