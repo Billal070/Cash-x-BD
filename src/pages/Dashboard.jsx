@@ -529,7 +529,8 @@ export default function Dashboard() {
           userId: user.id,
           email: user.email,
           username: profile?.username || 'user',
-          amount: activeActivationFee, 
+          amount: activeActivationFee,
+          type: 'activation',
           redirectUrl: window.location.origin + '/dashboard'
         })
       });
