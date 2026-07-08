@@ -326,6 +326,14 @@ export default function Dashboard() {
     }
   }, [searchParams, user, profile]);
 
+  // বোনাস প্যাকেজ পেমেন্ট রিডাইরেক্ট হ্যান্ডলার
+  useEffect(() => {
+    const invoiceId = searchParams.get('invoice_id');
+    if (invoiceId && user && profile && profile.is_active && !verifyingPayment) {
+      verifyBonusPayment(invoiceId);
+    }
+  }, [searchParams, user, profile]);
+
   // ২. বিজ্ঞপ্তির কোলডাউন টাইমার কন্ট্রোল
   useEffect(() => {
     if (profile?.last_ad_watched_at) {
@@ -423,12 +431,29 @@ export default function Dashboard() {
       setWeeklyReferrals(weeklyRes.count || 0);
 
       const currentWeekId = `${now.getFullYear()}-W${Math.ceil(((now - new Date(now.getFullYear(), 0, 1)) / 86400000 + new Date(now.getFullYear(), 0, 1).getDay() + 1) / 7)}`;
-      if (profile.salary_week_id !== currentWeekId) {
-        await supabase.from('profiles').update({ salary_week_id: currentWeekId, claimed_salary_tiers: '' }).eq('id', user.id);
-        setClaimedTiers([]);
-      } else {
-        setClaimedTiers(profile.claimed_salary_tiers ? profile.claimed_salary_tiers.split(',').filter(Boolean).map(Number) : []);
+
+      // Lifetime achieved milestones (never cleared)
+      const totalLifetimeRefs = profile.referral_count || 0;
+      const lifetimeAchieved = salaryTiers.filter(t => totalLifetimeRefs >= t.refers).map(t => t.refers);
+      const existingAchieved = profile.claimed_salary_tiers
+        ? profile.claimed_salary_tiers.split(',').filter(Boolean).map(Number)
+        : [];
+      const mergedAchieved = [...new Set([...existingAchieved, ...lifetimeAchieved])];
+
+      // Save any newly achieved milestones to the permanent record
+      if (mergedAchieved.length > existingAchieved.length) {
+        await supabase.from('profiles').update({ claimed_salary_tiers: mergedAchieved.join(',') }).eq('id', user.id);
       }
+
+      // Determine which milestones have been paid this week
+      let paidThisWeek = [];
+      if (profile.salary_week_id === currentWeekId && profile.salary_paid_this_week) {
+        paidThisWeek = profile.salary_paid_this_week.split(',').filter(Boolean).map(Number);
+      } else {
+        // New week: clear weekly tracking (NOT lifetime achievements)
+        await supabase.from('profiles').update({ salary_week_id: currentWeekId, salary_paid_this_week: '' }).eq('id', user.id);
+      }
+      setClaimedTiers(paidThisWeek);
     } catch (err) {
       console.error('Failed to load referral data:', err.message);
     } finally {
@@ -451,8 +476,9 @@ export default function Dashboard() {
   };
 
   const getHighestUnclaimedTier = () => {
+    const totalLifetimeRefs = profile.referral_count || 0;
     for (let i = salaryTiers.length - 1; i >= 0; i--) {
-      if (weeklyReferrals >= salaryTiers[i].refers && !claimedTiers.includes(salaryTiers[i].refers)) {
+      if (totalLifetimeRefs >= salaryTiers[i].refers && !claimedTiers.includes(salaryTiers[i].refers)) {
         return salaryTiers[i];
       }
     }
@@ -461,32 +487,44 @@ export default function Dashboard() {
 
   const handleClaimTier = async (tier) => {
     const weekId = getCurrentWeekId();
+    const totalLifetimeRefs = profile.referral_count || 0;
 
     if (claimedTiers.includes(tier.refers)) {
-      return toast.error('Already claimed this tier!');
+      return toast.error('Already claimed this week!');
     }
 
-    if (weeklyReferrals < tier.refers) {
-      return toast.error(`Need ${tier.refers - weeklyReferrals} more active referrals!`);
+    if (totalLifetimeRefs < tier.refers) {
+      return toast.error(`Need ${tier.refers - totalLifetimeRefs} more lifetime referrals!`);
     }
 
     setClaimingSalary(true);
     const toastId = toast.loading(`Claiming ৳${tier.salary}...`);
     try {
-      const newClaimed = [...claimedTiers, tier.refers].join(',');
+      // Add to lifetime achievements if not already there
+      const existingAchieved = profile.claimed_salary_tiers
+        ? profile.claimed_salary_tiers.split(',').filter(Boolean).map(Number)
+        : [];
+      const newLifetimeAchieved = existingAchieved.includes(tier.refers)
+        ? existingAchieved
+        : [...existingAchieved, tier.refers];
+
+      // Add to this week's paid milestones
+      const newPaidThisWeek = [...claimedTiers, tier.refers];
+
       const { error } = await supabase
         .from('profiles')
         .update({
           balance: (profile.balance || 0) + tier.salary,
           total_earned: (profile.total_earned || 0) + tier.salary,
           salary_week_id: weekId,
-          claimed_salary_tiers: newClaimed
+          claimed_salary_tiers: newLifetimeAchieved.join(','),
+          salary_paid_this_week: newPaidThisWeek.join(',')
         })
         .eq('id', user.id);
 
       if (error) throw error;
       toast.success(`৳${tier.salary} claimed successfully! 🎉`, { id: toastId });
-      setClaimedTiers([...claimedTiers, tier.refers]);
+      setClaimedTiers(newPaidThisWeek);
       await refreshProfile();
     } catch (err) {
       toast.error('Failed to claim salary', { id: toastId });
@@ -576,6 +614,35 @@ export default function Dashboard() {
       }
     } catch (err) {
       toast.error(err.message || 'Payment not verified yet', { id: toastId });
+    } finally {
+      setVerifyingPayment(false);
+      setSearchParams({});
+    }
+  };
+
+  const verifyBonusPayment = async (invoiceId) => {
+    setVerifyingPayment(true);
+    const toastId = toast.loading('Verifying bonus payment...');
+    try {
+      const pending = JSON.parse(sessionStorage.getItem('pendingBonusPackage') || '{}');
+      const packageId = pending.packageId || null;
+
+      const response = await fetch('/api/verify-bonus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoiceId, userId: user.id, packageId })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Verification failed');
+
+      if (data.success) {
+        toast.success('Bonus package activated! 🎉', { id: toastId });
+        sessionStorage.removeItem('pendingBonusPackage');
+        await refreshProfile();
+      }
+    } catch (err) {
+      toast.error(err.message || 'Payment not completed yet', { id: toastId });
     } finally {
       setVerifyingPayment(false);
       setSearchParams({});
@@ -1589,7 +1656,7 @@ export default function Dashboard() {
                   ) : claimedTiers.length === salaryTiers.length ? (
                     <span className="text-[#22C55E] font-bold">All tiers claimed!</span>
                   ) : (
-                    <span className="text-accent font-bold">{salaryTiers[0].refers - weeklyReferrals} more to first salary</span>
+                    <span className="text-accent font-bold">{Math.max(0, salaryTiers[0].refers - (profile.referral_count || 0))} more to first salary</span>
                   )}
                 </div>
                 <div className="w-full bg-background rounded-full h-3 overflow-hidden border border-cardBg">
@@ -1599,7 +1666,8 @@ export default function Dashboard() {
 
               <div className="space-y-3">
                 {salaryTiers.map((tier) => {
-                  const reached = weeklyReferrals >= tier.refers;
+                  const totalLifetimeRefs = profile.referral_count || 0;
+                  const reached = totalLifetimeRefs >= tier.refers;
                   const claimed = claimedTiers.includes(tier.refers);
                   const canClaim = reached && !claimed;
                   const locked = !reached && !claimed;
@@ -1613,7 +1681,7 @@ export default function Dashboard() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-textLight">{tier.refers} Active Referrals</p>
-                            <p className="text-[10px] text-textGray">{reached ? `${weeklyReferrals} active this week` : `${tier.refers - weeklyReferrals} more needed`}</p>
+                            <p className="text-[10px] text-textGray">{reached ? `${weeklyReferrals} active this week` : `${tier.refers - totalLifetimeRefs} more lifetime referrals needed`}</p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -1624,7 +1692,7 @@ export default function Dashboard() {
 
                       {claimed ? (
                         <div className="w-full py-2.5 bg-[#22C55E]/10 border border-[#22C55E]/20 rounded-xl text-[#22C55E] text-xs text-center font-bold">
-                          ✓ Claimed
+                          ✓ Claimed This Week
                         </div>
                       ) : canClaim ? (
                         <button onClick={() => handleClaimTier(tier)} disabled={claimingSalary} className="w-full py-2.5 bg-accent text-background font-black rounded-xl hover:bg-opacity-90 disabled:opacity-50 transition-all text-xs flex items-center justify-center gap-2">
@@ -1633,7 +1701,7 @@ export default function Dashboard() {
                         </button>
                       ) : (
                         <div className="w-full py-2.5 bg-background border border-cardBg rounded-xl text-textGray text-xs text-center font-semibold flex items-center justify-center gap-1.5">
-                          <Lock className="w-3 h-3" /> Locked — need {tier.refers - weeklyReferrals} more active referrals
+                          <Lock className="w-3 h-3" /> Locked — need {tier.refers - totalLifetimeRefs} more lifetime referrals
                         </div>
                       )}
                     </div>

@@ -110,17 +110,14 @@ export default function BonusPackages({ refreshProfile }) {
       const invoiceData = await invoiceResponse.json();
       if (!invoiceResponse.ok) throw new Error(invoiceData.error || 'Payment failed');
 
-      const invoiceId = invoiceData.invoice_id || invoiceData.id;
-      const verifyResponse = await fetch('/api/verify-bonus', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invoiceId, userId: user.id, packageId: pkg.id })
-      });
-      const verifyData = await verifyResponse.json();
-
-      if (invoiceData.invoice_url || invoiceData.url) {
-        window.location.href = invoiceData.invoice_url || invoiceData.url;
-      } else if (verifyData.success) {
+      const invoiceUrl = invoiceData.invoice_url || invoiceData.url;
+      if (invoiceUrl) {
+        sessionStorage.setItem('pendingBonusPackage', JSON.stringify({
+          invoiceId: invoiceData.invoice_id || invoiceData.id,
+          packageId: pkg.id
+        }));
+        window.location.href = invoiceUrl;
+      } else {
         toast.success('Package activated!');
         await fetchData();
         if (refreshProfile) await refreshProfile();
@@ -149,10 +146,7 @@ export default function BonusPackages({ refreshProfile }) {
     try {
       const { error: insertError } = await supabase.from('bonus_completions').insert({ user_id: user.id, user_package_id: activePackage.id, reward_earned: reward, completed_at: new Date().toISOString() });
       if (insertError) throw insertError;
-      const { data: cp } = await supabase.from('profiles').select('balance, total_earned, today_earned').eq('id', user.id).single();
-      if (cp) {
-        await supabase.from('profiles').update({ balance: (cp.balance || 0) + reward, total_earned: (cp.total_earned || 0) + reward, today_earned: (cp.today_earned || 0) + reward }).eq('id', user.id);
-      }
+      await supabase.rpc('increment_profile_balance', { p_user_id: user.id, p_amount: reward });
       toast.success(`৳${reward} bonus credited!`, { id: toastId });
       setTodayClaimed(true);
       setShowClaimBtn(false);
