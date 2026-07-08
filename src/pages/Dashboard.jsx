@@ -33,6 +33,13 @@ const formatCurrency = (value) => {
   return isNaN(num) ? "0.00" : num.toFixed(2);
 };
 
+// বাংলাদেশ সময় (UTC+6) অনুযায়ী আজকের তারিখ YYYY-MM-DD ফরম্যাটে
+const getBdDate = () => {
+  const now = new Date();
+  const bd = new Date(now.getTime() + 6 * 60 * 60 * 1000);
+  return bd.toISOString().split('T')[0];
+};
+
 // আপনার নিজের হোস্টিং সার্ভার (public ফোল্ডার) থেকে লোকাল ইমেজ পাথ
 const METHOD_LOGOS = {
   bkash: "/bkash.png",
@@ -207,11 +214,28 @@ export default function Dashboard() {
     fetchLiveSettings();
   }, []);
 
+  // ডেইলি রিসেট চেক — যদি last_ad_date আজকের না হয়, তাহলে RPC কল করে কাউন্টার রিসেট
+  const checkDailyReset = async () => {
+    try {
+      const todayBd = getBdDate();
+      if (profile.last_ad_date !== todayBd) {
+        const { error } = await supabase.rpc('reset_daily_counters', {
+          p_user_id: user.id,
+          p_today_bd: todayBd
+        });
+        if (error) throw error;
+        await refreshProfile();
+      }
+    } catch (err) {
+      console.error('Daily reset failed:', err.message);
+    }
+  };
+
   // ডাটাবেজ থেকে লাইভ টাস্ক লোড করা
   const fetchLiveTasks = async () => {
     setLoadingTasks(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getBdDate();
       
       const [tasksRes, completionsRes, bonusRes] = await Promise.all([
         supabase.from('tasks').select('*').eq('is_active', true).order('created_at'),
@@ -239,6 +263,12 @@ export default function Dashboard() {
       fetchLiveTasks();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user && profile) {
+      checkDailyReset();
+    }
+  }, [user, profile]);
 
   const fetchLiveSettings = async () => {
     try {
@@ -520,7 +550,7 @@ export default function Dashboard() {
       setShowActivationModal(true); 
       return;
     }
-    if (profile.ads_watched_today >= activeDailyAdLimit) {
+    if (totalCompletedToday >= activeDailyAdLimit) {
       return toast.error(`You have reached the daily limit of ${activeDailyAdLimit} Ads!`);
     }
     if (cooldown > 0) {
@@ -537,7 +567,7 @@ export default function Dashboard() {
   const claimAdReward = async () => {
     const toastId = toast.loading(`Adding ${activePerAdReward}৳ reward to your balance...`);
     try {
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getBdDate();
       
       let adsCount = profile.ads_watched_today;
       if (profile.last_ad_date !== todayStr) {
@@ -594,7 +624,7 @@ export default function Dashboard() {
       return toast.error('Please fill in all withdrawal fields');
     }
 
-    if (profile.ads_watched_today < activeDailyAdLimit) {
+    if (totalCompletedToday < activeDailyAdLimit) {
       return toast.error(`⚠️ You must complete all ${activeDailyAdLimit} daily ads before withdrawing!`);
     }
 
@@ -734,13 +764,14 @@ export default function Dashboard() {
   taskCompletions.forEach(c => { countMap[c.task_id] = (countMap[c.task_id] || 0) + 1; });
   const totalCompletedFromTasks = Object.values(countMap).reduce((a, b) => a + b, 0);
   
+  const bdToday = getBdDate();
   const todayEarned = totalCompletedFromTasks > 0 
     ? taskCompletions.reduce((acc, c) => acc + (Number(c.reward_earned) || 0), 0)
-    : (profile.today_earned || 0);
+    : (profile.last_ad_date === bdToday ? (profile.today_earned || 0) : 0);
   
   const totalCompletedToday = totalCompletedFromTasks > 0 
     ? totalCompletedFromTasks 
-    : (profile.ads_watched_today || 0);
+    : (profile.last_ad_date === bdToday ? (profile.ads_watched_today || 0) : 0);
   
   const remainingAds = activeDailyAdLimit - totalCompletedToday > 0 ? activeDailyAdLimit - totalCompletedToday : 0;
 
