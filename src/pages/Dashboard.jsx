@@ -78,7 +78,7 @@ export default function Dashboard() {
   const [referralHistory, setReferralHistory] = useState([]);
   const [refLeaderboard, setRefLeaderboard] = useState([]);
   const [loadingReferrals, setLoadingReferrals] = useState(false);
-  const [totalTasksCompleted, setTotalTasksCompleted] = useState(0);
+
   const [adEarnings, setAdEarnings] = useState(0);
   const [taskEarnings, setTaskEarnings] = useState(0);
   const [weeklyReferrals, setWeeklyReferrals] = useState(0);
@@ -515,7 +515,6 @@ export default function Dashboard() {
           });
           setAdEarnings(ad);
           setTaskEarnings(task);
-          setTotalTasksCompleted(data?.length || 0);
         });
     }
   }, [user, activeTab, profile?.total_earned]);
@@ -1796,7 +1795,7 @@ export default function Dashboard() {
 
                   {/* Member Since */}
                   <p className="text-[#8AA8B8] text-xs">
-                    Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}
+                    Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
                   </p>
 
                   {/* Balance */}
@@ -1879,7 +1878,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-[#1E3A2F]/50">
                       <span className="text-xs text-[#8AA8B8]">Member Since</span>
-                      <span className="text-xs font-bold text-[#F0F6FF]">{profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}</span>
+                      <span className="text-xs font-bold text-[#F0F6FF]">{profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-[#1E3A2F]/50">
                       <span className="text-xs text-[#8AA8B8]">Status</span>
@@ -1888,10 +1887,7 @@ export default function Dashboard() {
                         <span className={`text-xs font-bold ${profile?.is_active ? 'text-[#22C55E]' : 'text-red-500'}`}>{profile?.is_active ? 'Active' : 'Inactive'}</span>
                       </span>
                     </div>
-                    <div className="flex justify-between items-center py-2">
-                      <span className="text-xs text-[#8AA8B8]">Tasks Completed</span>
-                      <span className="text-xs font-bold text-[#F0F6FF]">{totalTasksCompleted}</span>
-                    </div>
+
                   </div>
                 </div>
 
