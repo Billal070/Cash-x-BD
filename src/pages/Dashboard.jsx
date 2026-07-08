@@ -186,6 +186,7 @@ export default function Dashboard() {
   const [adEarnings, setAdEarnings] = useState(0);
   const [taskEarnings, setTaskEarnings] = useState(0);
   const [weeklyReferrals, setWeeklyReferrals] = useState(0);
+  const [activeLifetimeRefs, setActiveLifetimeRefs] = useState(0);
   const [claimingSalary, setClaimingSalary] = useState(false);
   const [claimedTiers, setClaimedTiers] = useState([]);
   const [todayBonusEarned, setTodayBonusEarned] = useState(0);
@@ -429,11 +430,12 @@ export default function Dashboard() {
       setReferralHistory(historyRes.data || []);
       setRefLeaderboard(leaderboardRes.data || []);
       setWeeklyReferrals(weeklyRes.count || 0);
+      setActiveLifetimeRefs((historyRes.data || []).filter(r => r.is_active).length);
 
       const currentWeekId = `${now.getFullYear()}-W${Math.ceil(((now - new Date(now.getFullYear(), 0, 1)) / 86400000 + new Date(now.getFullYear(), 0, 1).getDay() + 1) / 7)}`;
 
-      // Lifetime achieved milestones (never cleared)
-      const totalLifetimeRefs = profile.referral_count || 0;
+      // Lifetime achieved milestones (never cleared) — count only active referrals
+      const totalLifetimeRefs = (historyRes.data || []).filter(r => r.is_active).length;
       const lifetimeAchieved = salaryTiers.filter(t => totalLifetimeRefs >= t.refers).map(t => t.refers);
       const existingAchieved = profile.claimed_salary_tiers
         ? profile.claimed_salary_tiers.split(',').filter(Boolean).map(Number)
@@ -476,7 +478,7 @@ export default function Dashboard() {
   };
 
   const getHighestUnclaimedTier = () => {
-    const totalLifetimeRefs = profile.referral_count || 0;
+    const totalLifetimeRefs = activeLifetimeRefs;
     for (let i = salaryTiers.length - 1; i >= 0; i--) {
       if (totalLifetimeRefs >= salaryTiers[i].refers && !claimedTiers.includes(salaryTiers[i].refers)) {
         return salaryTiers[i];
@@ -487,7 +489,7 @@ export default function Dashboard() {
 
   const handleClaimTier = async (tier) => {
     const weekId = getCurrentWeekId();
-    const totalLifetimeRefs = profile.referral_count || 0;
+    const totalLifetimeRefs = activeLifetimeRefs;
 
     if (claimedTiers.includes(tier.refers)) {
       return toast.error('Already claimed this week!');
@@ -1656,7 +1658,7 @@ export default function Dashboard() {
                   ) : claimedTiers.length === salaryTiers.length ? (
                     <span className="text-[#22C55E] font-bold">All tiers claimed!</span>
                   ) : (
-                    <span className="text-accent font-bold">{Math.max(0, salaryTiers[0].refers - (profile.referral_count || 0))} more to first salary</span>
+                    <span className="text-accent font-bold">{Math.max(0, salaryTiers[0].refers - activeLifetimeRefs)} more to first salary</span>
                   )}
                 </div>
                 <div className="w-full bg-background rounded-full h-3 overflow-hidden border border-cardBg">
@@ -1666,7 +1668,7 @@ export default function Dashboard() {
 
               <div className="space-y-3">
                 {salaryTiers.map((tier) => {
-                  const totalLifetimeRefs = profile.referral_count || 0;
+                  const totalLifetimeRefs = activeLifetimeRefs;
                   const reached = totalLifetimeRefs >= tier.refers;
                   const claimed = claimedTiers.includes(tier.refers);
                   const canClaim = reached && !claimed;
