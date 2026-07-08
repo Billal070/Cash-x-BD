@@ -190,6 +190,7 @@ export default function Dashboard() {
   const [weeklyReferrals, setWeeklyReferrals] = useState(0);
   const [activeLifetimeRefs, setActiveLifetimeRefs] = useState(0);
   const [totalReferralCount, setTotalReferralCount] = useState(0);
+  const [referralIncome, setReferralIncome] = useState(0);
   const [claimingSalary, setClaimingSalary] = useState(false);
   const [claimedTiers, setClaimedTiers] = useState([]);
   const [todayBonusEarned, setTodayBonusEarned] = useState(0);
@@ -238,7 +239,10 @@ export default function Dashboard() {
   // লাইভ সুপাবেস সেটিংস টেবিল থেকে ডাটা লোড করা
   useEffect(() => {
     fetchLiveSettings();
-    if (user) fetchTotalReferrals();
+    if (user) {
+      fetchTotalReferrals();
+      fetchReferralIncome();
+    }
   }, [user]);
 
   // ডেইলি রিসেট চেক — যদি last_ad_date আজকের না হয়, তাহলে RPC কল করে কাউন্টার রিসেট
@@ -321,6 +325,21 @@ export default function Dashboard() {
       if (!error && count !== null) setTotalReferralCount(count);
     } catch (err) {
       console.error('Failed to fetch total referrals:', err.message);
+    }
+  };
+
+  const fetchReferralIncome = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('referral_bonus_transactions')
+        .select('amount')
+        .eq('referrer_id', user.id);
+      if (!error && data) {
+        const total = data.reduce((sum, t) => sum + Number(t.amount), 0);
+        setReferralIncome(total);
+      }
+    } catch (err) {
+      console.error('Failed to fetch referral income:', err.message);
     }
   };
 
@@ -891,8 +910,7 @@ export default function Dashboard() {
   }
 
   const totalLifetimeIncome = profile ? (Number(profile.balance) + Number(profile.total_withdrawn)) : 0;
-  const referralEarnings = profile ? Number(profile.referral_count) * activeReferralBonus : 0;
-  const adsEarnings = totalLifetimeIncome - referralEarnings > 0 ? totalLifetimeIncome - referralEarnings : 0;
+  const adsEarnings = totalLifetimeIncome - referralIncome > 0 ? totalLifetimeIncome - referralIncome : 0;
 
   // আজকের ৩টি স্ট্যাটস ভ্যালু গ্লোবাল হিসাব
   const countMap = {};
@@ -917,7 +935,7 @@ export default function Dashboard() {
     const now = new Date();
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
-  const referralEarningsCalc = totalReferrals * activeReferralBonus;
+  const referralEarningsCalc = referralIncome;
 
   const milestones = [
     { target: 5, bonus: 150 },
@@ -1187,7 +1205,7 @@ export default function Dashboard() {
               </div>
               <div className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl p-3 text-center">
                 <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Ref Income</span>
-                <span className="block text-[#FBBF24] font-black text-sm sm:text-lg mt-1">৳ {formatCurrency((profile?.referral_count || 0) * activeReferralBonus)}</span>
+                <span className="block text-[#FBBF24] font-black text-sm sm:text-lg mt-1">৳ {formatCurrency(referralIncome)}</span>
               </div>
               <div className="bg-[#1A2332] border border-[#1E3A2F]/60 rounded-xl p-3 text-center">
                 <span className="block text-[#8AA8B8] text-[9px] sm:text-xs font-semibold">Bonus</span>
@@ -1865,7 +1883,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex justify-between items-center bg-[#0F1923] border border-[#1E3A2F] rounded-xl px-3 py-2">
                       <span className="text-[#8AA8B8] text-[10px] font-semibold">Referral Earnings</span>
-                      <span className="text-[#FBBF24] text-xs font-bold">৳ {formatCurrency((profile?.referral_count || 0) * activeReferralBonus)}</span>
+                      <span className="text-[#FBBF24] text-xs font-bold">৳ {formatCurrency(referralIncome)}</span>
                     </div>
                     <div className="flex justify-between items-center bg-[#0F1923] border border-[#22C55E]/30 rounded-xl px-3 py-2">
                       <span className="text-[#F0F6FF] text-[10px] font-bold">Total Earned</span>
