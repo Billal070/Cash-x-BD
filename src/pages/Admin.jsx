@@ -130,13 +130,26 @@ export default function Admin() {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Fetch active package for each user
       const userIds = (data || []).map(u => u.id);
+
+      // Fetch total referral count (active + inactive) from profiles.referred_by
+      const refCountMap = {};
+      if (userIds.length > 0) {
+        const { data: allRefs } = await supabase
+          .from('profiles')
+          .select('referred_by')
+          .not('referred_by', 'is', null);
+        (allRefs || []).forEach(p => {
+          refCountMap[p.referred_by] = (refCountMap[p.referred_by] || 0) + 1;
+        });
+      }
+
+      // Fetch active package for each user
       const pkgMap = {};
       if (userIds.length > 0) {
         const { data: activePackages } = await supabase
           .from('user_packages')
-          .select('user_id, packages!inner(name, tier)')
+          .select('user_id, packages(name, tier)')
           .in('user_id', userIds)
           .eq('is_active', true)
           .gte('expires_at', new Date().toISOString());
@@ -145,7 +158,11 @@ export default function Admin() {
         });
       }
 
-      setUsersList((data || []).map(u => ({ ...u, activePackageName: pkgMap[u.id] || 'None' })));
+      setUsersList((data || []).map(u => ({
+        ...u,
+        activePackageName: pkgMap[u.id] || 'None',
+        totalReferralCount: refCountMap[u.id] || 0
+      })));
     } catch (err) {
       toast.error('Failed to load users');
     } finally {
@@ -680,7 +697,7 @@ export default function Admin() {
                           <td className="py-3 text-textGray font-semibold">{usr.phone || 'No Phone'}</td>
                           <td className="py-3 text-primary font-bold">৳ {formatCurrency(usr.balance)}</td>
                           <td className="py-3 text-[#FBBF24] font-semibold text-xs">{usr.activePackageName}</td>
-                          <td className="py-3 font-medium text-accent">{usr.referral_count} Users</td>
+                          <td className="py-3 font-medium text-accent">{usr.totalReferralCount} Users</td>
                           <td className="py-3">
                             {/* iOS-style প্রফেশনাল স্লাইডিং টগল বাটন */}
                             <button
