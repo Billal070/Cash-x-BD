@@ -48,6 +48,8 @@ export default async function handler(req, res) {
 
       const { data: pkgData } = await supabase.from('packages').select('price').eq('id', pending.package_id).single();
 
+      await supabase.from('user_packages').update({ is_active: false }).eq('user_id', userId).eq('is_active', true);
+
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
 

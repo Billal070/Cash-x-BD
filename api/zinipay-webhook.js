@@ -66,6 +66,8 @@ export default async function handler(req, res) {
       }
     } else if (pending.type === 'bonus_package') {
       const { data: pkgData } = await supabase.from('packages').select('price').eq('id', pending.package_id).single();
+      await supabase.from('user_packages').update({ is_active: false }).eq('user_id', pending.user_id).eq('is_active', true);
+
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
       const { error: insertError } = await supabase.from('user_packages').insert({
