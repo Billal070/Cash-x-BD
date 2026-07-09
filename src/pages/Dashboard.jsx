@@ -80,7 +80,7 @@ export default function Dashboard() {
   const [loadingReferrals, setLoadingReferrals] = useState(false);
 
   const [adEarnings, setAdEarnings] = useState(0);
-  const [taskEarnings, setTaskEarnings] = useState(0);
+  const [salaryEarnings, setSalaryEarnings] = useState(0);
   const [bonusPackageEarnings, setBonusPackageEarnings] = useState(0);
   const [weeklyReferrals, setWeeklyReferrals] = useState(0);
   const [activeLifetimeRefs, setActiveLifetimeRefs] = useState(0);
@@ -507,16 +507,15 @@ export default function Dashboard() {
         .select('amount, source')
         .eq('user_id', user.id)
         .then(({ data }) => {
-          let ad = 0, task = 0, referral = 0, bonus = 0;
+          let ad = 0, salary = 0, bonus = 0;
           (data || []).forEach(e => {
             const amt = Number(e.amount) || 0;
             if (e.source === 'ad') ad += amt;
-            else if (e.source === 'referral_bonus') referral += amt;
-            else if (e.source === 'task') task += amt;
+            else if (e.source === 'salary') salary += amt;
             else if (e.source === 'bonus_package') bonus += amt;
           });
           setAdEarnings(ad);
-          setTaskEarnings(task);
+          setSalaryEarnings(salary);
           setBonusPackageEarnings(bonus);
         });
     }
@@ -843,9 +842,6 @@ export default function Dashboard() {
       </div>
     );
   }
-
-  const totalLifetimeIncome = profile ? (Number(profile.balance) + Number(profile.total_withdrawn)) : 0;
-  const adsEarnings = totalLifetimeIncome - referralIncome > 0 ? totalLifetimeIncome - referralIncome : 0;
 
   // আজকের ৩টি স্ট্যাটস ভ্যালু গ্লোবাল হিসাব
   const countMap = {};
@@ -1806,7 +1802,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* Earnings Breakdown */}
+                  {/* Earnings Breakdown — total_earned === Ad + Salary + Referral + Bonus Package Income */}
                   <div className="w-full mt-3 space-y-2">
                     <div className="flex justify-between items-center bg-[#0F1923] border border-[#1E3A2F] rounded-xl px-3 py-2">
                       <span className="text-[#8AA8B8] text-[10px] font-semibold">Bonus Package Income</span>
@@ -1817,8 +1813,8 @@ export default function Dashboard() {
                       <span className="text-[#FBBF24] text-xs font-bold">৳ {formatCurrency(adEarnings)}</span>
                     </div>
                     <div className="flex justify-between items-center bg-[#0F1923] border border-[#1E3A2F] rounded-xl px-3 py-2">
-                      <span className="text-[#8AA8B8] text-[10px] font-semibold">Task Earnings</span>
-                      <span className="text-[#FBBF24] text-xs font-bold">৳ {formatCurrency(taskEarnings)}</span>
+                      <span className="text-[#8AA8B8] text-[10px] font-semibold">Salary Earnings</span>
+                      <span className="text-[#FBBF24] text-xs font-bold">৳ {formatCurrency(salaryEarnings)}</span>
                     </div>
                     <div className="flex justify-between items-center bg-[#0F1923] border border-[#1E3A2F] rounded-xl px-3 py-2">
                       <span className="text-[#8AA8B8] text-[10px] font-semibold">Referral Earnings</span>
