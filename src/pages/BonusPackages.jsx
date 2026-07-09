@@ -251,6 +251,11 @@ export default function BonusPackages({ refreshProfile }) {
             const Icon = tierIcons[pkg.tier] || Sparkles;
             const isActive = activePackage?.package_id === pkg.id;
             const hasActive = !!activePackage;
+            const pkgSort = pkg.sort_order;
+            const activeSort = activePackage?.packages?.sort_order;
+            const isUpgraded = hasActive && pkgSort < activeSort;
+            const canBuy = hasActive && pkgSort > activeSort;
+            const isSameTier = isActive;
 
             return (
               <div
@@ -286,11 +291,15 @@ export default function BonusPackages({ refreshProfile }) {
                   </div>
                 </div>
 
-                {isActive ? (
+                {isUpgraded ? (
+                  <div className="w-full py-2.5 bg-[#1E3A2F]/20 border border-[#1E3A2F]/50 rounded-xl text-[#8AA8B8] text-xs font-bold min-h-[40px] flex items-center justify-center">
+                    UPGRADED
+                  </div>
+                ) : isSameTier ? (
                   <div className="w-full py-2.5 bg-[#22C55E]/10 border border-[#22C55E]/30 rounded-xl text-[#22C55E] text-xs font-bold min-h-[40px] flex items-center justify-center">
                     Active
                   </div>
-                ) : hasActive ? (
+                ) : canBuy ? (
                   <button
                     onClick={() => handleBuyPackage(pkg)}
                     disabled={loading === pkg.id}

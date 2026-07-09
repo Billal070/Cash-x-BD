@@ -81,6 +81,7 @@ export default function Dashboard() {
 
   const [adEarnings, setAdEarnings] = useState(0);
   const [taskEarnings, setTaskEarnings] = useState(0);
+  const [bonusPackageEarnings, setBonusPackageEarnings] = useState(0);
   const [weeklyReferrals, setWeeklyReferrals] = useState(0);
   const [activeLifetimeRefs, setActiveLifetimeRefs] = useState(0);
   const [totalReferralCount, setTotalReferralCount] = useState(0);
@@ -506,15 +507,17 @@ export default function Dashboard() {
         .select('amount, source')
         .eq('user_id', user.id)
         .then(({ data }) => {
-          let ad = 0, task = 0, referral = 0;
+          let ad = 0, task = 0, referral = 0, bonus = 0;
           (data || []).forEach(e => {
             const amt = Number(e.amount) || 0;
             if (e.source === 'ad') ad += amt;
             else if (e.source === 'referral_bonus') referral += amt;
             else if (e.source === 'task') task += amt;
+            else if (e.source === 'bonus_package') bonus += amt;
           });
           setAdEarnings(ad);
           setTaskEarnings(task);
+          setBonusPackageEarnings(bonus);
         });
     }
   }, [user, activeTab, profile?.total_earned]);
@@ -1805,6 +1808,10 @@ export default function Dashboard() {
 
                   {/* Earnings Breakdown */}
                   <div className="w-full mt-3 space-y-2">
+                    <div className="flex justify-between items-center bg-[#0F1923] border border-[#1E3A2F] rounded-xl px-3 py-2">
+                      <span className="text-[#8AA8B8] text-[10px] font-semibold">Bonus Package Income</span>
+                      <span className="text-[#FBBF24] text-xs font-bold">৳ {formatCurrency(bonusPackageEarnings)}</span>
+                    </div>
                     <div className="flex justify-between items-center bg-[#0F1923] border border-[#1E3A2F] rounded-xl px-3 py-2">
                       <span className="text-[#8AA8B8] text-[10px] font-semibold">Ad Earnings</span>
                       <span className="text-[#FBBF24] text-xs font-bold">৳ {formatCurrency(adEarnings)}</span>
