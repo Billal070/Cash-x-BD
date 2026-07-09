@@ -69,11 +69,11 @@ export default function BonusPackages({ refreshProfile }) {
     if (!user) return;
     const today = new Date().toISOString().split('T')[0];
 
-    const [pkgsRes, activeRes, completionRes, tasksRes, todayRes, totalRes] = await Promise.all([
+    const [pkgsRes, activeRes, completionRes, settingsRes, todayRes, totalRes] = await Promise.all([
       supabase.from('packages').select('*').eq('is_active', true).order('sort_order'),
       supabase.from('user_packages').select('*, packages(*)').eq('user_id', user.id).eq('is_active', true).gte('expires_at', new Date().toISOString()).maybeSingle(),
       supabase.from('bonus_completions').select('id').eq('user_id', user.id).gte('completed_at', today).maybeSingle(),
-      supabase.from('tasks').select('ad_url').eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('settings').select('bonus_package_ad_link').eq('id', 'config').maybeSingle(),
       supabase.from('bonus_completions').select('reward_earned').eq('user_id', user.id).gte('completed_at', today),
       supabase.from('bonus_completions').select('reward_earned').eq('user_id', user.id)
     ]);
@@ -81,7 +81,7 @@ export default function BonusPackages({ refreshProfile }) {
     setPackages(pkgsRes.data || []);
     setActivePackage(activeRes.data || null);
     setTodayClaimed(!!completionRes.data);
-    setBonusAdUrl(tasksRes.data?.ad_url || '');
+    setBonusAdUrl(settingsRes.data?.bonus_package_ad_link || '');
 
     const todayTotal = (todayRes.data || []).reduce((sum, c) => sum + (c.reward_earned || 0), 0);
     const allTotal = (totalRes.data || []).reduce((sum, c) => sum + (c.reward_earned || 0), 0);

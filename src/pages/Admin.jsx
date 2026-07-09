@@ -54,8 +54,9 @@ export default function Admin() {
     per_ad_reward: 5,
     activation_fee: 150,
     announcement_text: '',
-    ad_timer: 15,        // নতুন যুক্ত
-    daily_ad_limit: 15   // নতুন যুক্ত
+    ad_timer: 15,
+    daily_ad_limit: 15,
+    bonus_package_ad_link: ''
   });
   const [savingSettings, setSavingSettings] = useState(false);
 
@@ -128,7 +129,23 @@ export default function Admin() {
 
       const { data, error } = await query;
       if (error) throw error;
-      setUsersList(data || []);
+
+      // Fetch active package for each user
+      const userIds = (data || []).map(u => u.id);
+      const pkgMap = {};
+      if (userIds.length > 0) {
+        const { data: activePackages } = await supabase
+          .from('user_packages')
+          .select('user_id, packages!inner(name, tier)')
+          .in('user_id', userIds)
+          .eq('is_active', true)
+          .gte('expires_at', new Date().toISOString());
+        (activePackages || []).forEach(up => {
+          pkgMap[up.user_id] = up.packages?.name || up.packages?.tier || 'Package';
+        });
+      }
+
+      setUsersList((data || []).map(u => ({ ...u, activePackageName: pkgMap[u.id] || 'None' })));
     } catch (err) {
       toast.error('Failed to load users');
     } finally {
@@ -291,7 +308,8 @@ export default function Admin() {
           activation_fee: Number(settings.activation_fee),
           announcement_text: settings.announcement_text,
           ad_timer: Number(settings.ad_timer),               // নতুন যুক্ত
-          daily_ad_limit: Number(settings.daily_ad_limit)     // নতুন যুক্ত
+          daily_ad_limit: Number(settings.daily_ad_limit),     // নতুন যুক্ত
+          bonus_package_ad_link: settings.bonus_package_ad_link
         })
         .eq('id', 'config');
 
@@ -648,6 +666,7 @@ export default function Admin() {
                         <th className="pb-3">Email Address</th>
                         <th className="pb-3">Phone</th>
                         <th className="pb-3">Balance (৳)</th>
+                        <th className="pb-3">Package</th>
                         <th className="pb-3">Referrals</th>
                         <th className="pb-3">Status</th>
                         <th className="pb-3 text-right">Actions</th>
@@ -660,6 +679,7 @@ export default function Admin() {
                           <td className="py-3 text-textGray text-xs truncate max-w-[150px]">{usr.email}</td>
                           <td className="py-3 text-textGray font-semibold">{usr.phone || 'No Phone'}</td>
                           <td className="py-3 text-primary font-bold">৳ {formatCurrency(usr.balance)}</td>
+                          <td className="py-3 text-[#FBBF24] font-semibold text-xs">{usr.activePackageName}</td>
                           <td className="py-3 font-medium text-accent">{usr.referral_count} Users</td>
                           <td className="py-3">
                             {/* iOS-style প্রফেশনাল স্লাইডিং টগল বাটন */}
@@ -931,6 +951,16 @@ export default function Admin() {
                       value={settings.adsterra_link}
                       onChange={(e) => setSettings({ ...settings, adsterra_link: e.target.value })}
                       className="w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-textGray mb-2">Bonus Package Ad Link</label>
+                    <input
+                      type="url"
+                      required
+                      value={settings.bonus_package_ad_link}
+                      onChange={(e) => setSettings({ ...settings, bonus_package_ad_link: e.target.value })}
+                      className="w-full px-4 py-3 bg-[#0D1117] border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
                     />
                   </div>
                 </div>
