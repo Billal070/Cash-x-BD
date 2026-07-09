@@ -154,6 +154,7 @@ export default function Admin() {
           .eq('is_active', true)
           .gte('expires_at', new Date().toISOString());
         if (pkgErr) console.error('Admin fetchUsers package error:', pkgErr);
+        console.log('activePackages result:', activePackages, 'error:', pkgErr);
         (activePackages || []).forEach(up => {
           pkgMap[up.user_id] = up.packages?.name || up.packages?.tier || 'Package';
         });
