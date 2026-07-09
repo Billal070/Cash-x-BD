@@ -147,12 +147,13 @@ export default function Admin() {
       // Fetch active package for each user
       const pkgMap = {};
       if (userIds.length > 0) {
-        const { data: activePackages } = await supabase
+        const { data: activePackages, error: pkgErr } = await supabase
           .from('user_packages')
-          .select('user_id, packages(name, tier)')
+          .select('user_id, packages(*)')
           .in('user_id', userIds)
           .eq('is_active', true)
           .gte('expires_at', new Date().toISOString());
+        if (pkgErr) console.error('Admin fetchUsers package error:', pkgErr);
         (activePackages || []).forEach(up => {
           pkgMap[up.user_id] = up.packages?.name || up.packages?.tier || 'Package';
         });
