@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS pending_payments (
   invoice_id TEXT PRIMARY KEY,
   user_id UUID NOT NULL,
   type TEXT NOT NULL CHECK (type IN ('activation', 'bonus_package')),
-  package_id INTEGER,
+  package_id UUID,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
