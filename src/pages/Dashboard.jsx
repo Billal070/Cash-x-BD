@@ -13,6 +13,7 @@ import {
   Megaphone, Download, Headphones, MousePointer2, ArrowRight,
   Share2, Trophy, Star, Target, TrendingUp, ExternalLink, MessageCircle, Sparkles
 } from 'lucide-react';
+import LockedFeature from '../components/LockedFeature';
 
 // গ্লোবাল ডিফেন্সিভ ফলব্যাক সেটিংস (যেন কোনো অবস্থায় ক্র্যাশ না করে)
 const CONFIG = ImportedConfig || {
@@ -1275,13 +1276,11 @@ export default function Dashboard() {
 
             <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-5 md:p-6">
               {!profile.is_active ? (
-                // ইনঅ্যাক্টিভ ইউজারদের লকড স্ক্রিন
-                <div className="bg-background rounded-2xl p-8 border border-cardBg text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto"><Lock className="w-8 h-8" /></div>
-                  <h3 className="text-lg md:text-xl font-bold">Earning Feature Locked 🔒</h3>
-                  <p className="text-[#8AA8B8] text-xs max-w-sm mx-auto leading-relaxed">Account activation is required to watch daily advertisements and earn real wallet rewards.</p>
-                  <button onClick={() => setShowActivationModal(true)} className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all">Activate Account Now</button>
-                </div>
+                <LockedFeature
+                  title="Earning Feature Locked 🔒"
+                  description="Account activation is required to watch daily advertisements and earn real wallet rewards."
+                  onActivate={() => setShowActivationModal(true)}
+                />
               ) : (
                 // অ্যাক্টিভ ইউজারদের জন্য ডাইনামিক গ্রিড কার্ড
                 <div className="space-y-6">
@@ -1384,7 +1383,7 @@ export default function Dashboard() {
 
         {/* TAB: BONUS PACKAGES */}
         {activeTab === 'bonus-packages' && (
-          <BonusPackages refreshProfile={refreshProfile} />
+          <BonusPackages refreshProfile={refreshProfile} profile={profile} onActivate={() => setShowActivationModal(true)} />
         )}
 
         {/* TAB 3: WITHDRAW */}
@@ -1396,13 +1395,11 @@ export default function Dashboard() {
             </div>
 
             {!profile.is_active ? (
-              // ইনঅ্যাক্টিভ উইথড্রল লকড স্ক্রিন
-              <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-8 text-center space-y-4 max-w-2xl">
-                <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto"><Lock className="w-8 h-8" /></div>
-                <h3 className="text-lg md:text-xl font-bold">Withdrawals Locked 🔒</h3>
-                <p className="text-[#8AA8B8] text-xs max-w-sm mx-auto leading-relaxed">Account activation is required to submit payout requests.</p>
-                <button onClick={() => setShowActivationModal(true)} className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all">Activate Account Now</button>
-              </div>
+              <LockedFeature
+                title="Withdrawals Locked 🔒"
+                description="Account activation is required to submit payout requests."
+                onActivate={() => setShowActivationModal(true)}
+              />
             ) : (
               // অ্যাক্টিভ ইউজারদের উইথড্রল ফর্ম
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
@@ -1514,12 +1511,11 @@ export default function Dashboard() {
             </div>
 
             {!profile.is_active ? (
-              <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-8 text-center space-y-4">
-                <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto"><Lock className="w-8 h-8" /></div>
-                <h3 className="text-lg md:text-xl font-bold">Referral System Locked 🔒</h3>
-                <p className="text-[#8AA8B8] text-xs max-w-sm mx-auto leading-relaxed">Activate your account to start referring friends and earning {activeReferralBonus}৳ per referral.</p>
-                <button onClick={() => setShowActivationModal(true)} className="mt-4 px-6 py-2.5 bg-primary text-background font-black rounded-xl text-xs hover:bg-opacity-90 shadow-lg shadow-primary/25 transition-all">Activate Account Now</button>
-              </div>
+              <LockedFeature
+                title="Referral System Locked 🔒"
+                description={`Activate your account to start referring friends and earning ${activeReferralBonus}৳ per referral.`}
+                onActivate={() => setShowActivationModal(true)}
+              />
             ) : (<>
 
             <div className="bg-cardBg border border-cardBg/50 rounded-2xl">
@@ -2001,12 +1997,12 @@ export default function Dashboard() {
             <button onClick={() => setShowActivationModal(false)} className="absolute top-4 right-4 text-textGray hover:text-red-500"><X className="w-5 h-5" /></button>
             <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto mb-2"><ShieldCheck className="w-8 h-8" /></div>
             <h3 className="text-xl font-bold text-textLight">Activate Account</h3>
-            <p className="text-sm text-textGray">Pay a one-time fee of <span className="text-primary font-bold">{activeActivationFee}৳</span> to unlock lifetime access to earnings and withdrawals.</p>
+            <p className="text-sm text-textGray">Unlock lifetime access to earnings and withdrawals with a one-time activation fee.</p>
             
             <button onClick={handlePayment} disabled={paying || verifyingPayment} className="w-full py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
-              {(paying || verifyingPayment) ? 'Processing...' : `Pay ${activeActivationFee}৳ via ZiniPay`}
+              {(paying || verifyingPayment) ? 'Processing...' : 'Activate Now'}
             </button>
-            <p className="text-[10px] text-textGray">Secure payment powered by ZiniPay. Auto-activated after success.</p>
+            <p className="text-[10px] text-textGray">Secure payment. Your account activates automatically after successful payment.</p>
           </div>
         </div>
       )}

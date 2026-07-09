@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { Sparkles, CheckCircle, Clock, Zap, Crown, Star, Shield, Award, Gem, Trophy, Eye } from 'lucide-react';
+import LockedFeature from '../components/LockedFeature';
 
 const tierConfig = {
   starter:  { iconColor: '#22C55E', btnBg: 'bg-[#22C55E]', borderHover: '#22C55E' },
@@ -20,7 +21,7 @@ const tierIcons = {
   platinum: Gem, elite: Crown, master: Trophy, vip: Sparkles,
 };
 
-export default function BonusPackages({ refreshProfile }) {
+export default function BonusPackages({ refreshProfile, profile, onActivate }) {
   const { user } = useAuth();
   const [packages, setPackages] = useState([]);
   const [activePackage, setActivePackage] = useState(null);
@@ -163,6 +164,13 @@ export default function BonusPackages({ refreshProfile }) {
 
   return (
     <div className="space-y-6 max-w-5xl">
+      {!profile?.is_active ? (
+        <LockedFeature
+          title="Bonus Packages Locked 🔒"
+          description="Account activation is required to view and purchase bonus packages for extra daily earnings."
+          onActivate={onActivate}
+        />
+      ) : (<>
       {/* Header */}
       <div>
         <p className="text-[10px] font-bold text-[#8AA8B8] uppercase tracking-widest mb-1">Bonus Packages</p>
@@ -325,6 +333,7 @@ export default function BonusPackages({ refreshProfile }) {
           })}
         </div>
       </div>
+      </>)}
     </div>
   );
 }
