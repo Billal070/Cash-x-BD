@@ -1489,6 +1489,7 @@ export default function Dashboard() {
                       <div>
                         <p className="font-bold text-textLight">{wd.payment_method.toUpperCase()}</p>
                         <p className="text-textGray">{wd.payment_number}</p>
+                        <p className="text-[10px] text-textGray/70 mt-0.5">{new Date(wd.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-accent">৳ {formatCurrency(wd.receive_amount)}</p>
