@@ -2043,9 +2043,9 @@ export default function Dashboard() {
                 <Send className="w-8 h-8 text-[#0088CC]" />
               </div>
 
-              <h3 className="text-lg font-bold text-textLight mb-2">Telegram Channel Join Korun!</h3>
+              <h3 className="text-lg font-bold text-textLight mb-2">Join Our Telegram Channel!</h3>
               <p className="text-sm text-textGray leading-relaxed">
-                Shob task, earning update, payment proof, ar announcement pete amader official Telegram channel e join korun.
+                Get all task updates, earning alerts, payment proofs, and announcements. Stay connected with our community.
               </p>
             </div>
 
@@ -2062,7 +2062,7 @@ export default function Dashboard() {
                 onClick={() => setShowTelegramPopup(false)}
                 className="w-full py-2.5 text-textGray text-xs font-semibold hover:text-textLight transition-colors"
               >
-                Porogami korbo na
+                Later!
               </button>
             </div>
           </div>
