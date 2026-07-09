@@ -63,7 +63,7 @@ export default async function handler(req, res) {
 
     const invoiceId = data.payment_url?.split('/').pop();
     if (invoiceId && (type === 'activation' || type === 'bonus_package')) {
-      await supabase.from('pending_payments').insert({
+      const { error: pendingError } = await supabase.from('pending_payments').insert({
         invoice_id: invoiceId,
         user_id: userId,
         type: type,
@@ -71,6 +71,11 @@ export default async function handler(req, res) {
         status: 'pending',
         created_at: new Date().toISOString()
       });
+      if (pendingError) {
+        console.error('pending_payments insert failed:', pendingError);
+        return res.status(500).json({ error: 'Failed to record payment. Is the pending_payments table created?' });
+      }
+      console.log('pending_payments inserted:', { invoice_id: invoiceId, user_id: userId, type, package_id: packageId });
     }
 
     return res.status(200).json(data);

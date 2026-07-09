@@ -41,7 +41,9 @@ export default async function handler(req, res) {
     const isCompleted = data.status === 'COMPLETED' || data.status === 'true' || data.status === true;
 
     if (isCompleted) {
-      const { data: pending } = await supabase.from('pending_payments').select('package_id').eq('invoice_id', invoiceId).eq('user_id', userId).single();
+      const { data: pending, error: pendingLookupError } = await supabase.from('pending_payments').select('package_id').eq('invoice_id', invoiceId).eq('user_id', userId).single();
+      if (pendingLookupError) console.error('pending_payments lookup error:', pendingLookupError);
+      console.log('pending_payments lookup:', { invoice_id: invoiceId, user_id: userId, found: !!pending });
       if (!pending) return res.status(400).json({ error: 'Pending payment record not found' });
 
       const { data: pkgData } = await supabase.from('packages').select('price').eq('id', pending.package_id).single();
