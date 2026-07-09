@@ -1,5 +1,8 @@
 -- Allow admins to view all user_packages rows (admin panel needs this)
-CREATE POLICY IF NOT EXISTS "Admins can view all user_packages"
+-- Drop existing policy first to avoid "already exists" error
+DROP POLICY IF EXISTS "Admins can view all user_packages" ON user_packages;
+
+CREATE POLICY "Admins can view all user_packages"
   ON user_packages
   FOR SELECT
   TO authenticated
