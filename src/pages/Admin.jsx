@@ -155,16 +155,19 @@ export default function Admin() {
           .gte('expires_at', new Date().toISOString());
         if (pkgErr) console.error('Admin fetchUsers package error:', pkgErr);
         console.log('activePackages result:', activePackages, 'error:', pkgErr);
+        console.log('activePackages JSON:', JSON.stringify(activePackages, null, 2));
+        console.log('userIds being looked up:', JSON.stringify(userIds.slice(0, 3)), 'total:', userIds.length);
         (activePackages || []).forEach(up => {
+          console.log('pkgMap assigning:', up.user_id, '->', up.packages?.name || up.packages?.tier || 'Package');
           pkgMap[up.user_id] = up.packages?.name || up.packages?.tier || 'Package';
         });
       }
 
-      setUsersList((data || []).map(u => ({
-        ...u,
-        activePackageName: pkgMap[u.id] || 'None',
-        totalReferralCount: refCountMap[u.id] || 0
-      })));
+      setUsersList((data || []).map(u => {
+        const pkgName = pkgMap[u.id] || 'None';
+        console.log('setUsersList user:', u.id, 'pkgMap lookup:', pkgMap[u.id], 'result:', pkgName);
+        return { ...u, activePackageName: pkgName, totalReferralCount: refCountMap[u.id] || 0 };
+      }));
     } catch (err) {
       toast.error('Failed to load users');
     } finally {
