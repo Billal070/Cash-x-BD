@@ -73,7 +73,7 @@ export default async function handler(req, res) {
       });
       if (pendingError) {
         console.error('pending_payments insert failed:', pendingError);
-        return res.status(500).json({ error: 'Failed to record payment. Is the pending_payments table created?' });
+        return res.status(500).json({ error: `Failed to record payment: ${pendingError.message || JSON.stringify(pendingError)}` });
       }
       console.log('pending_payments inserted:', { invoice_id: invoiceId, user_id: userId, type, package_id: packageId });
     }

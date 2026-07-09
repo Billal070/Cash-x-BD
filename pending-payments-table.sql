@@ -16,3 +16,15 @@ CREATE POLICY "Service role full access on pending_payments"
   TO service_role
   USING (true)
   WITH CHECK (true);
+
+CREATE POLICY "Authenticated users can insert pending_payments"
+  ON pending_payments
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Authenticated users can select pending_payments"
+  ON pending_payments
+  FOR SELECT
+  TO authenticated
+  USING (true);
