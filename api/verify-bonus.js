@@ -11,9 +11,9 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { invoiceId, userId, packageId } = req.body;
+  const { invoiceId, userId } = req.body;
 
-  if (!invoiceId || !userId || !packageId) {
+  if (!invoiceId || !userId) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
@@ -41,14 +41,17 @@ export default async function handler(req, res) {
     const isCompleted = data.status === 'COMPLETED' || data.status === 'true' || data.status === true;
 
     if (isCompleted) {
-      const { data: pkgData } = await supabase.from('packages').select('price').eq('id', packageId).single();
+      const { data: pending } = await supabase.from('pending_payments').select('package_id').eq('invoice_id', invoiceId).eq('user_id', userId).single();
+      if (!pending) return res.status(400).json({ error: 'Pending payment record not found' });
+
+      const { data: pkgData } = await supabase.from('packages').select('price').eq('id', pending.package_id).single();
 
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
 
       const { error: insertError } = await supabase.from('user_packages').insert({
         user_id: userId,
-        package_id: packageId,
+        package_id: pending.package_id,
         amount_paid: pkgData?.price || 0,
         purchased_at: new Date().toISOString(),
         expires_at: expiresAt.toISOString(),

@@ -587,13 +587,10 @@ export default function Dashboard() {
     setVerifyingPayment(true);
     const toastId = toast.loading('Verifying bonus payment...');
     try {
-      const pending = JSON.parse(sessionStorage.getItem('pendingBonusPackage') || '{}');
-      const packageId = pending.packageId || null;
-
       const response = await fetch('/api/verify-bonus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invoiceId, userId: user.id, packageId })
+        body: JSON.stringify({ invoiceId, userId: user.id })
       });
 
       const data = await response.json();
@@ -601,7 +598,6 @@ export default function Dashboard() {
 
       if (data.success) {
         toast.success('Bonus package activated! 🎉', { id: toastId });
-        sessionStorage.removeItem('pendingBonusPackage');
         await refreshProfile();
       }
     } catch (err) {

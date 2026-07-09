@@ -112,9 +112,6 @@ export default function BonusPackages({ refreshProfile }) {
 
       const invoiceUrl = invoiceData.payment_url;
       if (invoiceUrl) {
-        sessionStorage.setItem('pendingBonusPackage', JSON.stringify({
-          packageId: pkg.id
-        }));
         window.location.href = invoiceUrl;
       } else {
         toast.success('Package activated!');
