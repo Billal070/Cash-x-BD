@@ -56,7 +56,8 @@ export default function Admin() {
     announcement_text: '',
     ad_timer: 15,
     daily_ad_limit: 15,
-    bonus_package_ad_link: ''
+    bonus_package_ad_link: '',
+    bonus_package_ad_timer: 30
   });
   const [savingSettings, setSavingSettings] = useState(false);
 
@@ -331,7 +332,8 @@ export default function Admin() {
           announcement_text: settings.announcement_text,
           ad_timer: Number(settings.ad_timer),               // নতুন যুক্ত
           daily_ad_limit: Number(settings.daily_ad_limit),     // নতুন যুক্ত
-          bonus_package_ad_link: settings.bonus_package_ad_link
+          bonus_package_ad_link: settings.bonus_package_ad_link,
+          bonus_package_ad_timer: Number(settings.bonus_package_ad_timer)
         })
         .eq('id', 'config');
 
@@ -982,6 +984,17 @@ export default function Admin() {
                       required
                       value={settings.bonus_package_ad_link}
                       onChange={(e) => setSettings({ ...settings, bonus_package_ad_link: e.target.value })}
+                      className="w-full px-4 py-3 bg-[#0D1117] border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-textGray mb-2">Package Ad Timer (seconds)</label>
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      value={settings.bonus_package_ad_timer}
+                      onChange={(e) => setSettings({ ...settings, bonus_package_ad_timer: e.target.value })}
                       className="w-full px-4 py-3 bg-[#0D1117] border border-cardBg rounded-xl text-xs text-textLight focus:border-primary focus:outline-none transition-colors"
                     />
                   </div>

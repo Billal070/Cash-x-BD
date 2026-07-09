@@ -34,6 +34,7 @@ export default function BonusPackages({ refreshProfile }) {
   const [totalBonusEarned, setTotalBonusEarned] = useState(0);
   const [todayBonusEarned, setTodayBonusEarned] = useState(0);
   const [resetsIn, setResetsIn] = useState('--:--:--');
+  const [bonusPackageAdTimer, setBonusPackageAdTimer] = useState(30);
 
   useEffect(() => { fetchData(); }, [user]);
 
@@ -73,7 +74,7 @@ export default function BonusPackages({ refreshProfile }) {
       supabase.from('packages').select('*').eq('is_active', true).order('sort_order'),
       supabase.from('user_packages').select('*, packages(*)').eq('user_id', user.id).eq('is_active', true).gte('expires_at', new Date().toISOString()).maybeSingle(),
       supabase.from('bonus_completions').select('id').eq('user_id', user.id).gte('completed_at', today).maybeSingle(),
-      supabase.from('settings').select('bonus_package_ad_link').eq('id', 'config').maybeSingle(),
+      supabase.from('settings').select('bonus_package_ad_link, bonus_package_ad_timer').eq('id', 'config').maybeSingle(),
       supabase.from('bonus_completions').select('reward_earned').eq('user_id', user.id).gte('completed_at', today),
       supabase.from('bonus_completions').select('reward_earned').eq('user_id', user.id)
     ]);
@@ -82,6 +83,7 @@ export default function BonusPackages({ refreshProfile }) {
     setActivePackage(activeRes.data || null);
     setTodayClaimed(!!completionRes.data);
     setBonusAdUrl(settingsRes.data?.bonus_package_ad_link || '');
+    setBonusPackageAdTimer(Number(settingsRes.data?.bonus_package_ad_timer) || 30);
 
     const todayTotal = (todayRes.data || []).reduce((sum, c) => sum + (c.reward_earned || 0), 0);
     const allTotal = (totalRes.data || []).reduce((sum, c) => sum + (c.reward_earned || 0), 0);
@@ -128,10 +130,10 @@ export default function BonusPackages({ refreshProfile }) {
   const handleBonusWatch = () => {
     if (!activePackage) return;
     window.open(bonusAdUrl || 'https://www.effectivegatecpm.com/j430o3gxy?key=45bfab9e5c9c8c7e57e4b5e0e5d0b5a0', '_blank');
-    setBonusTimer(30);
+    setBonusTimer(bonusPackageAdTimer);
     setBonusStarted(true);
     setShowClaimBtn(false);
-    toast.success('Ad loaded! Wait 30 seconds to claim reward.');
+    toast.success(`Ad loaded! Wait ${bonusPackageAdTimer} seconds to claim reward.`);
   };
 
   const handleBonusClaim = async () => {
