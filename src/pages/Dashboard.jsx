@@ -70,6 +70,7 @@ export default function Dashboard() {
   const [showWdModal, setShowWdModal] = useState(false);
   const [wdModalMessages, setWdModalMessages] = useState([]);
   const [showAnnouncement, setShowAnnouncement] = useState(true);
+  const [showTelegramPopup, setShowTelegramPopup] = useState(true);
 
   const [dbSettings, setDbSettings] = useState(null);
   const [tasks, setTasks] = useState([]);
@@ -2024,6 +2025,46 @@ export default function Dashboard() {
             <button onClick={() => setShowWdModal(false)} className="w-full py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 transition-all">
               Got it
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Telegram Channel Join Popup */}
+      {showTelegramPopup && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-6 w-full max-w-sm space-y-5 text-center relative overflow-hidden">
+            {/* Glow background */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#0088CC]/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-[#0088CC]/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="relative">
+              {/* Telegram Icon */}
+              <div className="w-16 h-16 rounded-full bg-[#0088CC]/10 border border-[#0088CC]/20 flex items-center justify-center mx-auto mb-4">
+                <Send className="w-8 h-8 text-[#0088CC]" />
+              </div>
+
+              <h3 className="text-lg font-bold text-textLight mb-2">Telegram Channel Join Korun!</h3>
+              <p className="text-sm text-textGray leading-relaxed">
+                Shob task, earning update, payment proof, ar announcement pete amader official Telegram channel e join korun.
+              </p>
+            </div>
+
+            <div className="relative flex flex-col gap-3">
+              <a
+                href={activeTelegramChannel}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 bg-[#0088CC] text-white font-bold rounded-xl hover:bg-[#0077B3] transition-all flex items-center justify-center gap-2"
+              >
+                <Send className="w-4 h-4" /> Join Telegram Channel
+              </a>
+              <button
+                onClick={() => setShowTelegramPopup(false)}
+                className="w-full py-2.5 text-textGray text-xs font-semibold hover:text-textLight transition-colors"
+              >
+                Porogami korbo na
+              </button>
+            </div>
           </div>
         </div>
       )}
