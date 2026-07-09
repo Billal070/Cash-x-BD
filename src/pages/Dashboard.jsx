@@ -1580,9 +1580,9 @@ export default function Dashboard() {
 
               <div className="border-t border-cardBg pt-4">
                 <h3 className="text-sm font-bold text-textLight flex items-center gap-2"><ExternalLink className="w-4 h-4 text-primary" /> Your Referral Link</h3>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input readOnly value={`${window.location.origin}/register?ref=${profile.referral_code || user.id}`} className="flex-1 px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight text-xs md:text-sm truncate" />
-                  <button onClick={copyReferralLink} className="px-4 bg-primary text-background font-bold rounded-xl hover:bg-opacity-90 transition-all flex items-center gap-2 text-xs"><Copy className="w-4 h-4" /> Copy</button>
+                  <button onClick={copyReferralLink} className="px-4 py-3 sm:py-3 bg-primary text-background font-bold rounded-xl hover:bg-opacity-90 transition-all flex items-center justify-center gap-2 text-xs"><Copy className="w-4 h-4" /> Copy</button>
                 </div>
                 <div>
                   <p className="text-[10px] text-textGray mb-2 font-semibold uppercase tracking-wider">Share on Social Media</p>

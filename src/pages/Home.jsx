@@ -72,10 +72,10 @@ export default function Home() {
             )}
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/login" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link to="/login" className="px-3 py-2 text-sm font-medium hover:text-primary transition-colors">
               Login
             </Link>
-            <Link to="/register" className="px-4 py-2 text-sm font-medium bg-primary text-background rounded-lg font-bold hover:bg-opacity-90 transition-all shadow-lg shadow-primary/20">
+            <Link to="/register" className="px-4 py-2.5 text-sm font-medium bg-primary text-background rounded-lg font-bold hover:bg-opacity-90 transition-all shadow-lg shadow-primary/20">
               Register Now
             </Link>
           </div>
@@ -88,10 +88,10 @@ export default function Home() {
           <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
           Trusted Reward Platform in Bangladesh
         </div>
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
+        <h1 className="text-3xl sm:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
           Earn Daily Cash By Watching <span className="text-primary">Ads</span> & Doing <span className="text-accent">Tasks</span>
         </h1>
-        <p className="max-w-2xl mx-auto text-textGray text-base sm:text-lg mb-8">
+        <p className="max-w-2xl mx-auto text-textGray text-sm sm:text-lg mb-8">
           Welcome to {CONFIG.siteName}. The most secure micro-earning platform. Activating your account is simple, and you can withdraw directly to your bKash, Nagad, or Rocket.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -123,7 +123,7 @@ export default function Home() {
           
           {/* Card 1 */}
           <div 
-            className={`group bg-cardBg border border-cardBg/50 hover:border-primary/30 rounded-[22px] p-6 shadow-xl transition-all duration-300 ease-in-out hover:-translate-y-1.5 hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(34,197,94,0.12)] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+            className={`group bg-cardBg border border-cardBg/50 hover:border-primary/30 rounded-[22px] p-6 shadow-xl transition-all duration-300 ease-in-out md:hover:-translate-y-1.5 md:hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(34,197,94,0.12)] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
             style={{ transitionDelay: isVisible ? '100ms' : '0ms' }}
           >
             <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300">
@@ -138,7 +138,7 @@ export default function Home() {
 
           {/* Card 2 */}
           <div 
-            className={`group bg-cardBg border border-cardBg/50 hover:border-primary/30 rounded-[22px] p-6 shadow-xl transition-all duration-300 ease-in-out hover:-translate-y-1.5 hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(34,197,94,0.12)] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+            className={`group bg-cardBg border border-cardBg/50 hover:border-primary/30 rounded-[22px] p-6 shadow-xl transition-all duration-300 ease-in-out md:hover:-translate-y-1.5 md:hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(34,197,94,0.12)] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
             style={{ transitionDelay: isVisible ? '250ms' : '0ms' }}
           >
             <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300">
@@ -153,7 +153,7 @@ export default function Home() {
 
           {/* Card 3 */}
           <div 
-            className={`group bg-cardBg border border-cardBg/50 hover:border-primary/30 rounded-[22px] p-6 shadow-xl transition-all duration-300 ease-in-out hover:-translate-y-1.5 hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(34,197,94,0.12)] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+            className={`group bg-cardBg border border-cardBg/50 hover:border-primary/30 rounded-[22px] p-6 shadow-xl transition-all duration-300 ease-in-out md:hover:-translate-y-1.5 md:hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(34,197,94,0.12)] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
             style={{ transitionDelay: isVisible ? '400ms' : '0ms' }}
           >
             <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300">
@@ -168,7 +168,7 @@ export default function Home() {
 
           {/* Card 4 */}
           <div 
-            className={`group bg-cardBg border border-cardBg/50 hover:border-primary/30 rounded-[22px] p-6 shadow-xl transition-all duration-300 ease-in-out hover:-translate-y-1.5 hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(34,197,94,0.12)] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+            className={`group bg-cardBg border border-cardBg/50 hover:border-primary/30 rounded-[22px] p-6 shadow-xl transition-all duration-300 ease-in-out md:hover:-translate-y-1.5 md:hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(34,197,94,0.12)] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
             style={{ transitionDelay: isVisible ? '550ms' : '0ms' }}
           >
             <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 text-accent flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300">

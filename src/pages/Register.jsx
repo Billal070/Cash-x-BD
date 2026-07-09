@@ -122,7 +122,7 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       {/* Back to Home */}
       <div className="absolute top-6 left-6">
         <Link to="/" className="flex items-center gap-2 text-textGray hover:text-primary transition-colors text-sm font-medium">
@@ -164,7 +164,7 @@ export default function Register() {
                   placeholder="enter_username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value.replace(/\s+/g, ''))}
-                  className="pl-10 w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
+                  className="pl-10 w-full pr-4 py-3.5 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
                 />
               </div>
             </div>
@@ -180,7 +180,7 @@ export default function Register() {
                   placeholder="example@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
+                  className="pl-10 w-full pr-4 py-3.5 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
                 />
               </div>
             </div>
@@ -196,7 +196,7 @@ export default function Register() {
                   placeholder="01XXXXXXXXX"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
-                  className="pl-10 w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
+                  className="pl-10 w-full pr-4 py-3.5 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
                 />
               </div>
             </div>
@@ -212,12 +212,12 @@ export default function Register() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
+                  className="pl-10 pr-10 w-full py-3.5 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-textGray hover:text-textLight transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 text-textGray hover:text-textLight transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -235,7 +235,7 @@ export default function Register() {
                   placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10 w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
+                  className="pl-10 w-full pr-4 py-3.5 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors"
                 />
               </div>
             </div>
@@ -247,12 +247,12 @@ export default function Register() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-textGray" />
                 <input
                   type="text"
-                  placeholder="Enter referral code e.g. EARN4X2B"
+                  placeholder="Referral code (e.g. EARN4X2B)"
                   value={refCode}
                   onChange={(e) => { if (!refLocked) setRefCode(e.target.value.toUpperCase()); }}
                   readOnly={refLocked}
                   disabled={refLocked}
-                  className="pl-10 w-full px-4 py-3 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="pl-10 w-full pr-4 py-3.5 bg-background border border-cardBg rounded-xl text-textLight focus:border-primary focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
               {refLocked && refCode && (
@@ -264,7 +264,7 @@ export default function Register() {
             <button
               type="submit"
               disabled={regLoading}
-              className="w-full py-3 px-4 bg-primary text-background font-bold rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full py-3.5 px-4 bg-primary text-background font-bold rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {regLoading ? 'Creating Account...' : 'Register'}
             </button>

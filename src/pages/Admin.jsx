@@ -540,7 +540,7 @@ export default function Admin() {
             ) : (
               <span className="text-2xl font-black text-primary">🟢 {CONFIG?.siteName || "Earnova"}</span>
             )}
-            <div className="mt-2 text-xs text-red-500 font-bold bg-red-500/10 border border-red-500/25 rounded-full px-3 py-1 max-w-max">
+            <div className="mt-2 text-xs text-red-500 font-bold bg-red-500/10 border border-red-500/25 rounded-full px-3 py-1 max-w-full truncate">
               🛡️ Admin Terminal
             </div>
           </div>
@@ -687,10 +687,10 @@ export default function Admin() {
                     <thead>
                       <tr className="border-b border-cardBg text-textGray text-xs font-semibold">
                         <th className="pb-3">Username</th>
-                        <th className="pb-3">Email Address</th>
-                        <th className="pb-3">Phone</th>
+                        <th className="pb-3 hidden sm:table-cell">Email Address</th>
+                        <th className="pb-3 hidden md:table-cell">Phone</th>
                         <th className="pb-3">Balance (৳)</th>
-                        <th className="pb-3">Package</th>
+                        <th className="pb-3 hidden md:table-cell">Package</th>
                         <th className="pb-3">Referrals</th>
                         <th className="pb-3">Status</th>
                         <th className="pb-3 text-right">Actions</th>
@@ -700,10 +700,10 @@ export default function Admin() {
                       {usersList.map((usr) => (
                         <tr key={usr.id} className="border-b border-cardBg/30">
                           <td className="py-3 font-semibold capitalize">{usr.username}</td>
-                          <td className="py-3 text-textGray text-xs truncate max-w-[150px]">{usr.email}</td>
-                          <td className="py-3 text-textGray font-semibold">{usr.phone || 'No Phone'}</td>
+                          <td className="py-3 text-textGray text-xs truncate max-w-[120px] sm:max-w-[150px] hidden sm:table-cell">{usr.email}</td>
+                          <td className="py-3 text-textGray font-semibold hidden md:table-cell">{usr.phone || 'No Phone'}</td>
                           <td className="py-3 text-primary font-bold">৳ {formatCurrency(usr.balance)}</td>
-                          <td className="py-3 text-[#FBBF24] font-semibold text-xs">{usr.activePackageName}</td>
+                          <td className="py-3 text-[#FBBF24] font-semibold text-xs hidden md:table-cell">{usr.activePackageName}</td>
                           <td className="py-3 font-medium text-accent">{usr.totalReferralCount} Users</td>
                           <td className="py-3">
                             {/* iOS-style প্রফেশনাল স্লাইডিং টগল বাটন */}
@@ -723,7 +723,7 @@ export default function Admin() {
                           <td className="py-3 text-right">
                             <button
                               onClick={() => setBalanceModal({ userId: usr.id, username: usr.username, currentBalance: usr.balance })}
-                              className="px-3 py-1.5 bg-accent/10 text-accent hover:bg-accent hover:text-background rounded-lg text-xs font-bold transition-all"
+                              className="px-3 py-2 sm:py-1.5 bg-accent/10 text-accent hover:bg-accent hover:text-background rounded-lg text-xs font-bold transition-all"
                             >
                               Adjust Balance
                             </button>
@@ -790,12 +790,12 @@ export default function Admin() {
               </div>
 
               {/* Status Filter buttons */}
-              <div className="flex bg-cardBg border border-cardBg/50 p-1.5 rounded-xl max-w-max">
+              <div className="flex bg-cardBg border border-cardBg/50 p-1.5 rounded-xl max-w-max w-full sm:w-auto">
                 {['pending', 'approved', 'rejected'].map((filter) => (
                   <button
                     key={filter}
                     onClick={() => setWdFilter(filter)}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold capitalize transition-all ${wdFilter === filter ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:text-textLight'}`}
+                    className={`flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-lg text-xs font-bold capitalize transition-all ${wdFilter === filter ? 'bg-primary text-background shadow-lg shadow-primary/10' : 'text-textGray hover:text-textLight'}`}
                   >
                     {filter}
                   </button>
@@ -816,10 +816,10 @@ export default function Admin() {
                       <tr className="border-b border-cardBg text-textGray text-xs font-semibold">
                         <th className="pb-3">User</th>
                         <th className="pb-3">Amount</th>
-                        <th className="pb-3">Fee (6.7%)</th>
+                        <th className="pb-3 hidden sm:table-cell">Fee (6.7%)</th>
                         <th className="pb-3">To Receive</th>
-                        <th className="pb-3">Method</th>
-                        <th className="pb-3">Payment Number</th>
+                        <th className="pb-3 hidden sm:table-cell">Method</th>
+                        <th className="pb-3 hidden sm:table-cell">Payment Number</th>
                         <th className="pb-3 text-right">Actions</th>
                       </tr>
                     </thead>
@@ -828,26 +828,26 @@ export default function Admin() {
                         <tr key={wd.id} className="border-b border-cardBg/30">
                           <td className="py-3">
                             <div className="font-semibold capitalize">{wd.profiles?.username || 'user'}</div>
-                            <span className="text-[10px] text-textGray block mt-0.5">{wd.profiles?.email}</span>
+                            <span className="text-[10px] text-textGray block mt-0.5 hidden sm:block">{wd.profiles?.email}</span>
                           </td>
                           <td className="py-3 font-bold">৳ {wd.amount}</td>
-                          <td className="py-3 text-red-500">৳ {wd.fee}</td>
+                          <td className="py-3 text-red-500 hidden sm:table-cell">৳ {wd.fee}</td>
                           <td className="py-3 text-primary font-bold">৳ {wd.receive_amount}</td>
-                          <td className="py-3 capitalize font-semibold">{wd.payment_method}</td>
-                          <td className="py-3 font-semibold text-textGray">{wd.payment_number}</td>
+                          <td className="py-3 capitalize font-semibold hidden sm:table-cell">{wd.payment_method}</td>
+                          <td className="py-3 font-semibold text-textGray hidden sm:table-cell">{wd.payment_number}</td>
                           <td className="py-3 text-right">
                             {wd.status === 'pending' ? (
-                              <div className="space-x-2">
+                              <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-2">
                                 <button
                                   onClick={() => handleApproveWithdrawal(wd.id)}
-                                  className="p-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-background rounded-lg font-bold text-xs inline-flex items-center gap-1 transition-all"
+                                  className="p-2.5 sm:p-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-background rounded-lg font-bold text-xs inline-flex items-center justify-center gap-1 transition-all min-h-[44px] sm:min-h-0"
                                   title="Approve & Mark Paid"
                                 >
                                   <Check className="w-4 h-4" /> Approve
                                 </button>
                                 <button
                                   onClick={() => handleRejectWithdrawal(wd)}
-                                  className="p-1.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-textLight rounded-lg font-bold text-xs inline-flex items-center gap-1 transition-all"
+                                  className="p-2.5 sm:p-1.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-textLight rounded-lg font-bold text-xs inline-flex items-center justify-center gap-1 transition-all min-h-[44px] sm:min-h-0"
                                   title="Reject & Refund user"
                                 >
                                   <X className="w-4 h-4" /> Reject
@@ -881,7 +881,7 @@ export default function Admin() {
               <form onSubmit={handleSaveSettings} className="space-y-6">
                 
                 {/* Activation fee & rewards */}
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div>
                     <label className="block text-[10px] sm:text-xs font-bold text-textGray mb-2">Activation Fee (৳)</label>
                     <input
@@ -1079,7 +1079,7 @@ export default function Admin() {
             {/* Add new rule */}
             <div className="bg-cardBg border border-cardBg/50 rounded-2xl p-6">
               <h3 className="text-sm font-bold text-textLight mb-4">Add New Rule</h3>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
                   placeholder="Enter rule text..."
@@ -1090,7 +1090,7 @@ export default function Admin() {
                 />
                 <button
                   onClick={handleAddRule}
-                  className="px-6 py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/15 transition-all flex items-center gap-2 text-sm whitespace-nowrap"
+                  className="w-full sm:w-auto px-6 py-3 bg-primary text-background font-black rounded-xl hover:bg-opacity-90 shadow-lg shadow-primary/15 transition-all flex items-center justify-center gap-2 text-sm whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4" /> Add Rule
                 </button>
@@ -1136,7 +1136,7 @@ export default function Admin() {
                           <button
                             onClick={() => handleMoveRule(rule, 'up')}
                             disabled={index === 0}
-                            className="p-1.5 text-textGray hover:text-textLight disabled:opacity-30 transition-all rounded-lg hover:bg-cardBg"
+                            className="p-2.5 sm:p-1.5 text-textGray hover:text-textLight disabled:opacity-30 transition-all rounded-lg hover:bg-cardBg"
                             title="Move up"
                           >
                             ▲
@@ -1145,7 +1145,7 @@ export default function Admin() {
                           <button
                             onClick={() => handleMoveRule(rule, 'down')}
                             disabled={index === withdrawalRules.length - 1}
-                            className="p-1.5 text-textGray hover:text-textLight disabled:opacity-30 transition-all rounded-lg hover:bg-cardBg"
+                            className="p-2.5 sm:p-1.5 text-textGray hover:text-textLight disabled:opacity-30 transition-all rounded-lg hover:bg-cardBg"
                             title="Move down"
                           >
                             ▼
@@ -1156,14 +1156,14 @@ export default function Admin() {
                             <>
                               <button
                                 onClick={() => handleSaveRuleEdit(rule.id)}
-                                className="p-1.5 text-primary hover:bg-primary/10 transition-all rounded-lg"
+                                className="p-2.5 sm:p-1.5 text-primary hover:bg-primary/10 transition-all rounded-lg"
                                 title="Save"
                               >
                                 <Check className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => { setEditingRuleId(null); setEditRuleText(''); }}
-                                className="p-1.5 text-red-500 hover:bg-red-500/10 transition-all rounded-lg"
+                                className="p-2.5 sm:p-1.5 text-red-500 hover:bg-red-500/10 transition-all rounded-lg"
                                 title="Cancel"
                               >
                                 <X className="w-4 h-4" />
@@ -1172,7 +1172,7 @@ export default function Admin() {
                           ) : (
                             <button
                               onClick={() => { setEditingRuleId(rule.id); setEditRuleText(rule.rule_text); }}
-                              className="p-1.5 text-accent hover:bg-accent/10 transition-all rounded-lg"
+                              className="p-2.5 sm:p-1.5 text-accent hover:bg-accent/10 transition-all rounded-lg"
                               title="Edit"
                             >
                               ✏️
@@ -1182,7 +1182,7 @@ export default function Admin() {
                           {/* Toggle active/inactive */}
                           <button
                             onClick={() => handleToggleRule(rule)}
-                            className={`p-1.5 transition-all rounded-lg ${rule.is_active ? 'text-primary hover:bg-primary/10' : 'text-textGray hover:bg-cardBg'}`}
+                            className={`p-2.5 sm:p-1.5 transition-all rounded-lg ${rule.is_active ? 'text-primary hover:bg-primary/10' : 'text-textGray hover:bg-cardBg'}`}
                             title={rule.is_active ? 'Deactivate' : 'Activate'}
                           >
                             {rule.is_active ? '🟢' : '⚪'}
@@ -1191,7 +1191,7 @@ export default function Admin() {
                           {/* Delete */}
                           <button
                             onClick={() => handleDeleteRule(rule.id)}
-                            className="p-1.5 text-red-500 hover:bg-red-500/10 transition-all rounded-lg"
+                            className="p-2.5 sm:p-1.5 text-red-500 hover:bg-red-500/10 transition-all rounded-lg"
                             title="Delete"
                           >
                             🗑️
