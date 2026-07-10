@@ -1,4 +1,4 @@
-self.options = {
+jsself.options = {
     "domain": "5gvci.com",
     "zoneId": 11265570
 }
